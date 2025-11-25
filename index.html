@@ -70,6 +70,7 @@
             position: relative; overflow: hidden; text-transform: uppercase; letter-spacing: 1px;
         }
         .btn-glow:hover { background: var(--primary-cyan); color: #000; box-shadow: 0 0 25px var(--primary-cyan); }
+        .btn-glow:disabled { border-color: #555; color: #555; cursor: not-allowed; box-shadow: none; }
         
         .btn-pink { border-color: var(--primary-pink); color: var(--primary-pink); }
         .btn-pink:hover { background: var(--primary-pink); color: white; box-shadow: 0 0 25px var(--primary-pink); }
@@ -221,8 +222,25 @@
         .reader-content { flex: 1; overflow-y: auto; padding: 60px 100px; font-family: 'ZCOOL XiaoWei', serif; font-size: 1.4rem; line-height: 2.2; color: #ddd; }
         .story-line { padding: 5px 0; position: relative; }
         .story-line:hover { background: rgba(255,255,255,0.05); }
-        .comment-bubble { position: absolute; right: -40px; top: 50%; transform: translateY(-50%); color: var(--primary-purple); opacity: 0; transition: 0.2s; font-size: 1.2rem; pointer-events: auto; }
+        
+        /* 修复评论气泡点击 */
+        .comment-bubble { 
+            position: absolute; right: -40px; top: 50%; transform: translateY(-50%); 
+            color: var(--primary-purple); opacity: 0; transition: 0.2s; font-size: 1.2rem; 
+            cursor: none; pointer-events: auto; /* 关键修复：开启点击 */
+            z-index: 100; /* 关键修复：提升层级 */
+            padding: 5px;
+        }
         .story-line:hover .comment-bubble { opacity: 1; right: 10px; }
+
+        /* 评论侧边栏 */
+        .sidebar-right { width: 0; background: rgba(10,5,20,0.98); border-left: 1px solid var(--glass-border); transition: width 0.3s ease; display: flex; flex-direction: column; z-index: 30; }
+        .sidebar-right.open { width: 360px; }
+        
+        .comments-list { flex: 1; overflow-y: auto; padding: 20px; }
+        .comment-card { background: rgba(255,255,255,0.05); padding: 15px; margin-bottom: 15px; border-radius: 6px; }
+        .comment-input-area { padding: 20px; border-top: 1px solid var(--glass-border); background: rgba(0,0,0,0.5); }
+        .quick-input { width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid #444; color: white; margin-bottom: 10px; font-family: 'Noto Sans SC'; }
 
         /* 加载动画 */
         #reader-loading {
@@ -240,6 +258,7 @@
             .pledge-container, .exceed-board { grid-template-columns: 1fr; }
             .sidebar-left { display: none; }
             .reader-content { padding: 20px; font-size: 1.1rem; }
+            .sidebar-right.open { position: absolute; right: 0; width: 90%; height: 100%; z-index: 60; }
             .login-box { width: 90%; padding: 20px; }
         }
     </style>
@@ -257,8 +276,8 @@
                 <input type="password" id="login-password" class="login-input" placeholder="PASSWORD">
                 <button class="btn-glow" style="width:100%; margin-top:10px;" onclick="handleLogin()">CONNECT</button>
                 <div style="margin-top:15px; font-size:0.8rem; display:flex; justify-content:space-between;">
-                    <span onclick="alert('Unavailable')" style="color:#666;">Forgot?</span>
-                    <span onclick="switchAuth('register')" style="color:var(--primary-pink); text-decoration:underline;">New Player</span>
+                    <span onclick="switchAuth('forgot')" style="text-decoration:underline; color:#888;">Forgot?</span>
+                    <span onclick="switchAuth('register')" style="text-decoration:underline; color:var(--primary-pink);">New Player</span>
                 </div>
             </div>
             <div id="register-step1" class="hidden">
@@ -374,6 +393,19 @@
                     <button class="btn-glow" style="padding:5px 20px;" onclick="changePage(1)">NEXT</button>
                 </div>
             </div>
+
+            <!-- 评论侧边栏 -->
+            <div class="sidebar-right" id="comment-sidebar">
+                <div style="padding:15px; border-bottom:1px solid #444; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-family:'Orbitron'; color:var(--primary-pink);">COMMENTS</span>
+                    <button onclick="toggleSidebar()" style="background:none; border:none; color:white; cursor:none;">[X]</button>
+                </div>
+                <div id="comments-list" class="comments-list"></div>
+                <div class="comment-input-area">
+                    <textarea id="comment-input" class="quick-input" rows="3" placeholder="Type your comment..."></textarea>
+                    <button id="btn-post-comment" class="btn-glow" style="width:100%; margin-top:5px;" onclick="postComment()">POST</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -388,6 +420,7 @@
         let currentUser = { username: "Guest", level: 16 };
         let allLines = [];
         let currentLineStart = 0;
+        let activeCommentLine = -1;
         const LINES_PER_PAGE = 150;
 
         // --- API ---
@@ -420,10 +453,10 @@
                 } else { err.innerText = d.message; btn.disabled = false; btn.innerText = "CONNECT"; }
             }).catch(() => { err.innerText = "ERROR"; btn.disabled = false; btn.innerText = "CONNECT"; });
         }
-        function requestRegCode() { /* 模拟发送 */ alert("Code sent (Simulated)"); switchAuth('register'); document.getElementById('register-step1').classList.add('hidden'); document.getElementById('register-step2').classList.remove('hidden'); }
+        function requestRegCode() { /* 模拟 */ alert("Code sent"); switchAuth('register'); document.getElementById('register-step1').classList.add('hidden'); document.getElementById('register-step2').classList.remove('hidden'); }
         function confirmRegister() { alert("Welcome!"); handleLogin(); }
 
-        // --- Reader (Async Chunked) ---
+        // --- Reader Logic ---
         function openReader() {
             document.getElementById('novel-reader').classList.add('active');
             fetch('novel.txt').then(r => { if(r.ok) return r.text(); throw new Error(); })
@@ -447,7 +480,7 @@
             tocList.innerHTML = "";
             allLines = text.split('\n');
             
-            const chunkSize = 2500;
+            const chunkSize = 3000;
             let tocHtml = "";
             const regex = /(?:^第.+章)|(?:^Chapter)|(?:^序章)|(?:^终章)/i;
 
@@ -478,36 +511,70 @@
             const container = document.getElementById('reader-content');
             const end = Math.min(currentLineStart + LINES_PER_PAGE, allLines.length);
             const slice = allLines.slice(currentLineStart, end);
-            container.innerHTML = slice.map(l => l.trim() ? `<div class="story-line">${l}<div class="comment-bubble">💬</div></div>` : "<br>").join('');
+            // 核心修复：传递真实的 index 给 openComments
+            container.innerHTML = slice.map((l, i) => {
+                const realIdx = currentLineStart + i;
+                return l.trim() ? `<div class="story-line">${l}<div class="comment-bubble" onclick="openComments(${realIdx})">💬</div></div>` : "<br>";
+            }).join('');
             container.scrollTop = 0;
             const pct = Math.round((end / allLines.length) * 100);
             document.getElementById('page-info').innerText = `LINE ${currentLineStart} (${pct}%)`;
         }
         function closeReader() { document.getElementById('novel-reader').classList.remove('active'); }
 
-        // --- World Data ---
+        // --- Comment Logic (Fixed) ---
+        function toggleSidebar() { document.getElementById('comment-sidebar').classList.toggle('open'); }
+        
+        function openComments(idx) {
+            activeCommentLine = idx;
+            document.getElementById('comment-sidebar').classList.add('open');
+            const list = document.getElementById('comments-list');
+            list.innerHTML = "<div style='text-align:center; color:#888;'>LOADING...</div>";
+            
+            callApi({action: 'get_line_comments', line_index: idx}).then(d => {
+                list.innerHTML = "";
+                if(!d.data || d.data.length===0) list.innerHTML = "<div style='text-align:center; color:#666;'>No comments yet</div>";
+                else d.data.forEach(c => {
+                    list.innerHTML += `<div class="comment-card"><div style="color:var(--primary-cyan); font-size:0.8rem;">${c.user}</div><div style="color:#ddd;">${c.content}</div></div>`;
+                });
+            });
+        }
+
+        function postComment() {
+            if(currentUser.username === "Guest") { alert("PLEASE LOGIN FIRST"); return; }
+            const input = document.getElementById('comment-input');
+            const val = input.value;
+            if(!val) return;
+            
+            const btn = document.getElementById('btn-post-comment');
+            btn.innerText = "POSTING..."; btn.disabled = true;
+
+            callApi({action: 'post_line_comment', line_index: activeCommentLine, username: currentUser.username, content: val}).then(() => {
+                input.value = "";
+                openComments(activeCommentLine); // Refresh
+                btn.innerText = "POST"; btn.disabled = false;
+            });
+        }
+
+        // --- World Data (With Rank Colors) ---
         const worldData = {
-            disboard: `<h3>DISBOARD (盘上世界)</h3><div class="world-text"><p>一切都由游戏决定的世界。在这个世界中，包括国境线在内的所有纠纷都必须通过游戏来解决。</p><br><p>这个世界由唯一神特图（Tet）所创造的“十条盟约”所约束。暴力是被绝对禁止的。</p></div>`,
-            history: `<h3>ARCHIVE (古大战)</h3><div class="world-text"><p>诸神争夺唯一神宝座的远古战争，最终由特图取得星杯而结束。</p></div>`,
+            disboard: `<h3>DISBOARD (盘上世界)</h3><div class="world-text"><p>一切都由游戏决定的世界。</p></div>`,
+            history: `<h3>ARCHIVE</h3><div class="world-text"><p>古大战记录...</p></div>`,
             exceed: `
                 <div class="world-text" style="padding-bottom:50px;">
                     <div class="exceed-board">
-                        <!-- God -->
                         <div class="piece-card rank-god hover-target"><div class="piece-rank">I</div><div class="piece-icon">♔</div><div class="piece-info"><div class="piece-name">Old Deus</div><div class="piece-desc">神灵种 / King</div></div></div>
                         <div class="piece-card rank-god hover-target"><div class="piece-rank">II</div><div class="piece-icon">♕</div><div class="piece-info"><div class="piece-name">Phantasma</div><div class="piece-desc">幻想种 / Queen</div></div></div>
                         <div class="piece-card rank-god hover-target"><div class="piece-rank">III</div><div class="piece-icon">♖</div><div class="piece-info"><div class="piece-name">Dragonia</div><div class="piece-desc">龙精种 / Rook</div></div></div>
                         
-                        <!-- High -->
                         <div class="piece-card rank-high hover-target"><div class="piece-rank">IV</div><div class="piece-icon">♗</div><div class="piece-info"><div class="piece-name">Flügel</div><div class="piece-desc">天翼种 / Bishop</div></div></div>
                         <div class="piece-card rank-high hover-target"><div class="piece-rank">V</div><div class="piece-icon">♘</div><div class="piece-info"><div class="piece-name">Elf</div><div class="piece-desc">森精种 / Knight</div></div></div>
                         <div class="piece-card rank-high hover-target"><div class="piece-rank">VI</div><div class="piece-icon">♙</div><div class="piece-info"><div class="piece-name">Gigant</div><div class="piece-desc">巨神种 / Pawn</div></div></div>
 
-                        <!-- Mid -->
                         <div class="piece-card rank-mid hover-target"><div class="piece-rank">VII</div><div class="piece-icon">🨠</div><div class="piece-info"><div class="piece-name">Werebeast</div><div class="piece-desc">兽人种 / General</div></div></div>
                         <div class="piece-card rank-mid hover-target"><div class="piece-rank">VIII</div><div class="piece-icon">♙</div><div class="piece-info"><div class="piece-name">Goblin</div><div class="piece-desc">地精种 / Pawn</div></div></div>
                         <div class="piece-card rank-mid hover-target"><div class="piece-rank">IX</div><div class="piece-icon">♖</div><div class="piece-info"><div class="piece-name">Dragonblood</div><div class="piece-desc">天龙种 / Rook</div></div></div>
 
-                        <!-- Low -->
                         <div class="piece-card rank-low hover-target"><div class="piece-rank">X</div><div class="piece-icon">♗</div><div class="piece-info"><div class="piece-name">Demonia</div><div class="piece-desc">妖魔种 / Bishop</div></div></div>
                         <div class="piece-card rank-low hover-target"><div class="piece-rank">XI</div><div class="piece-icon">♕</div><div class="piece-info"><div class="piece-name">Seiren</div><div class="piece-desc">海神种 / Queen</div></div></div>
                         <div class="piece-card rank-low hover-target"><div class="piece-rank">XII</div><div class="piece-icon">♘</div><div class="piece-info"><div class="piece-name">Fairy</div><div class="piece-desc">妖精种 / Knight</div></div></div>
@@ -515,7 +582,6 @@
                         <div class="piece-card rank-low hover-target"><div class="piece-rank">XIV</div><div class="piece-icon">♙</div><div class="piece-info"><div class="piece-name">Dhampir</div><div class="piece-desc">吸血种 / Pawn</div></div></div>
                         <div class="piece-card rank-low hover-target"><div class="piece-rank">XV</div><div class="piece-icon">♙</div><div class="piece-info"><div class="piece-name">Moonver</div><div class="piece-desc">月下兽人 / Pawn</div></div></div>
 
-                        <!-- Imanity -->
                         <div class="piece-card rank-imanity hover-target"><div class="piece-rank">XVI</div><div class="piece-icon">♙</div><div class="piece-info"><div class="piece-name">Imanity</div><div class="piece-desc">人类种 / Pawn (Potential)</div></div></div>
                     </div>
                 </div>
@@ -529,7 +595,6 @@
             setTimeout(()=>{area.innerHTML=worldData[tab]; area.style.opacity=1;},200);
         }
 
-        // --- Visuals ---
         function initVisuals() {
             const cvs = document.getElementById('bg-canvas'); const ctx = cvs.getContext('2d');
             let w = window.innerWidth, h = window.innerHeight; cvs.width = w; cvs.height = h;
