@@ -6,168 +6,132 @@
     <title>NO GAME NO LIFE - SYSTEM</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     <style>
-        /* ================= 全局样式 ================= */
+        /* 全局样式 */
         :root {
-            --primary-pink: #ff2a6d; --primary-cyan: #05d9e8; --primary-purple: #d905e8; --primary-gold: #ffd700;
-            --dark-bg: #09000f; --glass-bg: rgba(20, 20, 35, 0.9);
+            --primary-pink: #ff2a6d; --primary-cyan: #05d9e8; --primary-purple: #d905e8; --dark-bg: #09000f;
+            --glass-bg: rgba(20, 20, 35, 0.9);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; cursor: default; outline: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
         body { background-color: var(--dark-bg); color: white; font-family: 'Noto Sans SC', sans-serif; height: 100vh; overflow: hidden; }
-        body.unlocked { overflow-y: auto; }
+        body.unlocked { overflow: auto; }
 
-        /* ================= 登录层 (Z-Index 最高) ================= */
-        #auth-layer {
+        /* 登录层 */
+        #overlay-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000;
-            background: rgba(5, 2, 10, 0.95); backdrop-filter: blur(15px);
-            display: flex; justify-content: center; align-items: center;
+            background: rgba(5, 2, 10, 0.95); display: flex; justify-content: center; align-items: center;
         }
         .auth-box {
             width: 400px; padding: 40px; background: rgba(0,0,0,0.8); 
-            border: 2px solid var(--primary-pink); box-shadow: 0 0 50px rgba(255,42,109,0.3);
-            text-align: center; position: relative;
+            border: 2px solid var(--primary-pink); text-align: center;
+            box-shadow: 0 0 50px rgba(255, 42, 109, 0.3);
         }
         .auth-title { font-family: 'Orbitron'; font-size: 2rem; margin-bottom: 20px; color: white; text-shadow: 0 0 10px var(--primary-cyan); }
-        .auth-input {
+        
+        /* 输入框与按钮 */
+        .my-input {
             width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(255,255,255,0.1);
             border: 1px solid #555; color: white; text-align: center; font-family: 'Orbitron'; font-size: 1rem;
         }
-        .auth-btn {
-            width: 100%; padding: 12px; background: transparent; border: 2px solid var(--primary-pink);
-            color: var(--primary-pink); font-family: 'Orbitron'; font-weight: bold; cursor: pointer; transition: 0.3s;
+        .my-btn {
+            width: 100%; padding: 12px; background: var(--primary-pink); border: none;
+            color: white; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; transition: 0.3s;
         }
-        .auth-btn:hover { background: var(--primary-pink); color: white; box-shadow: 0 0 20px var(--primary-pink); }
-        .auth-link { margin-top: 15px; font-size: 0.8rem; color: #aaa; text-decoration: underline; cursor: pointer; }
-        .auth-error { color: #ff2a6d; margin-top: 10px; min-height: 20px; font-size: 0.9rem; }
-        
-        .hidden { display: none !important; }
+        .my-btn:hover { background: white; color: var(--primary-pink); box-shadow: 0 0 20px var(--primary-pink); }
+        .my-btn:disabled { background: #555; cursor: not-allowed; }
 
-        /* ================= 主界面 (初始模糊) ================= */
-        #main-app { filter: blur(10px); opacity: 0.5; pointer-events: none; transition: 0.8s; width: 100%; min-height: 100vh; position: relative; z-index: 1; }
-        body.unlocked #main-app { filter: blur(0); opacity: 1; pointer-events: all; }
-        
-        /* 背景 */
-        .bg-anim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 50% 0%, #2a0e36 0%, #000 70%); }
-        
-        /* 导航 */
-        nav {
-            position: fixed; top: 0; width: 100%; height: 60px; padding: 0 5%; 
-            display: flex; justify-content: space-between; align-items: center;
-            background: rgba(0,0,0,0.8); border-bottom: 1px solid #333; z-index: 100;
-        }
-        .brand { font-family: 'Orbitron'; font-weight: 900; color: var(--primary-cyan); }
-        
-        /* Hero */
-        .hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        .hero h1 { font-family: 'Orbitron'; font-size: 4rem; margin-bottom: 20px; text-shadow: 0 0 20px var(--primary-pink); }
-        
-        /* Content Sections */
-        section { padding: 80px 5%; max-width: 1200px; margin: 0 auto; }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: rgba(255,255,255,0.05); padding: 20px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #ddd; }
-        
-        /* Novel Reader Overlay */
-        #reader-overlay {
-            position: fixed; inset: 0; background: #000; z-index: 5000; 
-            display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: 0.3s;
-        }
-        #reader-overlay.active { opacity: 1; pointer-events: all; }
-        .reader-head { padding: 15px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
-        .reader-content { flex: 1; overflow-y: auto; padding: 40px; font-family: 'ZCOOL XiaoWei'; font-size: 1.2rem; line-height: 2; color: #ccc; text-align: justify; }
-        .close-btn { border: 1px solid var(--primary-pink); color: var(--primary-pink); background: none; padding: 5px 15px; font-family: 'Orbitron'; cursor: pointer; }
+        .link-text { margin-top: 15px; font-size: 0.8rem; color: #aaa; text-decoration: underline; cursor: pointer; }
+        .err-msg { color: red; margin-top: 10px; min-height: 20px; font-family: 'Orbitron'; }
 
-        /* 移动端 */
-        @media (max-width: 768px) {
-            .hero h1 { font-size: 2.5rem; }
-            .auth-box { width: 90%; padding: 20px; }
-        }
+        /* 显隐控制类 */
+        .d-none { display: none !important; }
+
+        /* 主界面模糊 */
+        #main-content { filter: blur(10px); opacity: 0.5; pointer-events: none; width: 100%; min-height: 100vh; transition: 1s; }
+        body.unlocked #main-content { filter: blur(0); opacity: 1; pointer-events: all; }
+        
+        /* 简单排版 */
+        nav { padding: 20px; text-align: center; border-bottom: 1px solid #333; font-family: 'Orbitron'; letter-spacing: 2px; }
+        .hero { height: 80vh; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        h1 { font-size: 4rem; color: var(--primary-cyan); text-shadow: 0 0 20px var(--primary-cyan); }
     </style>
 </head>
 <body>
 
-    <!-- 1. 认证层 -->
-    <div id="auth-layer">
+    <!-- 登录遮罩 -->
+    <div id="overlay-layer">
         <div class="auth-box">
-            <div id="auth-title" class="auth-title">SYSTEM LOGIN</div>
+            <h2 id="ui-title" class="auth-title">SYSTEM LOGIN</h2>
             
-            <!-- 登录视图 -->
-            <div id="view-login">
-                <input type="email" id="in-email" class="auth-input" placeholder="EMAIL">
-                <input type="password" id="in-pass" class="auth-input" placeholder="PASSWORD">
-                <button class="auth-btn" onclick="userLogin()">CONNECT</button>
-                <div class="auth-link" onclick="switchView('reg1')">NEW PLAYER? REGISTER</div>
+            <!-- 1. 登录表单 (ID: section-login) -->
+            <div id="section-login">
+                <input type="email" id="inp-login-email" class="my-input" placeholder="EMAIL">
+                <input type="password" id="inp-login-pass" class="my-input" placeholder="PASSWORD">
+                <button class="my-btn" onclick="actLogin(this)">CONNECT</button>
+                <div class="link-text" onclick="gotoRegister()">NEW PLAYER? REGISTER</div>
             </div>
 
-            <!-- 注册视图 1 -->
-            <div id="view-reg1" class="hidden">
-                <input type="text" id="in-reg-user" class="auth-input" placeholder="USERNAME">
-                <input type="email" id="in-reg-email" class="auth-input" placeholder="EMAIL">
-                <input type="password" id="in-reg-pass" class="auth-input" placeholder="PASSWORD">
-                <button class="auth-btn" onclick="userGetCode()">GET CODE</button>
-                <div class="auth-link" onclick="switchView('login')">BACK</div>
+            <!-- 2. 注册第一步 (ID: section-reg1) -->
+            <div id="section-reg1" class="d-none">
+                <input type="text" id="inp-reg-user" class="my-input" placeholder="USERNAME">
+                <input type="email" id="inp-reg-email" class="my-input" placeholder="EMAIL">
+                <input type="password" id="inp-reg-pass" class="my-input" placeholder="PASSWORD">
+                <button class="my-btn" onclick="actGetCode(this)">GET CODE</button>
+                <div class="link-text" onclick="gotoLogin()">BACK</div>
             </div>
 
-            <!-- 注册视图 2 -->
-            <div id="view-reg2" class="hidden">
-                <p style="color:#aaa; font-size:0.8rem; margin-bottom:10px;">Code sent (or try 123456)</p>
-                <input type="text" id="in-reg-code" class="auth-input" placeholder="6-DIGIT CODE">
-                <button class="auth-btn" onclick="userConfirmReg()">CONFIRM</button>
+            <!-- 3. 注册第二步 (ID: section-reg2) -->
+            <div id="section-reg2" class="d-none">
+                <p style="color:#ccc; margin-bottom:10px;">Code sent (or use 123456)</p>
+                <input type="text" id="inp-reg-code" class="my-input" placeholder="ENTER CODE">
+                <button class="my-btn" onclick="actConfirm(this)">CONFIRM</button>
             </div>
 
-            <div id="ui-msg" class="auth-error"></div>
+            <div id="msg-box" class="err-msg"></div>
         </div>
     </div>
 
-    <!-- 2. 主内容层 -->
-    <div id="main-app">
-        <div class="bg-anim"></div>
-        
-        <nav>
-            <span class="brand">NGNL SYSTEM</span>
-            <span id="user-badge" style="color:var(--primary-gold); border:1px solid var(--primary-gold); padding:2px 6px; font-size:0.8rem;">GUEST</span>
-        </nav>
-
-        <header class="hero">
-            <h1>NO GAME NO LIFE</h1>
-            <button class="auth-btn" style="width:auto; padding:10px 40px;" onclick="openReader()">READ NOVEL</button>
-        </header>
-
-        <section>
-            <h2 style="text-align:center; font-family:'Orbitron'; margin-bottom:40px; color:var(--primary-cyan);">THE PLEDGES</h2>
-            <div class="card-grid">
-                <div class="card">I. 禁止杀伤、战争与掠夺</div>
-                <div class="card">II. 所有纠纷通过游戏解决</div>
-                <div class="card">III. 赌注必须对等</div>
-                <div class="card">IV. 只要不违反三，内容不限</div>
-                <div class="card">V. 受挑战方决定游戏内容</div>
-                <div class="card">VI. 向盟约宣誓必须遵守</div>
-            </div>
-        </section>
-    </div>
-
-    <!-- 3. 阅读器层 -->
-    <div id="reader-overlay">
-        <div class="reader-head">
-            <span style="color:var(--primary-cyan); font-family:'Orbitron'">NOVEL DATABASE</span>
-            <button class="close-btn" onclick="closeReader()">EXIT</button>
-        </div>
-        <div id="reader-text" class="reader-content">
-            <div style="text-align:center; margin-top:50px;">
-                <p>INITIALIZING...</p>
-                <button class="auth-btn" style="width:auto; margin-top:20px;" onclick="document.getElementById('file-picker').click()">LOAD FILE</button>
-            </div>
+    <!-- 主界面 -->
+    <div id="main-content">
+        <nav>NGNL SYSTEM // <span id="user-name" style="color:var(--primary-gold)">GUEST</span></nav>
+        <div class="hero">
+            <h1>ASCHENTE</h1>
+            <p style="color:#aaa; margin-top:20px;">Welcome to Disboard.</p>
         </div>
     </div>
-    <input type="file" id="file-picker" accept=".txt" style="display:none;" onchange="loadFile(this)">
 
     <script>
-        // =============================================
-        // ⚠️ 填入你的 URL
+        // ==============================================
+        // ⚠️ 填入你的 Google Apps Script URL
         const API_URL = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec"; 
-        // =============================================
+        // ==============================================
 
-        // --- 1. 核心通信 (Text Plain 模式) ---
-        async function api(data) {
-            console.log("SEND:", data);
+        // --- 1. 绝对安全的切换视图函数 ---
+        function gotoRegister() {
+            // 强制隐藏登录，显示注册1
+            document.getElementById('section-login').classList.add('d-none');
+            document.getElementById('section-reg1').classList.remove('d-none');
+            document.getElementById('section-reg2').classList.add('d-none');
+            document.getElementById('ui-title').innerText = "REGISTER";
+            document.getElementById('msg-box').innerText = "";
+        }
+
+        function gotoLogin() {
+            // 强制显示登录，隐藏其他
+            document.getElementById('section-login').classList.remove('d-none');
+            document.getElementById('section-reg1').classList.add('d-none');
+            document.getElementById('section-reg2').classList.add('d-none');
+            document.getElementById('ui-title').innerText = "SYSTEM LOGIN";
+            document.getElementById('msg-box').innerText = "";
+        }
+
+        function gotoVerify() {
+            document.getElementById('section-reg1').classList.add('d-none');
+            document.getElementById('section-reg2').classList.remove('d-none');
+        }
+
+        // --- 2. API 请求 ---
+        async function sendReq(data) {
+            console.log("发送数据:", data);
             try {
                 const res = await fetch(API_URL, {
                     method: 'POST',
@@ -176,133 +140,90 @@
                     body: JSON.stringify(data)
                 });
                 const json = await res.json();
-                console.log("RECV:", json);
+                console.log("收到数据:", json);
                 return json;
             } catch (e) {
                 console.error(e);
-                return {status: 'error', message: 'Network/CORS Error'};
+                return {status: 'error', message: '网络错误，请检查控制台'};
             }
         }
 
-        // --- 2. 认证逻辑 ---
+        // --- 3. 业务逻辑 ---
         
-        // 切换视图
-        function switchView(viewName) {
-            // 隐藏所有
-            ['view-login', 'view-reg1', 'view-reg2'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-            });
-            document.getElementById('ui-msg').innerText = "";
-
-            // 显示目标
-            if (viewName === 'login') {
-                document.getElementById('view-login').classList.remove('hidden');
-                document.getElementById('auth-title').innerText = "SYSTEM LOGIN";
-            } else if (viewName === 'reg1') {
-                document.getElementById('view-reg1').classList.remove('hidden');
-                document.getElementById('auth-title').innerText = "REGISTER";
-            } else if (viewName === 'reg2') {
-                document.getElementById('view-reg2').classList.remove('hidden');
-            }
-        }
-
         // 登录
-        async function userLogin() {
-            const email = document.getElementById('in-email').value;
-            const pass = document.getElementById('in-pass').value;
-            const msg = document.getElementById('ui-msg');
-            
-            if (!email || !pass) { msg.innerText = "Missing Input"; return; }
-            msg.innerText = "Connecting...";
+        async function actLogin(btn) {
+            const e = document.getElementById('inp-login-email').value;
+            const p = document.getElementById('inp-login-pass').value;
+            const msg = document.getElementById('msg-box');
 
-            const res = await api({action: 'login', email: email, password: pass});
+            if(!e || !p) { msg.innerText = "请输入邮箱和密码"; return; }
+
+            btn.disabled = true; btn.innerText = "...";
             
+            const res = await sendReq({action: 'login', email: e, password: p});
+
             if (res.status === 'success') {
-                unlock(res.username);
+                document.getElementById('overlay-layer').style.display = 'none';
+                document.body.classList.add('unlocked');
+                document.getElementById('user-name').innerText = res.username;
             } else {
                 msg.innerText = res.message;
+                btn.disabled = false; btn.innerText = "CONNECT";
             }
         }
+
+        // 临时存数据
+        let tempUser = {};
 
         // 获取验证码
-        let tempReg = {};
-        async function userGetCode() {
-            const user = document.getElementById('in-reg-user').value;
-            const email = document.getElementById('in-reg-email').value;
-            const pass = document.getElementById('in-reg-pass').value;
-            const msg = document.getElementById('ui-msg');
+        async function actGetCode(btn) {
+            const u = document.getElementById('inp-reg-user').value;
+            const e = document.getElementById('inp-reg-email').value;
+            const p = document.getElementById('inp-reg-pass').value;
+            const msg = document.getElementById('msg-box');
 
-            if (!user || !email || !pass) { msg.innerText = "Fill all fields"; return; }
-            msg.innerText = "Sending...";
+            if(!u || !e || !p) { msg.innerText = "请填完所有信息"; return; }
 
-            tempReg = {username: user, email: email, password: pass};
-            
-            const res = await api({action: 'req_code', email: email});
-            
+            btn.disabled = true; btn.innerText = "...";
+            tempUser = { username: u, email: e, password: p };
+
+            const res = await sendReq({action: 'req_reg_code', email: e});
+
             if (res.status === 'success') {
-                switchView('reg2');
-                alert(res.message);
+                gotoVerify();
+                msg.innerText = "";
+                alert("验证码已发送 (测试码: 123456)");
             } else {
                 msg.innerText = res.message;
+                btn.disabled = false; btn.innerText = "GET CODE";
             }
         }
 
         // 确认注册
-        async function userConfirmReg() {
-            const code = document.getElementById('in-reg-code').value;
-            const msg = document.getElementById('ui-msg');
-            
-            if (!code) { msg.innerText = "Enter Code"; return; }
-            msg.innerText = "Verifying...";
+        async function actConfirm(btn) {
+            const code = document.getElementById('inp-reg-code').value;
+            const msg = document.getElementById('msg-box');
 
-            const res = await api({
-                action: 'register',
-                username: tempReg.username,
-                email: tempReg.email,
-                password: tempReg.password,
+            if(!code) { msg.innerText = "请输入验证码"; return; }
+            
+            btn.disabled = true; btn.innerText = "...";
+
+            const res = await sendReq({
+                action: 'confirm_register',
+                username: tempUser.username,
+                email: tempUser.email,
+                password: tempUser.password,
                 code: code
             });
 
             if (res.status === 'success') {
-                alert("Registered! Logging in...");
-                unlock(tempReg.username);
+                alert("注册成功！请登录");
+                gotoLogin();
             } else {
                 msg.innerText = res.message;
+                btn.disabled = false; btn.innerText = "CONFIRM";
             }
         }
-
-        // 解锁界面
-        function unlock(username) {
-            document.getElementById('login-overlay').style.display = 'none';
-            document.body.classList.add('unlocked');
-            document.getElementById('user-badge').innerText = username.toUpperCase();
-        }
-
-        // --- 3. 阅读器简易逻辑 ---
-        function openReader() {
-            document.getElementById('reader-overlay').classList.add('active');
-            // 尝试自动加载
-            fetch('novel.txt').then(r => r.text()).then(txt => {
-                if(txt.length < 50) throw new Error();
-                renderText(txt);
-            }).catch(() => console.log("Waiting for file"));
-        }
-        function closeReader() { document.getElementById('reader-overlay').classList.remove('active'); }
-        
-        function loadFile(input) {
-            const f = input.files[0];
-            const r = new FileReader();
-            r.onload = e => renderText(e.target.result);
-            r.readAsText(f);
-        }
-        
-        function renderText(txt) {
-            const div = document.getElementById('reader-text');
-            // 分行处理防卡顿
-            const lines = txt.split('\n').slice(0, 500); // 先只显示前500行演示
-            div.innerHTML = lines.map(l => `<div style="margin-bottom:10px;">${l}</div>`).join('');
-        }
-
     </script>
 </body>
 </html>
