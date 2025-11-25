@@ -6,16 +6,16 @@
     <title>NO GAME NO LIFE - 游戏人生 | SYSTEM LOGIN</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     <style>
-        /* ================= 1. 核心变量 (NGNL Palette) ================= */
+        /* ================= 1. 核心变量 ================= */
         :root {
             --primary-pink: #ff2a6d;
             --primary-cyan: #05d9e8;
             --primary-purple: #d905e8;
             --primary-gold: #ffd700;
-            --dark-bg: #0a0010; /* 更深邃的背景 */
-            --glass-bg: rgba(20, 20, 35, 0.75);
+            --dark-bg: #09000f;
+            --glass-bg: rgba(15, 15, 30, 0.85);
             --glass-border: rgba(255, 255, 255, 0.1);
-            --hud-bg: rgba(8, 4, 12, 0.98);
+            --hud-bg: rgba(5, 2, 8, 0.98);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; cursor: none; outline: none; }
@@ -25,208 +25,207 @@
             color: white;
             font-family: 'Noto Sans SC', sans-serif;
             min-height: 100vh;
-            overflow-x: hidden; /* 防止横向滚动条 */
-            /* 初始锁定滚动 */
-            overflow-y: hidden; 
+            overflow-x: hidden;
+            overflow-y: hidden; /* 登录前禁止滚动 */
         }
         
         body.unlocked { overflow-y: auto; }
 
-        /* ================= 2. 视觉特效组件 ================= */
-        
-        /* 自定义光标 */
+        /* ================= 2. 视觉组件 ================= */
+        /* 光标 */
         #cursor {
             width: 20px; height: 20px; border: 2px solid var(--primary-cyan); border-radius: 50%;
             position: fixed; pointer-events: none; z-index: 999999; transform: translate(-50%, -50%);
-            transition: width 0.2s, height 0.2s, background 0.2s; mix-blend-mode: difference;
+            transition: width 0.2s, height 0.2s, border-color 0.2s; mix-blend-mode: difference;
         }
-        #cursor.hovered { width: 50px; height: 50px; background: rgba(255, 42, 109, 0.2); border-color: var(--primary-pink); box-shadow: 0 0 20px var(--primary-pink); }
+        #cursor.hovered { width: 50px; height: 50px; background: rgba(255, 42, 109, 0.3); border-color: var(--primary-pink); }
 
         /* 滚动条 */
-        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #050505; }
-        ::-webkit-scrollbar-thumb { background: linear-gradient(to bottom, var(--primary-cyan), var(--primary-purple)); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(var(--primary-cyan), var(--primary-purple)); border-radius: 3px; }
 
-        /* 按钮样式 */
+        /* 通用按钮 */
         .btn-glow {
-            background: rgba(0,0,0,0.4); border: 1px solid var(--primary-cyan); color: var(--primary-cyan);
-            padding: 10px 25px; font-family: 'Orbitron'; text-transform: uppercase; font-weight: bold;
-            cursor: none; transition: 0.3s; box-shadow: 0 0 10px rgba(5, 217, 232, 0.1);
+            background: rgba(5, 217, 232, 0.05); border: 1px solid var(--primary-cyan); color: var(--primary-cyan);
+            padding: 10px 30px; font-family: 'Orbitron'; text-transform: uppercase; letter-spacing: 1px;
+            cursor: none; transition: 0.3s; position: relative; overflow: hidden;
         }
-        .btn-glow:hover {
-            background: var(--primary-cyan); color: #000; box-shadow: 0 0 30px var(--primary-cyan);
-        }
-        .btn-pink { border-color: var(--primary-pink); color: var(--primary-pink); box-shadow: 0 0 10px rgba(255, 42, 109, 0.1); }
-        .btn-pink:hover { background: var(--primary-pink); color: white; box-shadow: 0 0 30px var(--primary-pink); }
-
-        /* ================= 3. 布局层级 (修复错位关键) ================= */
+        .btn-glow:hover { background: var(--primary-cyan); color: #000; box-shadow: 0 0 25px var(--primary-cyan); }
         
-        /* 背景层 (最底层) */
+        .btn-pink { border-color: var(--primary-pink); color: var(--primary-pink); }
+        .btn-pink:hover { background: var(--primary-pink); color: white; box-shadow: 0 0 25px var(--primary-pink); }
+
+        /* ================= 3. 布局层级 ================= */
+        /* 背景 */
         .bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10;
             background-image: 
-                radial-gradient(circle at 15% 15%, rgba(255, 42, 109, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 85% 85%, rgba(5, 217, 232, 0.15) 0%, transparent 50%),
-                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-            background-size: 100% 100%, 100% 100%, 60px 60px, 60px 60px;
+                radial-gradient(circle at 50% 0%, rgba(255, 42, 109, 0.1) 0%, transparent 50%),
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
         }
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -5; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -5; opacity: 0.6; }
 
-        /* 主内容包裹器 (用于登录时模糊) */
+        /* 内容容器 (登录时模糊) */
         #site-wrapper {
-            position: relative; z-index: 1;
+            position: relative; z-index: 1; width: 100%;
             transition: filter 0.8s ease, opacity 0.8s ease;
-            filter: blur(20px); opacity: 0.4; pointer-events: none; /* 初始状态 */
+            filter: blur(15px); opacity: 0.3; pointer-events: none;
         }
         body.unlocked #site-wrapper { filter: blur(0); opacity: 1; pointer-events: all; }
 
-        /* 登录弹窗 (最高层级) */
+        /* 登录遮罩 */
         #login-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 20000;
             display: flex; justify-content: center; align-items: center;
-            background: rgba(5, 2, 10, 0.85); backdrop-filter: blur(15px);
+            background: rgba(5, 2, 10, 0.9); backdrop-filter: blur(10px);
         }
 
         /* ================= 4. 页面板块 ================= */
-
-        /* 导航栏 */
         nav {
-            position: fixed; top: 0; width: 100%; height: 70px; padding: 0 40px;
+            position: fixed; top: 0; width: 100%; height: 70px; padding: 0 5%;
             display: flex; justify-content: space-between; align-items: center;
-            background: rgba(10, 5, 20, 0.8); backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 1000;
+            z-index: 1000; background: rgba(10, 5, 20, 0.9); border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        .nav-brand { font-family: 'Orbitron'; font-weight: 900; font-size: 1.5rem; color: white; text-shadow: 2px 2px var(--primary-pink); }
-        .nav-links a { margin-left: 30px; color: #ddd; text-decoration: none; font-family: 'Orbitron'; font-size: 0.9rem; transition: 0.3s; }
+        .nav-brand { font-family: 'Orbitron'; font-weight: 900; font-size: 1.5rem; color: white; letter-spacing: 2px; }
+        .nav-links a { margin-left: 30px; color: #aaa; text-decoration: none; font-family: 'Orbitron'; font-size: 0.9rem; transition: 0.3s; }
         .nav-links a:hover { color: var(--primary-cyan); text-shadow: 0 0 10px var(--primary-cyan); }
 
-        /* Hero 区域 */
-        .hero {
-            height: 100vh; width: 100%;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            text-align: center; padding: 0 20px;
-        }
-        .hero h1 {
-            font-family: 'Orbitron'; font-size: 5rem; line-height: 1.1; margin-bottom: 20px;
-            background: linear-gradient(to bottom, #fff, #e0e0e0); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 15px rgba(255, 42, 109, 0.5));
-        }
-        .glitch { position: relative; }
-        /* (保留 glitch 动画以节省篇幅) */
-
-        /* 通用 Section */
-        section { padding: 100px 5%; width: 100%; max-width: 1400px; margin: 0 auto; }
+        section { padding: 100px 5%; max-width: 1400px; margin: 0 auto; }
         .section-title {
             font-family: 'Orbitron'; font-size: 3rem; text-align: center; margin-bottom: 60px;
-            color: var(--primary-cyan); text-shadow: 0 0 20px rgba(5, 217, 232, 0.4);
+            color: white; text-shadow: 0 0 20px var(--primary-cyan); letter-spacing: 5px;
         }
 
-        /* 盟约卡片 */
-        .pledge-container {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px;
+        /* Hero */
+        .hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .hero h1 { 
+            font-family: 'Orbitron'; font-size: 5rem; margin-bottom: 20px; line-height: 1;
+            background: linear-gradient(to bottom, #fff, #ccc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px var(--primary-pink));
         }
+        .glitch { animation: glitch-anim 3s infinite alternate-reverse; }
+        @keyframes glitch-anim { 0% { transform: skew(0deg); } 20% { transform: skew(-2deg); } 40% { transform: skew(2deg); } 100% { transform: skew(0deg); } }
+
+        /* Pledges Grid */
+        .pledge-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
         .pledge-card {
-            background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 25px; border-radius: 10px;
-            position: relative; overflow: hidden; transition: 0.3s; display: flex; align-items: center;
+            background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 30px; border-radius: 12px;
+            position: relative; overflow: hidden; transition: 0.4s; display: flex; align-items: center; min-height: 120px;
         }
-        .pledge-card:hover { transform: translateY(-5px); border-color: var(--primary-pink); box-shadow: 0 5px 20px rgba(255,42,109,0.2); }
-        .pledge-num { position: absolute; right: 10px; font-family: 'Orbitron'; font-size: 4rem; opacity: 0.1; font-weight: 900; }
-        .pledge-text { position: relative; z-index: 1; font-size: 1.1rem; line-height: 1.5; }
+        .pledge-card:hover { transform: translateY(-5px); border-color: var(--primary-pink); box-shadow: 0 10px 30px rgba(255,42,109,0.15); }
+        .pledge-num { position: absolute; right: 20px; font-family: 'Orbitron'; font-size: 4rem; opacity: 0.1; font-weight: 900; }
+        .pledge-text { position: relative; z-index: 1; font-size: 1.1rem; line-height: 1.6; }
 
-        /* 世界观 (修复布局) */
-        .world-container {
-            background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); border-radius: 10px; overflow: hidden;
-        }
-        .world-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(5,217,232,0.05); }
-        .world-tab { flex: 1; padding: 15px; text-align: center; font-family: 'Orbitron'; color: #888; cursor: none; border-right: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
-        .world-tab.active { color: white; background: rgba(5,217,232,0.15); text-shadow: 0 0 10px var(--primary-cyan); }
-        .world-content { padding: 30px; min-height: 300px; color: #ddd; font-size: 1.1rem; line-height: 1.8; }
+        /* World Database (Tab & Content) */
+        .world-container { background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; }
+        .world-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.02); }
+        .world-tab { flex: 1; padding: 20px; text-align: center; font-family: 'Orbitron'; color: #888; transition: 0.3s; border-right: 1px solid rgba(255,255,255,0.05); }
+        .world-tab.active { color: white; background: rgba(5,217,232,0.1); text-shadow: 0 0 15px var(--primary-cyan); border-bottom: 2px solid var(--primary-cyan); }
+        .world-content { padding: 40px; min-height: 300px; color: #ddd; font-size: 1.1rem; line-height: 1.8; }
 
-        /* 16种族 Grid (修复错位) */
+        /* 16 Races Grid (Fixed) */
         .exceed-board {
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* 关键修复 */
-            gap: 15px; margin-top: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); /* 完美自适应 */
+            gap: 20px; margin-top: 30px;
         }
         .piece-card {
-            height: 180px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
-            border-radius: 6px; padding: 15px; position: relative; overflow: hidden; transition: 0.3s;
+            height: 200px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+            border-radius: 8px; padding: 20px; position: relative; overflow: hidden; transition: 0.4s;
             display: flex; flex-direction: column; justify-content: space-between;
         }
-        .piece-card:hover { background: rgba(255,255,255,0.08); transform: scale(1.02); z-index: 2; box-shadow: 0 10px 30px black; }
-        .piece-icon { position: absolute; bottom: -10px; right: -10px; font-size: 6rem; opacity: 0.1; }
-        .piece-name { font-family: 'Orbitron'; color: var(--primary-cyan); font-size: 1.1rem; font-weight: bold; }
-        .piece-desc { font-size: 0.8rem; color: #888; }
-        .piece-card.rank-1 { border-color: var(--primary-gold); } .piece-card.rank-1 .piece-name { color: var(--primary-gold); }
+        .piece-card:hover { background: rgba(255,255,255,0.08); transform: scale(1.02); box-shadow: 0 15px 40px rgba(0,0,0,0.5); z-index: 5; }
+        .piece-icon { position: absolute; bottom: -15px; right: -15px; font-size: 7rem; opacity: 0.08; color: white; transition: 0.5s; }
+        .piece-card:hover .piece-icon { opacity: 0.2; transform: rotate(-10deg) scale(1.2); }
+        
+        .piece-rank { font-family: 'Orbitron'; font-size: 2rem; font-weight: 900; opacity: 0.3; color: var(--primary-cyan); }
+        .piece-name { font-family: 'Orbitron'; font-size: 1.2rem; color: white; font-weight: bold; margin-bottom: 5px; }
+        .piece-desc { font-size: 0.85rem; color: #999; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; }
+        
+        .piece-card.rank-1 { border-color: var(--primary-gold); box-shadow: inset 0 0 20px rgba(255,215,0,0.05); }
+        .piece-card.rank-1 .piece-rank { color: var(--primary-gold); }
 
-        /* 角色展示 */
+        /* Characters */
         .char-gallery { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
         .char-card { width: 260px; height: 380px; perspective: 1000px; }
-        .char-inner { width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; position: relative; }
+        .char-inner { width: 100%; height: 100%; transition: 0.6s; transform-style: preserve-3d; position: relative; }
         .char-card:hover .char-inner { transform: rotateY(180deg); }
         .char-front, .char-back {
             position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 15px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: linear-gradient(135deg, #201025, #050505); border: 1px solid var(--glass-border);
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            background: linear-gradient(145deg, #1a1025, #050505); border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        .char-back { transform: rotateY(180deg); background: linear-gradient(135deg, var(--primary-pink), #2a0e36); padding: 20px; text-align: center; }
-        .char-avatar { width: 130px; height: 130px; border-radius: 50%; border: 3px solid white; background-size: cover; background-position: top center; margin-bottom: 20px; box-shadow: 0 0 15px var(--primary-cyan); }
+        .char-back { transform: rotateY(180deg); background: linear-gradient(145deg, var(--primary-pink), #2a0e36); padding: 20px; text-align: center; }
+        .char-avatar { width: 130px; height: 130px; border-radius: 50%; border: 3px solid white; background-size: cover; background-position: top center; margin-bottom: 20px; box-shadow: 0 0 20px var(--primary-cyan); }
 
-        /* ================= 5. 登录界面 ================= */
+        /* ================= 5. 登录框 (Login Box) ================= */
         .login-box {
-            width: 400px; padding: 40px; background: rgba(0, 0, 0, 0.9);
-            border: 2px solid var(--primary-pink); box-shadow: 0 0 60px rgba(255, 42, 109, 0.3);
+            width: 400px; padding: 40px; background: rgba(10, 5, 15, 0.95);
+            border: 2px solid var(--primary-pink); box-shadow: 0 0 60px rgba(255, 42, 109, 0.2);
             text-align: center; position: relative;
         }
-        .login-box::before { content: "SYSTEM ACCESS"; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #000; padding: 0 10px; color: var(--primary-pink); font-family: 'Orbitron'; font-size: 0.8rem; }
-        .login-input { width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(255,255,255,0.1); border: 1px solid #444; color: white; text-align: center; font-family: 'Orbitron'; }
-        .login-input:focus { border-color: var(--primary-cyan); }
+        .login-box::before { content: "ACCESS REQUEST"; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #000; padding: 0 10px; color: var(--primary-pink); font-family: 'Orbitron'; font-size: 0.8rem; letter-spacing: 2px; }
+        .login-input { width: 100%; padding: 15px; margin-bottom: 15px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; text-align: center; font-family: 'Orbitron'; font-size: 1.1rem; }
         .hidden { display: none !important; }
 
-        /* ================= 6. 阅读器 PRO (性能优化版) ================= */
+        /* ================= 6. 终极阅读器 (Reader Ultimate) ================= */
         #novel-reader {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--hud-bg);
             z-index: 5000; display: flex; flex-direction: column;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+            opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
         }
         #novel-reader.active { opacity: 1; pointer-events: all; }
 
-        .reader-header { height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; border-bottom: 1px solid var(--glass-border); background: rgba(0,0,0,0.5); }
-        .reader-body { flex: 1; display: flex; overflow: hidden; }
+        .reader-header { height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; border-bottom: 1px solid var(--glass-border); background: rgba(0,0,0,0.6); }
+        .reader-body { flex: 1; display: flex; overflow: hidden; position: relative; }
 
-        /* 目录侧边栏 */
-        .sidebar-left { width: 260px; background: rgba(0,0,0,0.3); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; }
+        /* 加载层 (位于Body内) */
+        #reader-loading-screen {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 50;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            font-family: 'Orbitron'; color: var(--primary-cyan);
+        }
+        .loading-bar { width: 200px; height: 2px; background: #333; margin-top: 15px; position: relative; overflow: hidden; }
+        .loading-progress { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--primary-cyan); transition: width 0.1s; }
+
+        /* 侧边栏 */
+        .sidebar-left { width: 280px; background: rgba(0,0,0,0.4); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; }
         .toc-list { flex: 1; overflow-y: auto; }
-        .toc-item { padding: 12px 20px; font-size: 0.9rem; color: #aaa; border-bottom: 1px solid rgba(255,255,255,0.03); transition: 0.2s; }
-        .toc-item:hover { color: white; background: rgba(5,217,232,0.1); }
+        .toc-item { padding: 15px 20px; font-size: 0.9rem; color: #888; border-bottom: 1px solid rgba(255,255,255,0.02); transition: 0.2s; }
+        .toc-item:hover { color: white; background: rgba(5,217,232,0.05); padding-left: 25px; }
 
-        /* 正文区域 */
-        .text-area-container { flex: 1; display: flex; flex-direction: column; position: relative; }
+        /* 文本区 */
+        .text-area-container { flex: 1; display: flex; flex-direction: column; }
         .reader-content { 
             flex: 1; overflow-y: auto; padding: 50px 100px; 
-            font-family: 'ZCOOL XiaoWei', serif; font-size: 1.3rem; line-height: 2.2; color: #eee; 
+            font-family: 'ZCOOL XiaoWei', serif; font-size: 1.35rem; line-height: 2.1; color: #ddd; 
         }
-        
-        /* 评论侧边栏 */
-        .sidebar-right { width: 0; background: rgba(10,5,20,0.98); border-left: 1px solid var(--glass-border); transition: width 0.3s ease; display: flex; flex-direction: column; }
-        .sidebar-right.open { width: 350px; }
+        /* 空状态/错误状态容器 */
+        .reader-empty-state {
+            height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #666; gap: 20px;
+        }
 
-        /* 段评气泡 */
-        .story-line { position: relative; padding-right: 30px; border-radius: 4px; }
+        /* 评论侧边栏 */
+        .sidebar-right { width: 0; background: rgba(10,5,20,0.98); border-left: 1px solid var(--glass-border); transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; }
+        .sidebar-right.open { width: 360px; }
+
+        .story-line { position: relative; padding-right: 30px; border-radius: 4px; margin-bottom: 10px; }
         .story-line:hover { background: rgba(255,255,255,0.05); }
-        .comment-bubble { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); color: var(--primary-purple); opacity: 0; transition: 0.2s; cursor: none; }
+        .comment-bubble { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); color: var(--primary-purple); opacity: 0; transition: 0.2s; }
         .story-line:hover .comment-bubble { opacity: 1; }
 
-        /* 移动端适配 */
+        /* 移动端 */
         @media (max-width: 768px) {
             .hero h1 { font-size: 3rem; }
             .nav-links { display: none; }
             .pledge-container, .exceed-board { grid-template-columns: 1fr; }
             .sidebar-left { display: none; }
             .reader-content { padding: 20px; font-size: 1.1rem; }
-            .sidebar-right.open { position: absolute; right: 0; width: 85%; height: 100%; z-index: 20; }
+            .sidebar-right.open { position: absolute; right: 0; width: 90%; height: 100%; z-index: 60; }
             .login-box { width: 90%; }
         }
     </style>
@@ -239,35 +238,35 @@
     <div id="login-overlay">
         <div class="login-box hover-target">
             <h2 style="color:var(--primary-cyan); font-family:'Orbitron'; margin-bottom:20px;">SYSTEM LOGIN</h2>
-            <!-- Login -->
+            
             <div id="login-form">
                 <input type="email" id="login-email" class="login-input" placeholder="EMAIL">
                 <input type="password" id="login-password" class="login-input" placeholder="PASSWORD">
                 <button class="btn-glow" style="width:100%; margin-top:10px;" onclick="handleLogin()">CONNECT</button>
                 <div style="margin-top:15px; font-size:0.8rem; display:flex; justify-content:space-between;">
-                    <span onclick="switchAuth('forgot')" style="text-decoration:underline; color:#888; cursor:none;">Forgot?</span>
-                    <span onclick="switchAuth('register')" style="text-decoration:underline; color:var(--primary-pink); cursor:none;">New Player</span>
+                    <span onclick="switchAuth('forgot')" style="text-decoration:underline; color:#888;">Forgot?</span>
+                    <span onclick="switchAuth('register')" style="text-decoration:underline; color:var(--primary-pink);">New Player</span>
                 </div>
             </div>
-            <!-- Register 1 -->
+
             <div id="register-step1" class="hidden">
                 <input type="text" id="reg-user" class="login-input" placeholder="USERNAME">
                 <input type="email" id="reg-email" class="login-input" placeholder="EMAIL">
                 <input type="password" id="reg-pass" class="login-input" placeholder="PASSWORD">
                 <button class="btn-glow" style="width:100%;" onclick="requestRegCode()">GET CODE</button>
-                <div onclick="switchAuth('login')" style="margin-top:10px; color:#aaa; cursor:none;">BACK</div>
+                <div onclick="switchAuth('login')" style="margin-top:10px; color:#aaa;">BACK</div>
             </div>
-            <!-- Register 2 -->
+
             <div id="register-step2" class="hidden">
-                <p style="color:#ccc; font-size:0.8rem; margin-bottom:10px;">Code sent to email</p>
                 <input type="text" id="reg-code" class="login-input" placeholder="6-DIGIT CODE">
                 <button class="btn-glow" style="width:100%;" onclick="confirmRegister()">CONFIRM</button>
             </div>
+
             <div id="error-msg" style="color:#ff2a6d; margin-top:10px; font-family:'Orbitron'; font-size:0.8rem;"></div>
         </div>
     </div>
 
-    <!-- MAIN SITE CONTENT -->
+    <!-- MAIN SITE WRAPPER -->
     <div id="site-wrapper">
         <div class="bg-layer"></div>
         <canvas id="bg-canvas"></canvas>
@@ -289,10 +288,10 @@
             <button class="btn-pink hover-target" onclick="openReader()">READ NOVEL</button>
         </header>
 
-        <!-- PLEDGES -->
         <section id="pledges" class="pledges">
             <h2 class="section-title">THE TEN PLEDGES</h2>
             <div class="pledge-container">
+                <!-- Cards 1-10 -->
                 <div class="pledge-card hover-target"><div class="pledge-num">I</div><div class="pledge-text">这个世界禁止一切杀伤、战争与掠夺。</div></div>
                 <div class="pledge-card hover-target"><div class="pledge-num">II</div><div class="pledge-text">所有纠纷一律通过在游戏中决胜负来解决。</div></div>
                 <div class="pledge-card hover-target"><div class="pledge-num">III</div><div class="pledge-text">游戏中须赌上双方认为对等的赌注。</div></div>
@@ -306,7 +305,6 @@
             </div>
         </section>
 
-        <!-- WORLD DATABASE (16 RACES) -->
         <section id="world">
             <h2 class="section-title">WORLD DATABASE</h2>
             <div class="world-container">
@@ -319,46 +317,56 @@
             </div>
         </section>
 
-        <!-- CHARACTERS -->
         <section id="characters" class="characters">
             <h2 class="section-title">PLAYERS</h2>
             <div class="char-gallery">
-                <div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('sora.png');"></div><div class="char-name">SORA</div><div class="char-race">Imanity</div></div><div class="char-back"><h3>空 (Sora)</h3><p>十八岁。无业、处男、沟通障碍、游戏废人。擅长策略与读心。</p></div></div></div>
-                <div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('shiro.png');"></div><div class="char-name">SHIRO</div><div class="char-race">Imanity</div></div><div class="char-back"><h3>白 (Shiro)</h3><p>十一岁。空的义妹。拥有超乎常人的计算能力。</p></div></div></div>
+                <div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('sora.png');"></div><div class="char-name">SORA</div><div class="char-race">Imanity</div></div><div class="char-back"><h3>空</h3><p>十八岁。无业、处男、沟通障碍、游戏废人。擅长策略与读心。</p></div></div></div>
+                <div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('shiro.png');"></div><div class="char-name">SHIRO</div><div class="char-race">Imanity</div></div><div class="char-back"><h3>白</h3><p>十一岁。空的义妹。拥有超乎常人的计算能力。</p></div></div></div>
                 <div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('jibril.png');"></div><div class="char-name">JIBRIL</div><div class="char-race">Flügel</div></div><div class="char-back"><h3>吉普莉尔</h3><p>位阶序列第六位。拥有极强的战斗力与知识欲。</p></div></div></div>
                 <div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('steph.png');"></div><div class="char-name">STEPH</div><div class="char-race">Imanity</div></div><div class="char-back"><h3>史蒂芬妮</h3><p>艾尔奇亚的前王族孙女。被“空白”捉弄的管家。</p></div></div></div>
                 <div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('izuna.png');"></div><div class="char-name">IZUNA</div><div class="char-race">Werebeast</div></div><div class="char-back"><h3>初濑伊纲</h3><p>八岁。东部联合的大使。拥有极其敏锐的五感。</p></div></div></div>
-                <div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('tet.png');"></div><div class="char-name">TET</div><div class="char-race">One True God</div></div><div class="char-back"><h3>特图 (Tet)</h3><p>游戏之神，唯一的全权神。</p></div></div></div>
+                <div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('tet.png');"></div><div class="char-name">TET</div><div class="char-race">One True God</div></div><div class="char-back"><h3>特图</h3><p>游戏之神，唯一的全权神。</p></div></div></div>
             </div>
         </section>
 
         <footer><p>© NO GAME NO LIFE FAN SITE</p></footer>
     </div>
 
-    <!-- NOVEL READER OVERLAY -->
+    <!-- READER OVERLAY (Fixed Performance) -->
     <div id="novel-reader">
         <div class="sidebar-left">
             <div class="toc-header">INDEX</div>
             <div class="toc-list" id="toc-list"></div>
         </div>
+        
         <div class="reader-main">
             <div class="reader-header">
                 <span style="font-family:'Orbitron'; color:var(--primary-cyan);">NOVEL DATABASE</span>
-                <span id="reader-status" style="font-size:0.8rem; color:#888;">LOADING...</span>
                 <button onclick="closeReader()" style="background:none; border:1px solid var(--primary-pink); color:var(--primary-pink); padding:5px 15px; font-family:'Orbitron';">EXIT</button>
             </div>
             <div class="text-area-container">
-                <div class="reader-content" id="reader-content">
-                    <div style="text-align:center; margin-top:50px; color:#888;">INITIALIZING DATA STREAM...</div>
+                <!-- Loading Screen inside Reader -->
+                <div id="reader-loading-screen" class="hidden">
+                    <div id="loading-status">INITIALIZING DATA STREAM...</div>
+                    <div class="loading-bar"><div class="loading-progress" id="progress-bar"></div></div>
                 </div>
-                <!-- Pagination Controls -->
-                <div style="padding:10px; background:rgba(0,0,0,0.9); border-top:1px solid #333; display:flex; justify-content:center; gap:20px;">
+
+                <div class="reader-content" id="reader-content">
+                    <!-- Default Empty State -->
+                    <div class="reader-empty-state">
+                        <div style="font-size:1.5rem; font-family:'Orbitron'; color:#555;">NO DATA LOADED</div>
+                        <button class="btn-glow" onclick="document.getElementById('file-input').click()">SELECT NOVEL.TXT</button>
+                    </div>
+                </div>
+                
+                <div style="padding:10px; background:rgba(0,0,0,0.8); display:flex; justify-content:center; gap:20px; border-top:1px solid #333;">
                     <button class="btn-glow" style="padding:5px 20px;" onclick="changePage(-1)">PREV PAGE</button>
                     <span id="page-info" style="align-self:center; font-family:'Orbitron'; color:#aaa;">0 / 0</span>
                     <button class="btn-glow" style="padding:5px 20px;" onclick="changePage(1)">NEXT PAGE</button>
                 </div>
             </div>
         </div>
+
         <div class="sidebar-right" id="comment-sidebar">
             <div class="comments-header" style="padding:15px; border-bottom:1px solid #444; display:flex; justify-content:space-between;">
                 <span style="font-family:'Orbitron'; color:var(--primary-pink);">COMMENTS</span>
@@ -376,17 +384,17 @@
 
     <script>
         // ==========================================
-        // ⚠️ 替换你的 Google Apps Script URL
+        // ⚠️ 必须修改：你的后端 URL
         const API_URL = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec"; 
         // ==========================================
 
+        // State
         let currentUser = { username: "Guest", level: 16, exp: 0 };
         let allLines = [];
-        let chapters = []; // {title, index}
         let currentLineStart = 0;
-        const LINES_PER_PAGE = 150; // 分页优化核心：每页只渲染150行
+        const LINES_PER_PAGE = 150; // 分页优化：每页150行
 
-        // --- API Helper ---
+        // --- API ---
         async function callApi(data) {
             return fetch(API_URL, {
                 method: 'POST',
@@ -396,14 +404,12 @@
             }).then(res => res.json());
         }
 
-        // --- Login Logic ---
+        // --- Login ---
         function switchAuth(mode) {
-            const forms = ['login-form', 'register-step1', 'register-step2'];
-            forms.forEach(id => document.getElementById(id).classList.add('hidden'));
+            ['login-form','register-step1','register-step2'].forEach(id=>document.getElementById(id).classList.add('hidden'));
             if(mode==='login') document.getElementById('login-form').classList.remove('hidden');
             else document.getElementById('register-step1').classList.remove('hidden');
         }
-
         function handleLogin() {
             const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value;
             const btn = document.querySelector('#login-form button'), err = document.getElementById('error-msg');
@@ -414,58 +420,91 @@
                     document.getElementById('login-overlay').style.opacity = '0';
                     document.body.classList.add('unlocked');
                     document.getElementById('nav-user').innerText = d.username.toUpperCase();
-                    setTimeout(() => { 
-                        document.getElementById('login-overlay').style.display = 'none'; 
-                        initVisuals(); 
-                    }, 800);
+                    setTimeout(() => { document.getElementById('login-overlay').style.display = 'none'; initVisuals(); }, 800);
                 } else { err.innerText = d.message; btn.disabled = false; btn.innerText = "CONNECT"; }
             }).catch(() => { err.innerText = "ERROR"; btn.disabled = false; btn.innerText = "CONNECT"; });
         }
+        function requestRegCode() {
+            const e = document.getElementById('reg-email').value;
+            if(!e) return;
+            document.getElementById('btn-reg-code').innerText="...";
+            callApi({action:'req_reg_code', email:e}).then(d=>{
+                if(d.status==='success'){ window.tempReg={e, u:document.getElementById('reg-user').value, p:document.getElementById('reg-pass').value}; document.getElementById('register-step1').classList.add('hidden'); document.getElementById('register-step2').classList.remove('hidden'); }
+                else alert(d.message);
+            });
+        }
+        function confirmRegister() {
+            const c = document.getElementById('reg-code').value;
+            callApi({action:'confirm_register', ...window.tempReg, code:c}).then(d=>{
+                if(d.status==='success'){ alert('Welcome!'); handleLogin(); } else alert(d.message);
+            });
+        }
 
-        function requestRegCode() { /* 简略，参照之前逻辑 */ alert("Simulating code sent: 123456"); switchAuth('register'); document.getElementById('register-step1').classList.add('hidden'); document.getElementById('register-step2').classList.remove('hidden'); }
-        function confirmRegister() { alert("Registered!"); handleLogin(); }
-
-        // --- Reader Logic (Performance Fix) ---
+        // --- Reader Logic (Chunked Parsing to prevent lag) ---
         function openReader() {
             document.getElementById('novel-reader').classList.add('active');
             fetch('novel.txt').then(r => {
                 if(r.ok) return r.text();
-                throw new Error("No File");
+                throw new Error("404");
             }).then(text => {
-                // 异步解析，防止卡顿
-                setTimeout(() => processText(text), 100);
-            }).catch(() => document.getElementById('file-input').click());
+                startChunkedProcessing(text);
+            }).catch(() => {
+                // 如果找不到文件，保持 Empty State，不卡死
+                console.log("Auto-load failed, waiting for manual selection.");
+            });
         }
 
         function loadFromFile(inp) {
             const f = inp.files[0];
             const r = new FileReader();
-            r.onload = e => setTimeout(() => processText(e.target.result), 100);
+            r.onload = e => startChunkedProcessing(e.target.result);
             r.readAsText(f);
         }
 
-        function processText(text) {
-            allLines = text.split('\n');
-            document.getElementById('reader-status').innerText = "PARSING...";
-            
-            // 生成目录
-            chapters = [];
+        // 核心修复：分片处理，防止浏览器卡死
+        async function startChunkedProcessing(text) {
+            const loadingScreen = document.getElementById('reader-loading-screen');
+            const statusText = document.getElementById('loading-status');
+            const progressBar = document.getElementById('progress-bar');
             const tocList = document.getElementById('toc-list');
+            
+            loadingScreen.classList.remove('hidden');
             tocList.innerHTML = "";
+            
+            // 1. Split Lines (Fast)
+            allLines = text.split('\n');
+            
+            // 2. Generate TOC in Chunks
+            const chunkSize = 2000; // 每次处理2000行
             let tocHtml = "";
             const regex = /(?:^第.+章)|(?:^Chapter)|(?:^序章)|(?:^终章)/i;
-            
-            allLines.forEach((line, i) => {
-                if(line.length < 50 && regex.test(line)) {
-                    chapters.push({title: line.trim(), index: i});
-                    tocHtml += `<div class="toc-item hover-target" onclick="jumpToLine(${i})">${line.trim()}</div>`;
+
+            for (let i = 0; i < allLines.length; i += chunkSize) {
+                const end = Math.min(i + chunkSize, allLines.length);
+                
+                // 处理这一块数据
+                for (let j = i; j < end; j++) {
+                    const line = allLines[j];
+                    if (line.length < 50 && regex.test(line)) {
+                        // 为了性能，这里用字符串拼接代替 createElement
+                        tocHtml += `<div class="toc-item hover-target" onclick="jumpToLine(${j})">${line.trim()}</div>`;
+                    }
                 }
-            });
+
+                // 更新进度条
+                const pct = Math.round((end / allLines.length) * 100);
+                statusText.innerText = `PARSING DATA... ${pct}%`;
+                progressBar.style.width = `${pct}%`;
+
+                // 让出主线程给 UI 渲染 (关键！)
+                await new Promise(r => setTimeout(r, 0));
+            }
+
             tocList.innerHTML = tocHtml;
-            
-            // 渲染第一页
             jumpToLine(0);
-            document.getElementById('reader-status').innerText = "ONLINE";
+            
+            // Fade out loader
+            setTimeout(() => loadingScreen.classList.add('hidden'), 500);
         }
 
         function jumpToLine(index) {
@@ -492,23 +531,17 @@
                 const realIdx = currentLineStart + i;
                 html += `<div class="story-line hover-target">${line}<div class="comment-bubble" onclick="openComments(${realIdx})">💬</div></div>`;
             });
-            
-            // 讨论区 (只在最后一页显示)
-            if(end >= allLines.length) {
-                html += `<div style="margin-top:50px; padding:20px; border:1px solid var(--primary-cyan); text-align:center;">END OF FILE<br>Discussion Area</div>`;
-            }
 
             container.innerHTML = html;
             container.scrollTop = 0;
             
-            // 更新页码信息
             const pct = Math.round((end / allLines.length) * 100);
             document.getElementById('page-info').innerText = `LINE ${currentLineStart} / ${allLines.length} (${pct}%)`;
         }
 
         function closeReader() { document.getElementById('novel-reader').classList.remove('active'); }
 
-        // --- Comment System ---
+        // --- Comments ---
         let activeLine = -1;
         function toggleSidebar() { document.getElementById('comment-sidebar').classList.toggle('open'); }
         function openComments(idx) {
@@ -518,10 +551,8 @@
             list.innerHTML = "Loading...";
             callApi({action: 'get_line_comments', line_index: idx}).then(d => {
                 list.innerHTML = "";
-                if(!d.data || d.data.length===0) list.innerHTML = "<div style='color:#666; text-align:center;'>No comments</div>";
-                else d.data.forEach(c => {
-                    list.innerHTML += `<div style="background:rgba(255,255,255,0.05); padding:10px; margin-bottom:10px; border-radius:5px;"><div style="color:var(--primary-cyan); font-size:0.8rem;">${c.user}</div><div style="color:#ddd;">${c.content}</div></div>`;
-                });
+                if(!d.data || d.data.length===0) list.innerHTML = "<div style='text-align:center; color:#666;'>No comments</div>";
+                else d.data.forEach(c => list.innerHTML += `<div style="background:rgba(255,255,255,0.05); padding:10px; margin-bottom:10px; border-radius:5px;"><div style="color:var(--primary-cyan); font-size:0.8rem;">${c.user}</div><div style="color:#ddd;">${c.content}</div></div>`);
             });
         }
         function postComment() {
@@ -529,11 +560,11 @@
             if(!t) return;
             callApi({action: 'post_line_comment', line_index: activeLine, username: currentUser.username, content: t}).then(()=>{
                 document.getElementById('comment-input').value = "";
-                openComments(activeLine); // Reload
+                openComments(activeLine);
             });
         }
 
-        // --- World Data Injection ---
+        // --- World Data ---
         const worldData = {
             disboard: `<h3>DISBOARD (盘上世界)</h3><div class="world-text"><p>一切都由游戏决定的世界。在这个世界中，包括国境线在内的所有纠纷都必须通过游戏来解决。</p><br><p>这个世界由唯一神特图（Tet）所创造的“十条盟约”所约束。暴力是被绝对禁止的。</p></div>`,
             history: `<h3>ARCHIVE (古大战)</h3><div class="world-text"><p>诸神争夺唯一神宝座的远古战争，最终由特图取得星杯而结束。</p></div>`,
@@ -546,12 +577,20 @@
                 <div class="piece-card hover-target"><div class="piece-rank">VI</div><div class="piece-icon">♙</div><div class="piece-info"><div class="piece-name">Gigant</div><div class="piece-jp-name">巨神种</div><div class="piece-desc">兵（Pawn）。无限升变。</div></div></div>
                 <div class="piece-card hover-target"><div class="piece-rank">VII</div><div class="piece-icon">🨠</div><div class="piece-info"><div class="piece-name">Werebeast</div><div class="piece-jp-name">兽人种</div><div class="piece-desc">金将。身体能力强化。</div></div></div>
                 <div class="piece-card hover-target"><div class="piece-rank">VIII</div><div class="piece-icon">♙</div><div class="piece-info"><div class="piece-name">Goblin</div><div class="piece-jp-name">地精种</div><div class="piece-desc">兵（变体）。锻造技术。</div></div></div>
+                <div class="piece-card hover-target"><div class="piece-rank">IX</div><div class="piece-icon">♖</div><div class="piece-info"><div class="piece-name">Dragonblood</div><div class="piece-jp-name">天龙种</div><div class="piece-desc">象征坚固与力量。</div></div></div>
+                <div class="piece-card hover-target"><div class="piece-rank">X</div><div class="piece-icon">♗</div><div class="piece-info"><div class="piece-name">Demonia</div><div class="piece-jp-name">妖魔种</div><div class="piece-desc">强魔力，象征斜向影响力。</div></div></div>
+                <div class="piece-card hover-target"><div class="piece-rank">XI</div><div class="piece-icon">♕</div><div class="piece-info"><div class="piece-name">Seiren</div><div class="piece-jp-name">海神种</div><div class="piece-desc">生命力繁盛，依靠他族繁殖。</div></div></div>
+                <div class="piece-card hover-target"><div class="piece-rank">XII</div><div class="piece-icon">♘</div><div class="piece-info"><div class="piece-name">Fairy</div><div class="piece-jp-name">妖精种</div><div class="piece-desc">跳跃与不可预测的行动性。</div></div></div>
+                <div class="piece-card hover-target"><div class="piece-rank">XIII</div><div class="piece-icon">♜</div><div class="piece-info"><div class="piece-name">Ex-Machina</div><div class="piece-jp-name">机械种</div><div class="piece-desc">逻辑与火力，合体棋子。</div></div></div>
+                <div class="piece-card hover-target"><div class="piece-rank">XIV</div><div class="piece-icon">♙</div><div class="piece-info"><div class="piece-name">Dhampir</div><div class="piece-jp-name">吸血鬼种</div><div class="piece-desc">通过吸取改变状态，进化潜力。</div></div></div>
+                <div class="piece-card hover-target"><div class="piece-rank">XV</div><div class="piece-icon">♙</div><div class="piece-info"><div class="piece-name">Moonver</div><div class="piece-jp-name">月下兽人</div><div class="piece-desc">独特技能，仍归为兵阶。</div></div></div>
                 <div class="piece-card rank-16 hover-target"><div class="piece-rank">XVI</div><div class="piece-icon">♙</div><div class="piece-info"><div class="piece-name">Imanity</div><div class="piece-jp-name">人类种</div><div class="piece-desc">兵（Pawn）。最弱但拥有无限可能性。</div></div></div>
             </div></div>`
         };
         function renderWorld() { document.getElementById('world-display-area').innerHTML = worldData.disboard; }
         function switchWorldTab(tab) {
             const tabs = document.querySelectorAll('.world-tab'); tabs.forEach(t => t.classList.remove('active'));
+            if(tab === 'disboard') tabs[0].classList.add('active'); else if(tab === 'exceed') tabs[1].classList.add('active'); else tabs[2].classList.add('active');
             const area = document.getElementById('world-display-area'); area.style.opacity=0;
             setTimeout(()=>{area.innerHTML=worldData[tab]; area.style.opacity=1;},200);
         }
