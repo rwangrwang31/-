@@ -23,40 +23,37 @@
             color: white;
             font-family: 'Noto Sans SC', sans-serif;
             min-height: 100vh;
-            overflow: hidden; /* 初始禁止滚动 */
+            overflow: hidden; /* 登录前禁止滚动 */
         }
         
-        /* 登录成功后允许滚动 */
         body.unlocked {
             overflow-x: hidden;
             overflow-y: auto;
         }
 
-        /* ------------------ 核心修复：内容容器 ------------------ */
-        /* 这个容器包裹所有网页内容，初始状态是被模糊的 */
+        /* ------------------ 内容包裹器 (用于模糊背景) ------------------ */
         #site-wrapper {
             transition: filter 0.8s ease, opacity 0.8s ease;
             filter: blur(15px); /* 初始模糊 */
-            pointer-events: none; /* 初始禁止点击背景 */
+            pointer-events: none;
             opacity: 0.5;
             width: 100%;
             min-height: 100vh;
         }
 
-        /* 登录成功后，移除模糊 */
         body.unlocked #site-wrapper {
             filter: blur(0);
             pointer-events: all;
             opacity: 1;
         }
 
-        /* ------------------ 登录界面 (保持清晰) ------------------ */
+        /* ------------------ 登录界面 (置顶) ------------------ */
         #login-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 100000; /* 最高层级 */
+            z-index: 100000; /* 确保在最上层 */
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background: rgba(10, 5, 20, 0.6); /* 轻微背景遮罩 */
-            backdrop-filter: blur(5px); /* 让弹窗背后的背景更模糊一点 */
+            background: rgba(10, 5, 20, 0.6); /* 背景遮罩 */
+            backdrop-filter: blur(5px);
         }
         
         .login-box {
@@ -64,10 +61,8 @@
             background: rgba(0, 0, 0, 0.8);
             border: 2px solid var(--primary-pink);
             box-shadow: 0 0 50px rgba(255, 42, 109, 0.4);
-            text-align: center;
-            position: relative;
-            transform: scale(1);
-            transition: transform 0.3s, opacity 0.5s;
+            text-align: center; position: relative;
+            transform: scale(1); transition: transform 0.3s;
         }
         
         .login-box::before {
@@ -79,42 +74,54 @@
         }
 
         .login-title {
-            font-family: 'Orbitron', sans-serif; font-size: 2rem; margin-bottom: 30px;
+            font-family: 'Orbitron', sans-serif; font-size: 2rem; margin-bottom: 20px;
             color: white; text-shadow: 0 0 10px var(--primary-cyan);
         }
 
-        .input-group { margin-bottom: 20px; position: relative; }
+        .input-group { margin-bottom: 15px; position: relative; }
         .login-input {
-            width: 100%; padding: 15px; background: rgba(255,255,255,0.1);
+            width: 100%; padding: 12px; background: rgba(255,255,255,0.1);
             border: 1px solid #555; color: white; font-family: 'Orbitron', sans-serif;
-            text-align: center; outline: none; transition: 0.3s; font-size: 1.1rem;
+            text-align: center; outline: none; transition: 0.3s; font-size: 1rem;
         }
         .login-input:focus {
             border-color: var(--primary-cyan); box-shadow: 0 0 20px rgba(5, 217, 232, 0.5);
-            background: rgba(5, 217, 232, 0.1);
         }
         
         .login-btn {
-            width: 100%; padding: 15px; background: transparent;
+            width: 100%; padding: 12px; background: transparent;
             border: 2px solid var(--primary-pink); color: var(--primary-pink);
-            font-family: 'Orbitron', sans-serif; font-size: 1.2rem; cursor: none;
-            transition: 0.3s; margin-top: 10px; font-weight: bold;
-            text-transform: uppercase;
+            font-family: 'Orbitron', sans-serif; font-size: 1.1rem; cursor: none;
+            transition: 0.3s; margin-top: 10px; font-weight: bold; text-transform: uppercase;
         }
-        .login-btn:hover {
-            background: var(--primary-pink); color: white; box-shadow: 0 0 30px var(--primary-pink);
+        .login-btn:hover { background: var(--primary-pink); color: white; box-shadow: 0 0 30px var(--primary-pink); }
+        .login-btn:disabled { border-color: #555; color: #555; cursor: wait; }
+
+        .toggle-link {
+            margin-top: 15px; font-size: 0.8rem; color: #aaa; cursor: none;
+            text-decoration: underline; transition: 0.3s; display: inline-block;
         }
+        .toggle-link:hover { color: var(--primary-cyan); text-shadow: 0 0 5px var(--primary-cyan); }
 
         .error-msg {
-            color: #ff2a6d; margin-top: 20px; font-size: 1rem; 
-            min-height: 24px; opacity: 0; transition: opacity 0.3s;
-            font-family: 'Orbitron', sans-serif; letter-spacing: 1px;
-            text-shadow: 0 0 5px red;
+            color: #ff2a6d; margin-top: 10px; font-size: 0.9rem; 
+            min-height: 20px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px;
         }
 
-        /* ------------------ 主网站样式 (放入 Wrapper 中) ------------------ */
-        
-        /* 滚动条美化 */
+        .hidden { display: none; }
+
+        /* ------------------ 主站样式 ------------------ */
+        /* Background Layer */
+        .bg-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(255, 42, 109, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(5, 217, 232, 0.1) 0%, transparent 40%),
+                linear-gradient(rgba(17, 0, 28, 0.8) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(17, 0, 28, 0.8) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 50px 50px, 50px 50px;
+        }
+
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #050505; }
         ::-webkit-scrollbar-thumb { background: var(--primary-cyan); border-radius: 3px; }
@@ -136,10 +143,9 @@
 
         #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
 
-        /* Loader */
         #loader {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; display: none; /* JS控制显示 */
+            background: #000; display: none;
             justify-content: center; align-items: center;
             flex-direction: column; z-index: 99990; transition: opacity 1s ease;
         }
@@ -177,223 +183,93 @@
             margin-bottom: 20px; text-transform: uppercase; position: relative; z-index: 2;
         }
         .glitch { position: relative; color: white; }
-        .glitch::before, .glitch::after {
-            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        }
-        .glitch::before {
-            left: 2px; text-shadow: -1px 0 var(--primary-pink);
-            clip: rect(24px, 550px, 90px, 0); animation: glitch-anim-2 3s infinite linear alternate-reverse;
-        }
-        .glitch::after {
-            left: -2px; text-shadow: -1px 0 var(--primary-cyan);
-            clip: rect(85px, 550px, 140px, 0); animation: glitch-anim 2.5s infinite linear alternate-reverse;
-        }
-        .hero p {
-            font-size: 1.2rem; max-width: 600px; color: #ccc;
-            margin-bottom: 40px; text-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
-        .cta-btn {
-            padding: 15px 40px; font-size: 1.2rem; font-family: 'Orbitron', sans-serif;
-            background: rgba(0,0,0,0.5); color: white; border: 2px solid var(--primary-pink);
-            border-radius: 4px; position: relative; overflow: hidden;
-            transition: all 0.3s; box-shadow: 0 0 15px var(--primary-pink);
-            text-shadow: 0 0 5px var(--primary-pink);
-        }
-        .cta-btn:hover {
-            background: var(--primary-pink); box-shadow: 0 0 40px var(--primary-pink);
-            transform: scale(1.05) translateY(-2px);
-        }
+        .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .glitch::before { left: 2px; text-shadow: -1px 0 var(--primary-pink); clip: rect(24px, 550px, 90px, 0); animation: glitch-anim-2 3s infinite linear alternate-reverse; }
+        .glitch::after { left: -2px; text-shadow: -1px 0 var(--primary-cyan); clip: rect(85px, 550px, 140px, 0); animation: glitch-anim 2.5s infinite linear alternate-reverse; }
+        .hero p { font-size: 1.2rem; max-width: 600px; color: #ccc; margin-bottom: 40px; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .cta-btn { padding: 15px 40px; font-size: 1.2rem; font-family: 'Orbitron', sans-serif; background: rgba(0,0,0,0.5); color: white; border: 2px solid var(--primary-pink); border-radius: 4px; position: relative; overflow: hidden; transition: all 0.3s; box-shadow: 0 0 15px var(--primary-pink); text-shadow: 0 0 5px var(--primary-pink); }
+        .cta-btn:hover { background: var(--primary-pink); box-shadow: 0 0 40px var(--primary-pink); transform: scale(1.05) translateY(-2px); }
 
-        .section-title {
-            font-family: 'Orbitron', sans-serif; font-size: 3rem; margin-bottom: 60px;
-            background: linear-gradient(to bottom, #fff, #aaa);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(5, 217, 232, 0.3); text-align: center; letter-spacing: 5px;
-        }
+        .section-title { font-family: 'Orbitron', sans-serif; font-size: 3rem; margin-bottom: 60px; background: linear-gradient(to bottom, #fff, #aaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 30px rgba(5, 217, 232, 0.3); text-align: center; letter-spacing: 5px; }
 
-        .pledges {
-            padding: 120px 20px; display: flex; flex-direction: column; align-items: center;
-            background: linear-gradient(to bottom, transparent, rgba(17, 0, 28, 0.9)); position: relative;
-        }
-        .pledge-container {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 25px;
-            max-width: 1000px; width: 90%; perspective: 1000px;
-        }
-        .pledge-card {
-            background: var(--glass-bg); border: 1px solid var(--glass-border);
-            padding: 25px 30px; border-radius: 8px; position: relative; overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: flex; align-items: center; min-height: 100px;
-        }
-        .pledge-card:nth-child(odd) { border-left: 4px solid var(--primary-pink); }
-        .pledge-card:nth-child(even) { border-right: 4px solid var(--primary-cyan); text-align: right; flex-direction: row-reverse; }
-        .pledge-card:hover {
-            transform: translateY(-5px) scale(1.02); background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-        }
-        .pledge-num {
-            font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 5rem;
-            position: absolute; top: 50%; transform: translateY(-50%); opacity: 0.1;
-            z-index: 0; pointer-events: none; transition: opacity 0.3s;
-        }
-        .pledge-card:nth-child(odd) .pledge-num { left: 10px; color: var(--primary-pink); }
-        .pledge-card:nth-child(even) .pledge-num { right: 10px; color: var(--primary-cyan); }
-        .pledge-card:hover .pledge-num { opacity: 0.3; }
+        /* Pledges */
+        .pledges { padding: 120px 20px; display: flex; flex-direction: column; align-items: center; background: linear-gradient(to bottom, transparent, rgba(17, 0, 28, 0.9)); position: relative; }
+        .pledge-container { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; max-width: 1000px; width: 90%; perspective: 1000px; }
+        .pledge-card { background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 25px 30px; border-radius: 8px; position: relative; overflow: hidden; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; min-height: 100px; }
+        .pledge-card:nth-child(odd) { border-left: 4px solid var(--primary-pink); } .pledge-card:nth-child(even) { border-right: 4px solid var(--primary-cyan); text-align: right; flex-direction: row-reverse; }
+        .pledge-card:hover { transform: translateY(-5px) scale(1.02); background: rgba(255, 255, 255, 0.08); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .pledge-num { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 5rem; position: absolute; top: 50%; transform: translateY(-50%); opacity: 0.1; z-index: 0; pointer-events: none; transition: opacity 0.3s; }
+        .pledge-card:nth-child(odd) .pledge-num { left: 10px; color: var(--primary-pink); } .pledge-card:nth-child(even) .pledge-num { right: 10px; color: var(--primary-cyan); } .pledge-card:hover .pledge-num { opacity: 0.3; }
         .pledge-text { font-size: 1.1rem; z-index: 1; font-weight: 500; width: 100%; padding: 0 10px; }
 
-        #world {
-            padding: 100px 20px; background: #0b0514; position: relative;
-            background-image: 
-                radial-gradient(circle at 50% 50%, rgba(217, 5, 232, 0.05) 0%, transparent 60%),
-                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2305d9e8' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        }
-        .world-container {
-            max-width: 1000px; margin: 0 auto;
-            border: 1px solid var(--glass-border);
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(10px);
-            border-radius: 10px; overflow: hidden;
-            box-shadow: 0 0 50px rgba(5, 217, 232, 0.1);
-        }
+        /* World */
+        #world { padding: 100px 20px; background: #0b0514; position: relative; background-image: radial-gradient(circle at 50% 50%, rgba(217, 5, 232, 0.05) 0%, transparent 60%), url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2305d9e8' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+        .world-container { max-width: 1000px; margin: 0 auto; border: 1px solid var(--glass-border); background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px); border-radius: 10px; overflow: hidden; box-shadow: 0 0 50px rgba(5, 217, 232, 0.1); }
         .world-tabs { display: flex; border-bottom: 1px solid var(--primary-cyan); background: rgba(5, 217, 232, 0.1); }
-        .world-tab {
-            flex: 1; padding: 20px; text-align: center; font-family: 'Orbitron', sans-serif; color: #888;
-            cursor: none; transition: 0.3s; border-right: 1px solid rgba(255,255,255,0.1); position: relative; overflow: hidden;
-        }
-        .world-tab.active { color: #fff; background: rgba(5, 217, 232, 0.2); text-shadow: 0 0 10px var(--primary-cyan); }
-        .world-tab.active::after {
-            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px;
-            background: var(--primary-cyan); box-shadow: 0 0 15px var(--primary-cyan);
-        }
-        .world-content { padding: 40px; min-height: 400px; color: #ddd; line-height: 1.8; position: relative; }
-        .world-content h3 {
-            font-family: 'Orbitron', sans-serif; font-size: 2rem; color: var(--primary-pink);
-            margin-bottom: 20px; border-bottom: 1px dashed var(--primary-purple); padding-bottom: 10px; display: inline-block;
-        }
-        .world-text { font-family: 'Noto Sans SC', sans-serif; font-size: 1.1rem; text-align: justify; }
+        .world-tab { flex: 1; padding: 20px; text-align: center; font-family: 'Orbitron', sans-serif; color: #888; cursor: none; transition: 0.3s; border-right: 1px solid rgba(255,255,255,0.1); position: relative; overflow: hidden; }
+        .world-tab.active { color: #fff; background: rgba(5, 217, 232, 0.2); text-shadow: 0 0 10px var(--primary-cyan); } .world-tab.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: var(--primary-cyan); box-shadow: 0 0 15px var(--primary-cyan); }
+        .world-content { padding: 40px; min-height: 400px; color: #ddd; line-height: 1.8; position: relative; } .world-content h3 { font-family: 'Orbitron', sans-serif; font-size: 2rem; color: var(--primary-pink); margin-bottom: 20px; border-bottom: 1px dashed var(--primary-purple); padding-bottom: 10px; display: inline-block; } .world-text { font-family: 'Noto Sans SC', sans-serif; font-size: 1.1rem; text-align: justify; }
+        .exceed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; } .exceed-card { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 15px; border-radius: 4px; position: relative; transition: 0.3s; } .exceed-card:hover { background: rgba(217, 5, 232, 0.2); border-color: var(--primary-purple); transform: scale(1.05); box-shadow: 0 0 15px var(--primary-purple); } .rank-badge { font-family: 'Orbitron', sans-serif; font-weight: 900; color: rgba(255,255,255,0.2); font-size: 2rem; position: absolute; top: 0; right: 10px; } .race-name { font-weight: bold; color: var(--primary-cyan); font-size: 1.1rem; } .race-detail { font-size: 0.8rem; color: #aaa; margin-top: 5px; }
 
-        .exceed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
-        .exceed-card {
-            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
-            padding: 15px; border-radius: 4px; position: relative; transition: 0.3s;
-        }
-        .exceed-card:hover {
-            background: rgba(217, 5, 232, 0.2); border-color: var(--primary-purple);
-            transform: scale(1.05); box-shadow: 0 0 15px var(--primary-purple);
-        }
-        .rank-badge {
-            font-family: 'Orbitron', sans-serif; font-weight: 900;
-            color: rgba(255,255,255,0.2); font-size: 2rem; position: absolute; top: 0; right: 10px;
-        }
-        .race-name { font-weight: bold; color: var(--primary-cyan); font-size: 1.1rem; }
-        .race-detail { font-size: 0.8rem; color: #aaa; margin-top: 5px; }
+        /* Characters */
+        .characters { padding: 100px 50px; position: relative; } .char-gallery { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; } .char-card { width: 280px; height: 400px; position: relative; perspective: 1000px; } .char-inner { width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; position: relative; cursor: pointer; } .char-card:hover .char-inner { transform: rotateY(180deg); } .char-front, .char-back { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 15px; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: rgba(20, 20, 30, 0.9); box-shadow: 0 0 20px rgba(0,0,0,0.5); } .char-front { background: linear-gradient(135deg, rgba(42, 14, 54, 0.9), rgba(0, 0, 0, 0.95)); border-top: 2px solid var(--primary-purple); } .char-avatar { width: 140px; height: 140px; border-radius: 50%; background-color: #fff; margin-bottom: 20px; border: 3px solid white; box-shadow: 0 0 25px var(--primary-pink); background-size: cover; background-repeat: no-repeat; } .char-name { font-family: 'Orbitron', sans-serif; font-size: 1.5rem; color: var(--primary-pink); text-transform: uppercase; letter-spacing: 2px; } .char-race { color: var(--primary-cyan); font-size: 0.9rem; margin-top: 5px; } .char-back { background: linear-gradient(135deg, var(--primary-pink), var(--primary-purple)); transform: rotateY(180deg); padding: 25px; text-align: center; } .char-desc { font-size: 0.9rem; line-height: 1.8; }
 
-        .characters { padding: 100px 50px; position: relative; }
-        .char-gallery { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; }
-        .char-card { width: 280px; height: 400px; position: relative; perspective: 1000px; }
-        .char-inner { width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; position: relative; cursor: pointer; }
-        .char-card:hover .char-inner { transform: rotateY(180deg); }
-        .char-front, .char-back {
-            position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden;
-            backface-visibility: hidden; border-radius: 15px; display: flex;
-            flex-direction: column; justify-content: center; align-items: center; overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.1); background: rgba(20, 20, 30, 0.9); box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-        .char-front { 
-            background: linear-gradient(135deg, rgba(42, 14, 54, 0.9), rgba(0, 0, 0, 0.95)); 
-            border-top: 2px solid var(--primary-purple);
-        }
-        .char-avatar {
-            width: 140px; height: 140px; border-radius: 50%; background-color: #fff;
-            margin-bottom: 20px; border: 3px solid white; box-shadow: 0 0 25px var(--primary-pink);
-            background-size: cover; background-repeat: no-repeat;
-        }
-        .char-name { font-family: 'Orbitron', sans-serif; font-size: 1.5rem; color: var(--primary-pink); text-transform: uppercase; letter-spacing: 2px; }
-        .char-race { color: var(--primary-cyan); font-size: 0.9rem; margin-top: 5px; }
-        .char-back { background: linear-gradient(135deg, var(--primary-pink), var(--primary-purple)); transform: rotateY(180deg); padding: 25px; text-align: center; }
-        .char-desc { font-size: 0.9rem; line-height: 1.8; }
-
-        /* Reader */
-        #novel-reader {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--hud-bg); z-index: 5000;
-            display: flex; flex-direction: column;
-            opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
-            backdrop-filter: blur(20px);
-        }
-        #novel-reader.active { opacity: 1; pointer-events: all; }
-        .reader-header {
-            height: 60px; width: 100%; border-bottom: 1px solid rgba(255, 42, 109, 0.3);
-            display: flex; justify-content: space-between; align-items: center; padding: 0 30px;
-            background: rgba(0,0,0,0.5); box-shadow: 0 5px 20px rgba(255, 42, 109, 0.1);
-        }
-        .reader-title { font-family: 'Orbitron', sans-serif; color: var(--primary-cyan); font-weight: 700; letter-spacing: 2px; display: flex; align-items: center; gap: 10px; }
-        .reader-title::before { content: ''; display: block; width: 10px; height: 10px; background: var(--primary-pink); box-shadow: 0 0 10px var(--primary-pink); transform: rotate(45deg); }
-        .reader-body { flex: 1; display: flex; overflow: hidden; height: calc(100vh - 60px); }
-        .sidebar { width: 300px; background: rgba(0,0,0,0.4); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; transition: transform 0.3s; }
-        .sidebar-tabs { display: flex; height: 50px; border-bottom: 1px solid var(--glass-border); }
-        .sidebar-tab { flex: 1; background: transparent; border: none; color: #888; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; transition: 0.3s; border-bottom: 2px solid transparent; }
-        .sidebar-tab.active { color: white; background: rgba(255, 255, 255, 0.05); border-bottom-color: var(--primary-cyan); text-shadow: 0 0 10px var(--primary-cyan); }
-        .sidebar-content { flex: 1; overflow-y: auto; padding: 0; }
-        .list-item { padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #ccc; font-size: 0.9rem; transition: 0.2s; position: relative; }
-        .list-item:hover { background: rgba(5, 217, 232, 0.1); color: var(--primary-cyan); padding-left: 25px; }
-        .list-item.active-chapter { background: linear-gradient(90deg, rgba(255, 42, 109, 0.2), transparent); border-left: 3px solid var(--primary-pink); color: white; }
-        .delete-bm { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #555; font-size: 0.8rem; padding: 5px; }
-        .delete-bm:hover { color: var(--primary-pink); }
-        .text-area-container { flex: 1; display: flex; flex-direction: column; position: relative; background-image: linear-gradient(rgba(5, 217, 232, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(5, 217, 232, 0.03) 1px, transparent 1px); background-size: 40px 40px; }
-        .text-viewport { flex: 1; padding: 60px 100px; overflow-y: auto; color: #ddd; font-size: 1.2rem; line-height: 2; font-family: 'ZCOOL XiaoWei', 'Noto Sans SC', serif; text-shadow: 0 0 1px rgba(0,0,0,0.8); }
-        .text-viewport p { margin-bottom: 24px; text-align: justify; }
-        .reader-controls { height: 60px; border-top: 1px solid var(--glass-border); display: flex; justify-content: center; align-items: center; gap: 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
-        .ctrl-btn { padding: 8px 25px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--primary-cyan); font-family: 'Orbitron', sans-serif; border-radius: 4px; transition: 0.3s; }
-        .ctrl-btn:hover:not(:disabled) { background: var(--primary-cyan); color: black; box-shadow: 0 0 15px var(--primary-cyan); }
-        .ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .page-indicator { font-family: 'Orbitron', sans-serif; color: #888; font-size: 0.8rem; width: 250px; text-align: center; letter-spacing: 1px; }
-        .bm-btn { border-color: var(--primary-purple); color: var(--primary-purple); }
-        .bm-btn:hover { background: var(--primary-purple); color: white; box-shadow: 0 0 15px var(--primary-purple); }
-        .close-btn { border-color: var(--primary-pink); color: var(--primary-pink); }
-        .close-btn:hover { background: var(--primary-pink); color: white; box-shadow: 0 0 15px var(--primary-pink); }
-        .fallback-ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
-        #file-input { display: none; }
+        /* Reader PRO */
+        #novel-reader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--hud-bg); z-index: 5000; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; backdrop-filter: blur(20px); } #novel-reader.active { opacity: 1; pointer-events: all; } .reader-header { height: 60px; width: 100%; border-bottom: 1px solid rgba(255, 42, 109, 0.3); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; background: rgba(0,0,0,0.5); box-shadow: 0 5px 20px rgba(255, 42, 109, 0.1); } .reader-title { font-family: 'Orbitron', sans-serif; color: var(--primary-cyan); font-weight: 700; letter-spacing: 2px; display: flex; align-items: center; gap: 10px; } .reader-title::before { content: ''; display: block; width: 10px; height: 10px; background: var(--primary-pink); box-shadow: 0 0 10px var(--primary-pink); transform: rotate(45deg); } .reader-body { flex: 1; display: flex; overflow: hidden; height: calc(100vh - 60px); } .sidebar { width: 300px; background: rgba(0,0,0,0.4); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; transition: transform 0.3s; } .sidebar-tabs { display: flex; height: 50px; border-bottom: 1px solid var(--glass-border); } .sidebar-tab { flex: 1; background: transparent; border: none; color: #888; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; transition: 0.3s; border-bottom: 2px solid transparent; } .sidebar-tab.active { color: white; background: rgba(255, 255, 255, 0.05); border-bottom-color: var(--primary-cyan); text-shadow: 0 0 10px var(--primary-cyan); } .sidebar-content { flex: 1; overflow-y: auto; padding: 0; } .list-item { padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #ccc; font-size: 0.9rem; transition: 0.2s; position: relative; } .list-item:hover { background: rgba(5, 217, 232, 0.1); color: var(--primary-cyan); padding-left: 25px; } .list-item.active-chapter { background: linear-gradient(90deg, rgba(255, 42, 109, 0.2), transparent); border-left: 3px solid var(--primary-pink); color: white; } .delete-bm { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #555; font-size: 0.8rem; padding: 5px; } .delete-bm:hover { color: var(--primary-pink); } .text-area-container { flex: 1; display: flex; flex-direction: column; position: relative; background-image: linear-gradient(rgba(5, 217, 232, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(5, 217, 232, 0.03) 1px, transparent 1px); background-size: 40px 40px; } .text-viewport { flex: 1; padding: 60px 100px; overflow-y: auto; color: #ddd; font-size: 1.2rem; line-height: 2; font-family: 'ZCOOL XiaoWei', 'Noto Sans SC', serif; text-shadow: 0 0 1px rgba(0,0,0,0.8); } .text-viewport p { margin-bottom: 24px; text-align: justify; } .reader-controls { height: 60px; border-top: 1px solid var(--glass-border); display: flex; justify-content: center; align-items: center; gap: 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); } .ctrl-btn { padding: 8px 25px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--primary-cyan); font-family: 'Orbitron', sans-serif; border-radius: 4px; transition: 0.3s; } .ctrl-btn:hover:not(:disabled) { background: var(--primary-cyan); color: black; box-shadow: 0 0 15px var(--primary-cyan); } .ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; } .page-indicator { font-family: 'Orbitron', sans-serif; color: #888; font-size: 0.8rem; width: 250px; text-align: center; letter-spacing: 1px; } .bm-btn { border-color: var(--primary-purple); color: var(--primary-purple); } .bm-btn:hover { background: var(--primary-purple); color: white; box-shadow: 0 0 15px var(--primary-purple); } .close-btn { border-color: var(--primary-pink); color: var(--primary-pink); } .close-btn:hover { background: var(--primary-pink); color: white; box-shadow: 0 0 15px var(--primary-pink); } .fallback-ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; } #file-input { display: none; }
 
         @keyframes pulse { 0% { opacity: 0.5; text-shadow: 0 0 10px var(--primary-pink); } 50% { opacity: 1; text-shadow: 0 0 30px var(--primary-pink), 0 0 50px var(--primary-purple); } 100% { opacity: 0.5; text-shadow: 0 0 10px var(--primary-pink); } }
         @keyframes glitch-anim-2 { 0% { clip: rect(65px, 9999px, 100px, 0); } 100% { clip: rect(60px, 9999px, 90px, 0); } }
         @keyframes glitch-anim { 0% { clip: rect(12px, 9999px, 5px, 0); } 100% { clip: rect(10px, 9999px, 80px, 0); } }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-10px); } 50% { transform: translateX(10px); } 75% { transform: translateX(-10px); } 100% { transform: translateX(0); } }
 
         footer { text-align: center; padding: 30px; border-top: 1px solid var(--glass-border); color: rgba(255,255,255,0.3); font-size: 0.8rem; background: #050505; }
 
-        @media (max-width: 768px) {
-            .hero h1 { font-size: 2.5rem; } .nav-links { display: none; }
-            .pledge-container { grid-template-columns: 1fr; }
-            .sidebar { display: none; }
-            .text-viewport { padding: 30px; font-size: 1rem; }
-            .exceed-grid { grid-template-columns: 1fr 1fr; }
-            .login-box { width: 90%; }
-        }
+        @media (max-width: 768px) { .hero h1 { font-size: 2.5rem; } .nav-links { display: none; } .pledge-container { grid-template-columns: 1fr; } .sidebar { display: none; } .text-viewport { padding: 30px; font-size: 1rem; } .exceed-grid { grid-template-columns: 1fr 1fr; } .login-box { width: 90%; } }
     </style>
 </head>
 <body>
 
     <div id="cursor"></div>
 
-    <!-- 登录界面 (放在Wrapper外面，保持清晰) -->
+    <!-- LOGIN OVERLAY -->
     <div id="login-overlay">
         <div class="login-box hover-target">
-            <h2 class="login-title">SYSTEM LOGIN</h2>
-            <div class="input-group">
-                <input type="text" id="username" class="login-input" placeholder="USERNAME" autocomplete="off">
+            <h2 class="login-title" id="login-title">SYSTEM LOGIN</h2>
+            
+            <!-- LOGIN FORM -->
+            <div id="login-form">
+                <div class="input-group">
+                    <input type="email" id="login-email" class="login-input" placeholder="EMAIL" autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="login-password" class="login-input" placeholder="PASSWORD">
+                </div>
+                <button class="login-btn hover-target" id="btn-login" onclick="handleLogin()">LOGIN</button>
+                <div class="toggle-link hover-target" onclick="toggleAuthMode()">NEW PLAYER? REGISTER</div>
             </div>
-            <div class="input-group">
-                <input type="password" id="password" class="login-input" placeholder="PASSWORD">
+
+            <!-- REGISTER FORM -->
+            <div id="register-form" class="hidden">
+                <div class="input-group">
+                    <input type="text" id="reg-username" class="login-input" placeholder="USERNAME" autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <input type="email" id="reg-email" class="login-input" placeholder="EMAIL" autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="reg-password" class="login-input" placeholder="PASSWORD">
+                </div>
+                <button class="login-btn hover-target" id="btn-register" onclick="handleRegister()">REGISTER</button>
+                <div class="toggle-link hover-target" onclick="toggleAuthMode()">ALREADY REGISTERED? LOGIN</div>
             </div>
-            <button class="login-btn hover-target" onclick="checkLogin()">CONNECT</button>
-            <div id="error-msg" class="error-msg">ACCESS DENIED</div>
+
+            <div id="error-msg" class="error-msg"></div>
         </div>
     </div>
 
-    <!-- 核心修复：内容包裹器 (初始被模糊) -->
+    <!-- SITE WRAPPER -->
     <div id="site-wrapper">
-        
-        <div class="bg-layer" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background-image: radial-gradient(circle at 10% 10%, rgba(255, 42, 109, 0.1) 0%, transparent 40%), radial-gradient(circle at 90% 90%, rgba(5, 217, 232, 0.1) 0%, transparent 40%), linear-gradient(rgba(17, 0, 28, 0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(17, 0, 28, 0.8) 1px, transparent 1px); background-size: 100% 100%, 100% 100%, 50px 50px, 50px 50px;"></div>
+        <div class="bg-layer"></div>
         
         <div id="loader"><div class="loader-text">ASCHENTE</div><div class="loader-sub">向盟约宣誓</div></div>
         <canvas id="bg-canvas"></canvas>
@@ -443,6 +319,7 @@
             <button class="cta-btn hover-target" onclick="startGame()">GAME START</button>
         </header>
 
+        <!-- Pledges, World, Characters same as before... -->
         <section id="pledges" class="pledges">
             <h2 class="section-title">THE TEN PLEDGES</h2>
             <div class="pledge-container">
@@ -459,7 +336,6 @@
             </div>
         </section>
 
-        <!-- WORLD -->
         <section id="world">
             <h2 class="section-title">WORLD DATABASE</h2>
             <div class="world-container">
@@ -472,7 +348,6 @@
             </div>
         </section>
 
-        <!-- CHARACTERS -->
         <section id="characters" class="characters">
             <h2 class="section-title">PLAYERS</h2>
             <div class="char-gallery">
@@ -485,60 +360,98 @@
             </div>
         </section>
 
-        <footer>
-            <p>© 2024 Yuu Kamiya, PUBLISHED BY KADOKAWA CORPORATION / NO GAME NO LIFE PARTNERS</p>
-            <p>Fan Site Demo - Not Official</p>
-        </footer>
+        <footer><p>© 2024 Yuu Kamiya, PUBLISHED BY KADOKAWA CORPORATION / NO GAME NO LIFE PARTNERS</p><p>Fan Site Demo - Not Official</p></footer>
     </div>
-    <!-- END SITE WRAPPER -->
 
     <script>
-        // --- 登录逻辑 ---
-        function checkLogin() {
-            const u = document.getElementById('username').value;
-            const p = document.getElementById('password').value;
-            const err = document.getElementById('error-msg');
-            
-            // 简单的前端验证
-            if (u === 'Blank' && p === 'Kuuhaku') {
-                const overlay = document.getElementById('login-overlay');
-                overlay.style.opacity = '0';
-                
-                // 核心修复：移除body的模糊和锁定状态
-                document.body.classList.add('unlocked');
-                
-                setTimeout(() => {
-                    overlay.style.display = 'none';
-                    initSite(); 
-                }, 800);
+        // ------------------------ 配置 ------------------------
+        const API_URL = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec"; // 替换这里！
+        // -----------------------------------------------------
+
+        function toggleAuthMode() {
+            const loginForm = document.getElementById('login-form');
+            const regForm = document.getElementById('register-form');
+            const title = document.getElementById('login-title');
+            document.getElementById('error-msg').innerText = "";
+            if(loginForm.classList.contains('hidden')) {
+                loginForm.classList.remove('hidden'); regForm.classList.add('hidden'); title.innerText = "SYSTEM LOGIN";
             } else {
-                err.style.opacity = '1';
-                err.innerText = "ACCESS DENIED";
-                document.querySelector('.login-box').style.animation = "shake 0.5s";
-                setTimeout(() => { document.querySelector('.login-box').style.animation = ""; }, 500);
+                loginForm.classList.add('hidden'); regForm.classList.remove('hidden'); title.innerText = "NEW PLAYER ENTRY";
             }
         }
 
-        document.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') checkLogin();
-        });
-
-        function initSite() {
-            // Loader Animation
-            const loader = document.getElementById('loader');
-            loader.style.display = 'flex';
-            setTimeout(() => { loader.style.opacity = '1'; }, 10); // Trigger transition
+        function handleRegister() {
+            const u = document.getElementById('reg-username').value;
+            const e = document.getElementById('reg-email').value;
+            const p = document.getElementById('reg-password').value;
+            const btn = document.getElementById('btn-register');
+            const err = document.getElementById('error-msg');
+            if(!u || !e || !p) { err.innerText = "MISSING FIELDS"; return; }
+            btn.disabled = true; btn.innerText = "CONNECTING...";
             
-            setTimeout(() => { 
-                loader.style.opacity = '0'; 
-                setTimeout(() => { loader.style.display = 'none'; }, 1000); 
-            }, 2000);
-
-            // Canvas
-            initParticles(); 
-            animate();
+            fetch(API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: JSON.stringify({ action: 'register', username: u, email: e, password: p })
+            }).then(() => {
+                alert("REGISTRATION SENT. PLEASE LOGIN.");
+                toggleAuthMode();
+                btn.disabled = false; btn.innerText = "REGISTER";
+            }).catch(() => {
+                err.innerText = "CONNECTION ERROR"; btn.disabled = false; btn.innerText = "REGISTER";
+            });
         }
 
+        function handleLogin() {
+            const e = document.getElementById('login-email').value;
+            const p = document.getElementById('login-password').value;
+            const btn = document.getElementById('btn-login');
+            const err = document.getElementById('error-msg');
+            if(!e || !p) { err.innerText = "MISSING INPUT"; return; }
+            btn.disabled = true; btn.innerText = "VERIFYING...";
+
+            fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: 'login', email: e, password: p })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    unlockSite(data.username);
+                } else {
+                    err.innerText = "INVALID CREDENTIALS";
+                    btn.disabled = false; btn.innerText = "LOGIN";
+                    document.querySelector('.login-box').style.animation = "shake 0.5s";
+                    setTimeout(() => { document.querySelector('.login-box').style.animation = ""; }, 500);
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                err.innerText = "SERVER ERROR (CHECK URL)";
+                btn.disabled = false; btn.innerText = "LOGIN";
+            });
+        }
+
+        function unlockSite(username) {
+            document.getElementById('login-overlay').style.opacity = '0';
+            document.body.classList.add('unlocked');
+            document.querySelector('.hero p').innerHTML = `WELCOME, PLAYER <span style="color:var(--primary-cyan)">${username}</span>.<br>ASCHENTE!`;
+            setTimeout(() => {
+                document.getElementById('login-overlay').style.display = 'none';
+                initSite();
+            }, 800);
+        }
+
+        function initSite() {
+            const loader = document.getElementById('loader');
+            loader.style.display = 'flex';
+            setTimeout(() => { loader.style.opacity = '1'; }, 10);
+            setTimeout(() => { loader.style.opacity = '0'; setTimeout(() => { loader.style.display = 'none'; }, 1000); }, 2000);
+            initParticles(); animate();
+        }
+
+        // --- Visuals & Reader Logic ---
         const canvas = document.getElementById('bg-canvas');
         const ctx = canvas.getContext('2d');
         let width = window.innerWidth, height = window.innerHeight;
@@ -566,7 +479,6 @@
         document.addEventListener('mousemove', (e) => { cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px'; });
         document.body.addEventListener('mouseover', (e) => { if(e.target.closest('.hover-target')) cursor.classList.add('hovered'); else cursor.classList.remove('hovered'); });
 
-        // World Data
         const worldDisplay = document.getElementById('world-display-area');
         const worldData = {
             disboard: `<h3>DISBOARD (盘上世界)</h3><div class="world-text"><p>一切都由游戏决定的世界。在这个世界中，包括国境线在内的所有纠纷都必须通过游戏来解决。</p><br><p>这个世界由唯一神特图（Tet）所创造的“十条盟约”所约束。暴力是被绝对禁止的。</p></div>`,
@@ -575,16 +487,11 @@
         };
         if(worldDisplay) worldDisplay.innerHTML = worldData.disboard;
         function switchWorldTab(tabName) {
-            const tabs = document.querySelectorAll('.world-tab');
-            tabs.forEach(t => t.classList.remove('active'));
-            if(tabName === 'disboard') tabs[0].classList.add('active');
-            if(tabName === 'exceed') tabs[1].classList.add('active');
-            if(tabName === 'history') tabs[2].classList.add('active');
-            worldDisplay.style.opacity = 0;
-            setTimeout(() => { worldDisplay.innerHTML = worldData[tabName]; worldDisplay.style.opacity = 1; }, 200);
+            const tabs = document.querySelectorAll('.world-tab'); tabs.forEach(t => t.classList.remove('active'));
+            if(tabName === 'disboard') tabs[0].classList.add('active'); if(tabName === 'exceed') tabs[1].classList.add('active'); if(tabName === 'history') tabs[2].classList.add('active');
+            worldDisplay.style.opacity = 0; setTimeout(() => { worldDisplay.innerHTML = worldData[tabName]; worldDisplay.style.opacity = 1; }, 200);
         }
 
-        // Reader Logic (V5)
         const readerOverlay = document.getElementById('novel-reader');
         const readerContent = document.getElementById('reader-content');
         const pageInfo = document.getElementById('page-info');
@@ -592,79 +499,19 @@
         const bookmarkList = document.getElementById('bookmark-list');
         let allLines = [], chapters = [], currentLine = 0, totalLines = 0; const LINES_PER_VIEW = 200;
 
-        function startGame() {
-            readerOverlay.classList.add('active');
-            fetch('novel.txt').then(res => { if (!res.ok) throw new Error(); return res.text(); })
-                .then(text => processNovelData(text))
-                .catch(() => { readerContent.innerHTML = `<div class="fallback-ui"><h2>FILE ERROR</h2><p>无法自动加载 novel.txt</p><button class="ctrl-btn hover-target" onclick="document.getElementById('file-input').click()">SELECT FILE</button></div>`; });
-        }
+        function startGame() { readerOverlay.classList.add('active'); fetch('novel.txt').then(res => { if (!res.ok) throw new Error(); return res.text(); }).then(text => processNovelData(text)).catch(() => { readerContent.innerHTML = `<div class="fallback-ui"><h2>FILE ERROR</h2><p>无法自动加载 novel.txt</p><button class="ctrl-btn hover-target" onclick="document.getElementById('file-input').click()">SELECT FILE</button></div>`; }); }
         function loadFromFile(input) { const file = input.files[0]; if (file) { const reader = new FileReader(); reader.onload = (e) => processNovelData(e.target.result); reader.readAsText(file, "UTF-8"); } }
         function processNovelData(text) { allLines = text.split('\n'); totalLines = allLines.length; currentLine = 0; generateTOC(); renderView(currentLine); renderBookmarks(); }
-        function generateTOC() {
-            chapters = []; tocList.innerHTML = '';
-            const chapterRegex = /(?:^\s*第\s*[0-9零一二三四五六七八九十百千]+\s*[章回卷节])|(?:^\s*Chapter\s*\d+)|(?:^\s*序章)|(?:^\s*终章)/i;
-            allLines.forEach((line, index) => { if (line.length < 50 && chapterRegex.test(line)) { chapters.push({ title: line.trim(), lineIndex: index }); } });
-            if (chapters.length === 0) { tocList.innerHTML = '<div class="list-item">SYSTEM: No Chapter Indexes Found</div>'; } 
-            else { chapters.forEach(chap => { const div = document.createElement('div'); div.className = 'list-item hover-target'; div.innerText = chap.title; div.onclick = () => { currentLine = chap.lineIndex; renderView(currentLine); }; tocList.appendChild(div); }); }
-        }
-        function renderView(startLine) {
-            if (totalLines === 0) return;
-            if (startLine < 0) startLine = 0; if (startLine >= totalLines) startLine = totalLines - LINES_PER_VIEW;
-            const endLine = Math.min(startLine + LINES_PER_VIEW, totalLines);
-            const viewLines = allLines.slice(startLine, endLine);
-            readerContent.innerHTML = viewLines.map(line => { const l = line.trim(); return l ? `<p>${l}</p>` : '<br>'; }).join('');
-            readerContent.scrollTop = 0;
-            const percent = ((startLine / totalLines) * 100).toFixed(1);
-            pageInfo.innerText = `LINE: ${startLine} / ${totalLines} | ${percent}%`;
-            document.getElementById('prev-btn').disabled = (startLine <= 0);
-            document.getElementById('next-btn').disabled = (endLine >= totalLines);
-            highlightCurrentChapter();
-        }
+        function generateTOC() { chapters = []; tocList.innerHTML = ''; const chapterRegex = /(?:^\s*第\s*[0-9零一二三四五六七八九十百千]+\s*[章回卷节])|(?:^\s*Chapter\s*\d+)|(?:^\s*序章)|(?:^\s*终章)/i; allLines.forEach((line, index) => { if (line.length < 50 && chapterRegex.test(line)) { chapters.push({ title: line.trim(), lineIndex: index }); } }); if (chapters.length === 0) { tocList.innerHTML = '<div class="list-item">SYSTEM: No Chapter Indexes Found</div>'; } else { chapters.forEach(chap => { const div = document.createElement('div'); div.className = 'list-item hover-target'; div.innerText = chap.title; div.onclick = () => { currentLine = chap.lineIndex; renderView(currentLine); }; tocList.appendChild(div); }); } }
+        function renderView(startLine) { if (totalLines === 0) return; if (startLine < 0) startLine = 0; if (startLine >= totalLines) startLine = totalLines - LINES_PER_VIEW; const endLine = Math.min(startLine + LINES_PER_VIEW, totalLines); const viewLines = allLines.slice(startLine, endLine); readerContent.innerHTML = viewLines.map(line => { const l = line.trim(); return l ? `<p>${l}</p>` : '<br>'; }).join(''); readerContent.scrollTop = 0; const percent = ((startLine / totalLines) * 100).toFixed(1); pageInfo.innerText = `LINE: ${startLine} / ${totalLines} | ${percent}%`; document.getElementById('prev-btn').disabled = (startLine <= 0); document.getElementById('next-btn').disabled = (endLine >= totalLines); highlightCurrentChapter(); }
         function changeView(dir) { const nextLine = currentLine + (dir * LINES_PER_VIEW); if (nextLine >= -LINES_PER_VIEW && nextLine < totalLines) { currentLine = nextLine; renderView(currentLine); } }
-        function highlightCurrentChapter() {
-            const items = tocList.getElementsByClassName('list-item');
-            for(let i=0; i<items.length; i++) items[i].classList.remove('active-chapter');
-            for (let i = chapters.length - 1; i >= 0; i--) { if (chapters[i].lineIndex <= currentLine) { if (items[i]) items[i].classList.add('active-chapter'); break; } }
-        }
+        function highlightCurrentChapter() { const items = tocList.getElementsByClassName('list-item'); for(let i=0; i<items.length; i++) items[i].classList.remove('active-chapter'); for (let i = chapters.length - 1; i >= 0; i--) { if (chapters[i].lineIndex <= currentLine) { if (items[i]) items[i].classList.add('active-chapter'); break; } } }
         function getBookmarks() { return JSON.parse(localStorage.getItem('ngnl_bookmarks_v2') || '[]'); }
-        function addBookmark() {
-            const bms = getBookmarks();
-            let previewText = "";
-            for(let i=0; i<5; i++) { if(allLines[currentLine+i] && allLines[currentLine+i].trim()) { previewText = allLines[currentLine+i].trim(); break; } }
-            const preview = previewText.substring(0, 25) + "..." || "Line " + currentLine;
-            const newBm = { id: Date.now(), lineIndex: currentLine, preview: preview, date: new Date().toLocaleDateString() };
-            bms.unshift(newBm); localStorage.setItem('ngnl_bookmarks_v2', JSON.stringify(bms)); renderBookmarks(); alert("MEMORY SAVED: Position Logged.");
-        }
+        function addBookmark() { const bms = getBookmarks(); let previewText = ""; for(let i=0; i<5; i++) { if(allLines[currentLine+i] && allLines[currentLine+i].trim()) { previewText = allLines[currentLine+i].trim(); break; } } const preview = previewText.substring(0, 25) + "..." || "Line " + currentLine; const newBm = { id: Date.now(), lineIndex: currentLine, preview: preview, date: new Date().toLocaleDateString() }; bms.unshift(newBm); localStorage.setItem('ngnl_bookmarks_v2', JSON.stringify(bms)); renderBookmarks(); alert("MEMORY SAVED: Position Logged."); }
         function deleteBookmark(id, event) { event.stopPropagation(); let bms = getBookmarks().filter(b => b.id !== id); localStorage.setItem('ngnl_bookmarks_v2', JSON.stringify(bms)); renderBookmarks(); }
-        function renderBookmarks() {
-            const bms = getBookmarks(); bookmarkList.innerHTML = '';
-            if (bms.length === 0) { bookmarkList.innerHTML = '<div class="list-item">NO DATA</div>'; return; }
-            bms.forEach(bm => {
-                const div = document.createElement('div'); div.className = 'list-item hover-target';
-                div.innerHTML = `<div style="font-size:0.8rem; color:var(--primary-purple)">${bm.date}</div><div>Line ${bm.lineIndex}: ${bm.preview}</div><span class="delete-bm hover-target" onclick="deleteBookmark(${bm.id}, event)">[DEL]</span>`;
-                div.onclick = () => { currentLine = bm.lineIndex; renderView(currentLine); }; bookmarkList.appendChild(div);
-            });
-        }
-        function switchTab(tab) {
-            const tabs = document.querySelectorAll('.sidebar-tab'); tabs.forEach(t => t.classList.remove('active'));
-            if (tab === 'toc') { tabs[0].classList.add('active'); tocList.style.display = 'block'; bookmarkList.style.display = 'none'; }
-            else { tabs[1].classList.add('active'); tocList.style.display = 'none'; bookmarkList.style.display = 'block'; }
-        }
+        function renderBookmarks() { const bms = getBookmarks(); bookmarkList.innerHTML = ''; if (bms.length === 0) { bookmarkList.innerHTML = '<div class="list-item">NO DATA</div>'; return; } bms.forEach(bm => { const div = document.createElement('div'); div.className = 'list-item hover-target'; div.innerHTML = `<div style="font-size:0.8rem; color:var(--primary-purple)">${bm.date}</div><div>Line ${bm.lineIndex}: ${bm.preview}</div><span class="delete-bm hover-target" onclick="deleteBookmark(${bm.id}, event)">[DEL]</span>`; div.onclick = () => { currentLine = bm.lineIndex; renderView(currentLine); }; bookmarkList.appendChild(div); }); }
+        function switchTab(tab) { const tabs = document.querySelectorAll('.sidebar-tab'); tabs.forEach(t => t.classList.remove('active')); if (tab === 'toc') { tabs[0].classList.add('active'); tocList.style.display = 'block'; bookmarkList.style.display = 'none'; } else { tabs[1].classList.add('active'); tocList.style.display = 'none'; bookmarkList.style.display = 'block'; } }
         function closeReader() { readerOverlay.classList.remove('active'); setTimeout(() => { readerContent.innerHTML = ''; }, 500); }
-
-        /* KEYFRAMES FOR SHAKE */
-        const styleSheet = document.createElement("style");
-        styleSheet.innerText = `
-            @keyframes shake {
-                0% { transform: translateX(0); }
-                25% { transform: translateX(-10px); }
-                50% { transform: translateX(10px); }
-                75% { transform: translateX(-10px); }
-                100% { transform: translateX(0); }
-            }
-        `;
-        document.head.appendChild(styleSheet);
-
     </script>
 </body>
 </html>
