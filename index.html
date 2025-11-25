@@ -3,227 +3,426 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NO GAME NO LIFE - SYSTEM</title>
+    <title>NO GAME NO LIFE - 游戏人生 | DISBOARD</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     <style>
-        /* 全局样式 */
         :root {
-            --primary-pink: #ff2a6d; --primary-cyan: #05d9e8; --primary-purple: #d905e8; --dark-bg: #09000f;
-            --glass-bg: rgba(20, 20, 35, 0.9);
+            --pink: #ff2a6d; --cyan: #05d9e8; --purple: #d905e8; --gold: #ffd700;
+            --bg: #09000f; --glass: rgba(20,20,35,0.9); --border: rgba(255,255,255,0.15);
+            --rank-god:#ffd700; --rank-high:#9b59b6; --rank-mid:#2ecc71; --rank-low:#e74c3c;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
-        body { background-color: var(--dark-bg); color: white; font-family: 'Noto Sans SC', sans-serif; height: 100vh; overflow: hidden; }
-        body.unlocked { overflow: auto; }
+        * { margin:0; padding:0; box-sizing:border-box; cursor:none; outline:none; }
+        body { background:var(--bg); color:white; font-family:'Noto Sans SC',sans-serif; height:100vh; overflow:hidden; }
+        body.unlocked { overflow-y:auto; overflow-x:hidden; }
 
-        /* 登录层 */
-        #overlay-layer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000;
-            background: rgba(5, 2, 10, 0.95); display: flex; justify-content: center; align-items: center;
-        }
-        .auth-box {
-            width: 400px; padding: 40px; background: rgba(0,0,0,0.8); 
-            border: 2px solid var(--primary-pink); text-align: center;
-            box-shadow: 0 0 50px rgba(255, 42, 109, 0.3);
-        }
-        .auth-title { font-family: 'Orbitron'; font-size: 2rem; margin-bottom: 20px; color: white; text-shadow: 0 0 10px var(--primary-cyan); }
+        /* --- UI --- */
+        #cursor { width:20px; height:20px; border:2px solid var(--cyan); border-radius:50%; position:fixed; pointer-events:none; z-index:999999; transform:translate(-50%,-50%); transition:0.1s; mix-blend-mode:difference; }
+        #cursor.hover { width:50px; height:50px; background:rgba(255,42,109,0.3); border-color:var(--pink); }
+        ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:var(--cyan); border-radius:3px; }
+        .btn { background:rgba(5,217,232,0.05); border:1px solid var(--cyan); color:var(--cyan); padding:8px 20px; font-family:'Orbitron'; font-weight:bold; cursor:none; transition:0.3s; }
+        .btn:hover { background:var(--cyan); color:black; box-shadow:0 0 15px var(--cyan); }
+        .btn-pink { border-color:var(--pink); color:var(--pink); } .btn-pink:hover { background:var(--pink); color:white; box-shadow:0 0 15px var(--pink); }
+        .btn:disabled { border-color:#555; color:#555; cursor:not-allowed; box-shadow:none; background:transparent; }
+        .inp { background:rgba(255,255,255,0.1); border:1px solid #555; color:white; padding:10px; width:100%; font-family:'Orbitron'; text-align:center; margin-bottom:10px; }
+        .inp:focus { border-color:var(--cyan); }
+
+        /* --- Layers --- */
+        #app { filter:blur(10px); opacity:0.5; pointer-events:none; transition:0.8s; width:100%; }
+        body.unlocked #app { filter:blur(0); opacity:1; pointer-events:all; }
+        #bg-layer { position:fixed; inset:0; z-index:-10; background:radial-gradient(circle at 50% 0%, #2a0e36, #000); }
+        #auth-layer { position:fixed; inset:0; z-index:10000; background:rgba(5,2,10,0.95); display:flex; justify-content:center; align-items:center; backdrop-filter:blur(10px); }
+
+        /* --- Auth Box --- */
+        .auth-box { width:400px; padding:40px; background:rgba(0,0,0,0.8); border:2px solid var(--pink); text-align:center; box-shadow:0 0 40px rgba(255,42,109,0.2); }
+        .hidden { display:none !important; }
+        .err { color:var(--pink); font-size:0.8rem; margin-top:10px; height:20px; }
+        .link { font-size:0.8rem; color:#888; text-decoration:underline; cursor:none; margin-top:10px; display:inline-block; }
+        .link:hover { color:var(--cyan); }
+
+        /* --- Main UI --- */
+        nav { position:fixed; top:0; width:100%; height:60px; padding:0 40px; display:flex; justify-content:space-between; align-items:center; background:rgba(10,5,20,0.9); z-index:100; border-bottom:1px solid rgba(255,255,255,0.1); }
+        .brand { font-family:'Orbitron'; font-weight:900; color:white; letter-spacing:2px; text-shadow:0 0 5px var(--pink); }
+        .nav-item { margin-left:20px; font-family:'Orbitron'; font-size:0.8rem; color:#aaa; text-decoration:none; transition:0.3s; }
+        .nav-item:hover { color:var(--cyan); text-shadow:0 0 5px var(--cyan); }
         
-        /* 输入框与按钮 */
-        .my-input {
-            width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(255,255,255,0.1);
-            border: 1px solid #555; color: white; text-align: center; font-family: 'Orbitron'; font-size: 1rem;
-        }
-        .my-btn {
-            width: 100%; padding: 12px; background: var(--primary-pink); border: none;
-            color: white; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; transition: 0.3s;
-        }
-        .my-btn:hover { background: white; color: var(--primary-pink); box-shadow: 0 0 20px var(--primary-pink); }
-        .my-btn:disabled { background: #555; cursor: not-allowed; }
-
-        .link-text { margin-top: 15px; font-size: 0.8rem; color: #aaa; text-decoration: underline; cursor: pointer; }
-        .err-msg { color: red; margin-top: 10px; min-height: 20px; font-family: 'Orbitron'; }
-
-        /* 显隐控制类 */
-        .d-none { display: none !important; }
-
-        /* 主界面模糊 */
-        #main-content { filter: blur(10px); opacity: 0.5; pointer-events: none; width: 100%; min-height: 100vh; transition: 1s; }
-        body.unlocked #main-content { filter: blur(0); opacity: 1; pointer-events: all; }
+        section { padding:80px 20px; max-width:1200px; margin:0 auto; }
+        .title { font-family:'Orbitron'; font-size:3rem; text-align:center; margin-bottom:50px; text-shadow:0 0 20px var(--cyan); }
         
-        /* 简单排版 */
-        nav { padding: 20px; text-align: center; border-bottom: 1px solid #333; font-family: 'Orbitron'; letter-spacing: 2px; }
-        .hero { height: 80vh; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        h1 { font-size: 4rem; color: var(--primary-cyan); text-shadow: 0 0 20px var(--primary-cyan); }
+        /* Cards */
+        .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:20px; }
+        .card { background:var(--glass); border:1px solid var(--border); padding:20px; border-radius:8px; transition:0.3s; position:relative; overflow:hidden; }
+        .card:hover { transform:translateY(-5px); border-color:var(--pink); box-shadow:0 0 15px rgba(255,42,109,0.2); }
+
+        /* Reader */
+        #reader { position:fixed; inset:0; background:var(--hud-bg); z-index:5000; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:0.3s; }
+        #reader.active { opacity:1; pointer-events:all; }
+        .reader-head { height:50px; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center; padding:0 20px; background:rgba(0,0,0,0.8); }
+        .reader-body { flex:1; display:flex; overflow:hidden; }
+        
+        .side-l { width:250px; background:rgba(0,0,0,0.3); border-right:1px solid #333; display:flex; flex-direction:column; }
+        .tabs { display:flex; border-bottom:1px solid #333; }
+        .tab { flex:1; padding:10px; text-align:center; font-family:'Orbitron'; font-size:0.8rem; color:#666; border-bottom:2px solid transparent; }
+        .tab.active { color:white; border-color:var(--cyan); background:rgba(255,255,255,0.05); }
+        .list { flex:1; overflow-y:auto; }
+        .item { padding:10px 15px; font-size:0.85rem; color:#888; border-bottom:1px solid rgba(255,255,255,0.05); }
+        .item:hover { background:rgba(5,217,232,0.1); color:white; padding-left:20px; }
+        
+        .content-area { flex:1; display:flex; flex-direction:column; position:relative; z-index:10; }
+        .text-view { flex:1; overflow-y:auto; padding:40px 80px; font-family:'ZCOOL XiaoWei'; font-size:1.3rem; line-height:2; color:#ddd; }
+        .line { padding:2px 0; position:relative; }
+        .line:hover { background:rgba(255,255,255,0.05); }
+        .bubble { position:absolute; right:-30px; top:0; color:var(--purple); cursor:none; opacity:0; pointer-events:auto; font-size:1.2rem; }
+        .line:hover .bubble { opacity:1; right:10px; }
+
+        .side-r { width:0; background:rgba(10,5,20,0.98); border-left:1px solid #333; transition:0.3s; display:flex; flex-direction:column; z-index:30; }
+        .side-r.open { width:320px; }
+        .comments { flex:1; overflow-y:auto; padding:15px; }
+        .comment-box { background:rgba(255,255,255,0.05); padding:10px; margin-bottom:10px; border-radius:5px; border:1px solid transparent; }
+        .comment-box:hover { border-color:var(--cyan); }
+        .tag { font-size:0.7rem; color:var(--cyan); display:flex; justify-content:space-between; margin-bottom:5px; }
+        
+        /* Discussion */
+        .discuss-area { margin-top:50px; border-top:2px solid var(--cyan); padding:30px; background:rgba(5,217,232,0.02); }
+        .d-card { background:rgba(0,0,0,0.6); border:1px solid #333; padding:15px; margin-bottom:15px; }
+        .actions { display:flex; gap:15px; margin-top:5px; font-size:0.8rem; color:#888; }
+        .act-btn:hover { color:var(--pink); } .coin-btn:hover { color:var(--gold); }
+
+        /* Mobile */
+        @media(max-width:768px) { 
+            .side-l { display:none; } .side-r.open { position:absolute; right:0; width:90%; height:100%; } 
+            .text-view { padding:20px; } .nav-links { display:none; }
+        }
     </style>
 </head>
 <body>
+    <div id="cursor"></div>
 
-    <!-- 登录遮罩 -->
-    <div id="overlay-layer">
+    <!-- 1. 认证层 -->
+    <div id="auth-layer">
         <div class="auth-box">
-            <h2 id="ui-title" class="auth-title">SYSTEM LOGIN</h2>
+            <h2 id="auth-title" style="font-family:'Orbitron'; color:white; margin-bottom:20px;">LOGIN</h2>
             
-            <!-- 1. 登录表单 (ID: section-login) -->
-            <div id="section-login">
-                <input type="email" id="inp-login-email" class="my-input" placeholder="EMAIL">
-                <input type="password" id="inp-login-pass" class="my-input" placeholder="PASSWORD">
-                <button class="my-btn" onclick="actLogin(this)">CONNECT</button>
-                <div class="link-text" onclick="gotoRegister()">NEW PLAYER? REGISTER</div>
+            <!-- Login -->
+            <div id="view-login">
+                <input type="email" id="l-email" class="inp" placeholder="EMAIL">
+                <input type="password" id="l-pass" class="inp" placeholder="PASSWORD">
+                <button class="btn" style="width:100%" onclick="userLogin(this)">CONNECT</button>
+                <div style="display:flex; justify-content:space-between;">
+                    <span class="link" onclick="switchView('reg1')">Register</span>
+                    <span class="link" onclick="switchView('reset1')">Forgot?</span>
+                </div>
             </div>
 
-            <!-- 2. 注册第一步 (ID: section-reg1) -->
-            <div id="section-reg1" class="d-none">
-                <input type="text" id="inp-reg-user" class="my-input" placeholder="USERNAME">
-                <input type="email" id="inp-reg-email" class="my-input" placeholder="EMAIL">
-                <input type="password" id="inp-reg-pass" class="my-input" placeholder="PASSWORD">
-                <button class="my-btn" onclick="actGetCode(this)">GET CODE</button>
-                <div class="link-text" onclick="gotoLogin()">BACK</div>
+            <!-- Register 1 -->
+            <div id="view-reg1" class="hidden">
+                <input type="text" id="r-user" class="inp" placeholder="USERNAME">
+                <input type="email" id="r-email" class="inp" placeholder="EMAIL">
+                <input type="password" id="r-pass" class="inp" placeholder="PASSWORD">
+                <button class="btn" style="width:100%" onclick="getRegCode(this)">GET CODE</button>
+                <span class="link" onclick="switchView('login')">Back</span>
+            </div>
+            <!-- Register 2 -->
+            <div id="view-reg2" class="hidden">
+                <input type="text" id="r-code" class="inp" placeholder="CODE (123456)">
+                <button class="btn" style="width:100%" onclick="confirmReg(this)">CONFIRM</button>
             </div>
 
-            <!-- 3. 注册第二步 (ID: section-reg2) -->
-            <div id="section-reg2" class="d-none">
-                <p style="color:#ccc; margin-bottom:10px;">Code sent (or use 123456)</p>
-                <input type="text" id="inp-reg-code" class="my-input" placeholder="ENTER CODE">
-                <button class="my-btn" onclick="actConfirm(this)">CONFIRM</button>
+            <!-- Reset -->
+            <div id="view-reset1" class="hidden">
+                <input type="email" id="f-email" class="inp" placeholder="EMAIL">
+                <button class="btn" style="width:100%" onclick="getResetCode(this)">SEND CODE</button>
+                <span class="link" onclick="switchView('login')">Back</span>
+            </div>
+            <div id="view-reset2" class="hidden">
+                <input type="text" id="f-code" class="inp" placeholder="CODE">
+                <input type="password" id="f-pass" class="inp" placeholder="NEW PASSWORD">
+                <button class="btn" style="width:100%" onclick="confirmReset(this)">UPDATE</button>
             </div>
 
-            <div id="msg-box" class="err-msg"></div>
+            <div id="auth-msg" class="err"></div>
         </div>
     </div>
 
-    <!-- 主界面 -->
-    <div id="main-content">
-        <nav>NGNL SYSTEM // <span id="user-name" style="color:var(--primary-gold)">GUEST</span></nav>
-        <div class="hero">
-            <h1>ASCHENTE</h1>
-            <p style="color:#aaa; margin-top:20px;">Welcome to Disboard.</p>
+    <!-- 2. 主界面 -->
+    <div id="app">
+        <div id="bg-layer"></div>
+        <nav>
+            <span class="brand">NGNL</span>
+            <div class="nav-links">
+                <a href="#hero" class="hover">HOME</a>
+                <a href="#pledges" class="hover">PLEDGES</a>
+                <a href="#world" class="hover">WORLD</a>
+                <a href="#chars" class="hover">PLAYERS</a>
+                <span id="u-name" style="color:var(--gold); border:1px solid var(--gold); padding:0 5px; margin-left:10px;">GUEST</span>
+                <span id="u-coins" style="color:var(--cyan); font-size:0.8rem; margin-left:5px;"></span>
+            </div>
+        </nav>
+
+        <div id="hero" class="hero">
+            <h1 style="font-family:'Orbitron'; font-size:4rem; text-shadow:0 0 20px var(--pink);">NO GAME NO LIFE</h1>
+            <button class="btn-pink" style="margin-top:30px; padding:10px 30px;" onclick="openReader()">START GAME</button>
+        </div>
+
+        <!-- Pledges -->
+        <section id="pledges">
+            <h2 class="title">THE PLEDGES</h2>
+            <div class="grid">
+                <div class="card hover">I. 禁止杀伤、战争与掠夺</div>
+                <div class="card hover">II. 所有纠纷一律通过在游戏中决胜负来解决</div>
+                <div class="card hover">III. 赌注必须对等</div>
+                <div class="card hover">IV. 只要不违反三，内容不限</div>
+                <div class="card hover">V. 受挑战方决定内容</div>
+                <div class="card hover">VI. 向盟约宣誓必须遵守</div>
+                <div class="card hover">VII. 集团纠纷指定全权代理人</div>
+                <div class="card hover">VIII. 不正当行为视为败北</div>
+                <div class="card hover">IX. 以神之名宣布以上绝对不变</div>
+                <div class="card hover">X. 大家一起和平地玩吧</div>
+            </div>
+        </section>
+
+        <!-- World & Chars (Simplified HTML for brevity, add your own content) -->
+        <section id="world"><h2 class="title">WORLD</h2><div class="card">Loading database...</div></section>
+        <section id="chars"><h2 class="title">PLAYERS</h2><div class="grid"><div class="card">Sora</div><div class="card">Shiro</div><div class="card">Jibril</div></div></section>
+    </div>
+
+    <!-- 3. 阅读器 -->
+    <div id="reader">
+        <div class="reader-head">
+            <span style="font-family:'Orbitron'; color:var(--cyan);">ARCHIVE</span>
+            <button class="btn" style="padding:5px 15px;" onclick="closeReader()">EXIT</button>
+        </div>
+        <div class="reader-body">
+            <div class="side-l">
+                <div class="tabs">
+                    <div class="tab active hover" onclick="tab('toc')">INDEX</div>
+                    <div class="tab hover" onclick="tab('bm')">MEMORY</div>
+                </div>
+                <div id="list-toc" class="list"></div>
+                <div id="list-bm" class="list hidden"></div>
+            </div>
+            <div class="content-area">
+                <div id="text-view" class="text-view">
+                    <div style="text-align:center; margin-top:50px;">
+                        <button class="btn" onclick="document.getElementById('file').click()">LOAD NOVEL.TXT</button>
+                    </div>
+                </div>
+                <div style="padding:10px; background:rgba(0,0,0,0.8); display:flex; justify-content:center; gap:10px;">
+                    <button class="btn" onclick="turnPage(-1)">PREV</button>
+                    <span id="pg-info" style="color:#888; align-self:center;">0%</span>
+                    <button class="btn" onclick="turnPage(1)">NEXT</button>
+                    <button class="btn" style="color:var(--gold); border-color:var(--gold);" onclick="saveBM()">SAVE</button>
+                </div>
+            </div>
+            <div id="side-r" class="side-r">
+                <div style="padding:10px; border-bottom:1px solid #333; display:flex; justify-content:space-between;">
+                    <span style="color:var(--pink);">COMMENTS</span><span onclick="toggleR()" class="hover">[X]</span>
+                </div>
+                <div id="comments" class="comments"></div>
+                <div style="padding:10px;">
+                    <textarea id="c-input" class="inp" rows="2" placeholder="Type..."></textarea>
+                    <button class="btn" style="width:100%" onclick="postC()">POST</button>
+                </div>
+            </div>
         </div>
     </div>
+    <input type="file" id="file" accept=".txt" style="display:none" onchange="readFile(this)">
 
     <script>
-        // ==============================================
-        // ⚠️ 填入你的 Google Apps Script URL
-        const API_URL = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec"; 
-        // ==============================================
+        // ==================================================
+        // ⚠️ 填入你的 URL
+        const API = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec"; 
+        // ==================================================
 
-        // --- 1. 绝对安全的切换视图函数 ---
-        function gotoRegister() {
-            // 强制隐藏登录，显示注册1
-            document.getElementById('section-login').classList.add('d-none');
-            document.getElementById('section-reg1').classList.remove('d-none');
-            document.getElementById('section-reg2').classList.add('d-none');
-            document.getElementById('ui-title').innerText = "REGISTER";
-            document.getElementById('msg-box').innerText = "";
-        }
+        let user = {name: "Guest", coins: 0, rank: 16};
+        let lines = [], curStart = 0, curCommentLine = -1;
+        const PAGE_SIZE = 150;
 
-        function gotoLogin() {
-            // 强制显示登录，隐藏其他
-            document.getElementById('section-login').classList.remove('d-none');
-            document.getElementById('section-reg1').classList.add('d-none');
-            document.getElementById('section-reg2').classList.add('d-none');
-            document.getElementById('ui-title').innerText = "SYSTEM LOGIN";
-            document.getElementById('msg-box').innerText = "";
-        }
-
-        function gotoVerify() {
-            document.getElementById('section-reg1').classList.add('d-none');
-            document.getElementById('section-reg2').classList.remove('d-none');
-        }
-
-        // --- 2. API 请求 ---
-        async function sendReq(data) {
-            console.log("发送数据:", data);
+        // --- API ---
+        async function req(data) {
             try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    redirect: 'follow',
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(data)
+                const r = await fetch(API, {
+                    method:'POST', redirect:'follow',
+                    headers:{'Content-Type':'text/plain;charset=utf-8'},
+                    body:JSON.stringify(data)
                 });
-                const json = await res.json();
-                console.log("收到数据:", json);
-                return json;
-            } catch (e) {
-                console.error(e);
-                return {status: 'error', message: '网络错误，请检查控制台'};
-            }
+                return await r.json();
+            } catch(e) { console.error(e); return {status:'error', message:'Network Error'}; }
         }
 
-        // --- 3. 业务逻辑 ---
-        
-        // 登录
-        async function actLogin(btn) {
-            const e = document.getElementById('inp-login-email').value;
-            const p = document.getElementById('inp-login-pass').value;
-            const msg = document.getElementById('msg-box');
-
-            if(!e || !p) { msg.innerText = "请输入邮箱和密码"; return; }
-
-            btn.disabled = true; btn.innerText = "...";
-            
-            const res = await sendReq({action: 'login', email: e, password: p});
-
-            if (res.status === 'success') {
-                document.getElementById('overlay-layer').style.display = 'none';
-                document.body.classList.add('unlocked');
-                document.getElementById('user-name').innerText = res.username;
-            } else {
-                msg.innerText = res.message;
-                btn.disabled = false; btn.innerText = "CONNECT";
-            }
+        // --- Auth ---
+        function switchView(v) {
+            ['view-login','view-reg1','view-reg2','view-reset1','view-reset2'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+            document.getElementById('view-'+v).classList.remove('hidden');
+            document.getElementById('auth-msg').innerText = "";
+        }
+        async function userLogin(btn) {
+            const e = document.getElementById('l-email').value, p = document.getElementById('l-pass').value;
+            if(!e||!p) return msg("Input required");
+            btn.disabled=true; btn.innerText="...";
+            const res = await req({action:'login', email:e, password:p});
+            if(res.status==='success') {
+                user = {name:res.username, coins:res.coins, rank:res.level};
+                unlock();
+            } else { msg(res.message); btn.disabled=false; btn.innerText="CONNECT"; }
+        }
+        async function getRegCode(btn) {
+            const u=document.getElementById('r-user').value, e=document.getElementById('r-email').value, p=document.getElementById('r-pass').value;
+            if(!u||!e) return msg("Input required");
+            btn.disabled=true;
+            const res = await req({action:'req_reg_code', email:e});
+            if(res.status==='success') {
+                window.tmpReg={u,e,p}; switchView('reg2');
+            } else { msg(res.message); btn.disabled=false; }
+        }
+        async function confirmReg(btn) {
+            const c = document.getElementById('r-code').value;
+            const res = await req({action:'confirm_register', username:window.tmpReg.u, email:window.tmpReg.e, password:window.tmpReg.p, code:c});
+            if(res.status==='success') { alert("Success!"); switchView('login'); }
+            else msg(res.message);
+        }
+        function msg(t) { document.getElementById('auth-msg').innerText = t; }
+        function unlock() {
+            document.getElementById('auth-layer').style.display='none';
+            document.body.classList.add('unlocked');
+            document.getElementById('u-name').innerText = user.name.toUpperCase();
+            document.getElementById('u-coins').innerText = `🪙 ${user.coins}`;
         }
 
-        // 临时存数据
-        let tempUser = {};
-
-        // 获取验证码
-        async function actGetCode(btn) {
-            const u = document.getElementById('inp-reg-user').value;
-            const e = document.getElementById('inp-reg-email').value;
-            const p = document.getElementById('inp-reg-pass').value;
-            const msg = document.getElementById('msg-box');
-
-            if(!u || !e || !p) { msg.innerText = "请填完所有信息"; return; }
-
-            btn.disabled = true; btn.innerText = "...";
-            tempUser = { username: u, email: e, password: p };
-
-            const res = await sendReq({action: 'req_reg_code', email: e});
-
-            if (res.status === 'success') {
-                gotoVerify();
-                msg.innerText = "";
-                alert("验证码已发送 (测试码: 123456)");
-            } else {
-                msg.innerText = res.message;
-                btn.disabled = false; btn.innerText = "GET CODE";
-            }
+        // --- Reader ---
+        function openReader() { document.getElementById('reader').classList.add('active'); loadBM(); }
+        function closeReader() { document.getElementById('reader').classList.remove('active'); }
+        function readFile(inp) {
+            const r = new FileReader();
+            r.onload = e => {
+                lines = e.target.result.split('\n');
+                genTOC(); renderPage(0);
+            };
+            r.readAsText(inp.files[0]);
         }
-
-        // 确认注册
-        async function actConfirm(btn) {
-            const code = document.getElementById('inp-reg-code').value;
-            const msg = document.getElementById('msg-box');
-
-            if(!code) { msg.innerText = "请输入验证码"; return; }
-            
-            btn.disabled = true; btn.innerText = "...";
-
-            const res = await sendReq({
-                action: 'confirm_register',
-                username: tempUser.username,
-                email: tempUser.email,
-                password: tempUser.password,
-                code: code
+        function genTOC() {
+            let html = "";
+            lines.forEach((l,i) => {
+                if(l.match(/(Chapter|第.+章|序章|终章)/i) && l.length<50) 
+                    html += `<div class="item hover" onclick="renderPage(${i})">${l}</div>`;
             });
-
-            if (res.status === 'success') {
-                alert("注册成功！请登录");
-                gotoLogin();
-            } else {
-                msg.innerText = res.message;
-                btn.disabled = false; btn.innerText = "CONFIRM";
-            }
+            document.getElementById('list-toc').innerHTML = html;
         }
+        function renderPage(idx) {
+            if(idx<0) idx=0; if(idx>=lines.length) idx=lines.length-PAGE_SIZE;
+            curStart = idx;
+            const chunk = lines.slice(idx, idx+PAGE_SIZE);
+            let html = chunk.map((l,i) => {
+                let realIdx = idx + i;
+                return l.trim() ? `<div class="line">${l}<div class="bubble" onclick="openComm(${realIdx})">💬</div></div>` : "<br>";
+            }).join('');
+            
+            // Discussion Area at end
+            if (idx + PAGE_SIZE >= lines.length) {
+                html += `<div class="discuss-area">
+                    <h3 style="color:var(--cyan); font-family:'Orbitron'">DISCUSSION</h3>
+                    <textarea id="d-inp" class="inp" placeholder="Share..."></textarea>
+                    <button class="btn" onclick="postDisc()">POST (+10 EXP)</button>
+                    <div id="d-list" style="margin-top:20px"></div>
+                </div>`;
+                loadDisc();
+            }
+
+            document.getElementById('text-view').innerHTML = html;
+            document.getElementById('text-view').scrollTop = 0;
+            document.getElementById('pg-info').innerText = Math.round((idx/lines.length)*100)+"%";
+        }
+        function turnPage(d) { renderPage(curStart + d*PAGE_SIZE); }
+
+        // --- Comments & Social ---
+        function toggleR() { document.getElementById('side-r').classList.toggle('open'); }
+        function openComm(idx) {
+            curCommentLine = idx;
+            document.getElementById('side-r').classList.add('open');
+            const div = document.getElementById('comments');
+            div.innerHTML = "Loading...";
+            req({action:'get_comments', line:idx}).then(res => {
+                div.innerHTML = res.data.length ? "" : "No comments";
+                res.data.forEach(c => div.innerHTML += renderCard(c, 'comment'));
+            });
+        }
+        async function postC() {
+            const txt = document.getElementById('c-input').value;
+            if(!txt) return;
+            await req({action:'post_comment', line:curCommentLine, username:user.name, content:txt});
+            document.getElementById('c-input').value="";
+            openComm(curCommentLine);
+        }
+        
+        // Discussion
+        function loadDisc() {
+            req({action:'get_discuss'}).then(res => {
+                const div = document.getElementById('d-list');
+                if(div) div.innerHTML = res.data.map(d => renderCard(d, 'discuss')).join('');
+            });
+        }
+        async function postDisc() {
+            const txt = document.getElementById('d-inp').value;
+            await req({action:'post_discuss', username:user.name, content:txt});
+            loadDisc();
+        }
+
+        // Interact
+        function renderCard(data, type) {
+            return `<div class="${type==='comment'?'comment-box':'d-card'}">
+                <div class="tag"><span>${data.user}</span><span>♥ ${data.likes}</span></div>
+                <div>${data.content}</div>
+                <div class="actions">
+                    <span class="act-btn" onclick="interact('like',${data.id},'${type}')">LIKE</span>
+                    ${type==='discuss' ? `<span class="coin-btn" onclick="interact('tip',${data.id},'discuss')">TIP (${data.coins})</span>` : ''}
+                </div>
+            </div>`;
+        }
+        async function interact(act, id, type) {
+            if(act==='tip' && !confirm("Spend 1 Coin?")) return;
+            const res = await req({action:'interact', sub_action:act, type:type, id:id, username:user.name, target_id:id});
+            if(res.status==='success') {
+                if(act==='tip') { user.coins = res.new_balance; document.getElementById('u-coins').innerText = `🪙 ${user.coins}`; }
+                if(type==='comment') openComm(curCommentLine); else loadDisc();
+            } else alert(res.message);
+        }
+
+        // --- Bookmarks ---
+        function tab(t) {
+            document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('list-toc').className = t==='toc'?'list':'hidden';
+            document.getElementById('list-bm').className = t==='bm'?'list':'hidden';
+        }
+        function saveBM() {
+            let bms = JSON.parse(localStorage.getItem('ngnl_bm')||'[]');
+            bms.unshift({t:new Date().toLocaleDateString(), i:curStart, txt:lines[curStart].substr(0,15)+"..."});
+            localStorage.setItem('ngnl_bm', JSON.stringify(bms));
+            loadBM(); alert("Saved");
+        }
+        function loadBM() {
+            let bms = JSON.parse(localStorage.getItem('ngnl_bm')||'[]');
+            document.getElementById('list-bm').innerHTML = bms.map((b,k) => 
+                `<div class="item hover" onclick="renderPage(${b.i})">
+                    <div style="display:flex;justify-content:space-between">
+                        <span>${b.txt}</span>
+                        <span onclick="delBM(${k},event)" style="color:var(--pink)">X</span>
+                    </div>
+                    <div style="font-size:0.7rem;color:var(--purple)">${b.t}</div>
+                </div>`
+            ).join('');
+        }
+        function delBM(k,e) {
+            e.stopPropagation();
+            let bms = JSON.parse(localStorage.getItem('ngnl_bm'));
+            bms.splice(k,1);
+            localStorage.setItem('ngnl_bm', JSON.stringify(bms));
+            loadBM();
+        }
+
+        // Cursor Logic
+        const cursor = document.getElementById('cursor');
+        document.addEventListener('mousemove', e=>{ cursor.style.left=e.clientX+'px'; cursor.style.top=e.clientY+'px'; });
+        document.body.addEventListener('mouseover', e=>{ if(e.target.closest('.hover')) cursor.classList.add('hover'); else cursor.classList.remove('hover'); });
     </script>
 </body>
 </html>
