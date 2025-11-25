@@ -23,29 +23,46 @@
             color: white;
             font-family: 'Noto Sans SC', sans-serif;
             min-height: 100vh;
-            overflow: hidden;
+            overflow: hidden; /* 登录前禁止滚动 */
         }
         
-        body.unlocked { overflow-x: hidden; overflow-y: auto; }
+        body.unlocked {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
 
+        /* ------------------ 内容包裹器 ------------------ */
         #site-wrapper {
             transition: filter 0.8s ease, opacity 0.8s ease;
-            filter: blur(15px); opacity: 0.5; pointer-events: none;
-            width: 100%; min-height: 100vh;
+            filter: blur(15px); /* 初始模糊 */
+            pointer-events: none;
+            opacity: 0.5;
+            width: 100%;
+            min-height: 100vh;
         }
-        body.unlocked #site-wrapper { filter: blur(0); pointer-events: all; opacity: 1; }
 
-        /* LOGIN UI */
+        body.unlocked #site-wrapper {
+            filter: blur(0);
+            pointer-events: all;
+            opacity: 1;
+        }
+
+        /* ------------------ 登录界面 (置顶) ------------------ */
         #login-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 100000; display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background: rgba(10, 5, 20, 0.6); backdrop-filter: blur(5px);
+            z-index: 100000; /* 确保在最上层 */
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(10, 5, 20, 0.6); /* 背景遮罩 */
+            backdrop-filter: blur(8px);
         }
         
         .login-box {
-            width: 420px; padding: 40px; background: rgba(0, 0, 0, 0.85);
-            border: 2px solid var(--primary-pink); box-shadow: 0 0 50px rgba(255, 42, 109, 0.4);
-            text-align: center; position: relative; transition: all 0.3s;
+            width: 420px; padding: 40px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid var(--primary-pink);
+            box-shadow: 0 0 50px rgba(255, 42, 109, 0.4);
+            text-align: center; position: relative;
+            transform: scale(1); transition: transform 0.3s;
         }
         
         .login-box::before {
@@ -61,34 +78,30 @@
             color: white; text-shadow: 0 0 10px var(--primary-cyan);
         }
 
-        .input-group { margin-bottom: 15px; position: relative; display: flex; gap: 10px; }
+        .input-group { margin-bottom: 15px; position: relative; }
         .login-input {
             width: 100%; padding: 12px; background: rgba(255,255,255,0.1);
             border: 1px solid #555; color: white; font-family: 'Orbitron', sans-serif;
             text-align: center; outline: none; transition: 0.3s; font-size: 1rem;
         }
-        .login-input:focus { border-color: var(--primary-cyan); box-shadow: 0 0 15px rgba(5, 217, 232, 0.3); }
-        
-        /* Small Verify Button */
-        .verify-btn {
-            width: 140px; background: rgba(5, 217, 232, 0.1); border: 1px solid var(--primary-cyan);
-            color: var(--primary-cyan); font-family: 'Orbitron', sans-serif; cursor: none;
-            font-size: 0.8rem; transition: 0.3s;
+        .login-input:focus {
+            border-color: var(--primary-cyan); box-shadow: 0 0 20px rgba(5, 217, 232, 0.5);
         }
-        .verify-btn:hover:not(:disabled) { background: var(--primary-cyan); color: black; }
-        .verify-btn:disabled { border-color: #555; color: #555; cursor: not-allowed; }
-
+        
         .login-btn {
             width: 100%; padding: 12px; background: transparent;
             border: 2px solid var(--primary-pink); color: var(--primary-pink);
             font-family: 'Orbitron', sans-serif; font-size: 1.1rem; cursor: none;
-            transition: 0.3s; margin-top: 5px; font-weight: bold; text-transform: uppercase;
+            transition: 0.3s; margin-top: 10px; font-weight: bold; text-transform: uppercase;
         }
         .login-btn:hover:not(:disabled) { background: var(--primary-pink); color: white; box-shadow: 0 0 30px var(--primary-pink); }
         .login-btn:disabled { border-color: #555; color: #555; cursor: wait; }
 
         .links-row { margin-top: 15px; display: flex; justify-content: space-between; font-size: 0.8rem; }
-        .toggle-link { color: #aaa; cursor: none; text-decoration: underline; transition: 0.3s; }
+        .toggle-link {
+            color: #aaa; cursor: none;
+            text-decoration: underline; transition: 0.3s;
+        }
         .toggle-link:hover { color: var(--primary-cyan); text-shadow: 0 0 5px var(--primary-cyan); }
 
         .error-msg {
@@ -98,30 +111,89 @@
 
         .hidden { display: none; }
 
-        /* Common Styles */
+        /* ------------------ 主站样式 ------------------ */
+        /* Background Layer */
+        .bg-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(255, 42, 109, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(5, 217, 232, 0.1) 0%, transparent 40%),
+                linear-gradient(rgba(17, 0, 28, 0.8) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(17, 0, 28, 0.8) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 50px 50px, 50px 50px;
+        }
+
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #050505; }
         ::-webkit-scrollbar-thumb { background: var(--primary-cyan); border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--primary-pink); }
-        #cursor { width: 20px; height: 20px; border: 2px solid var(--primary-cyan); border-radius: 50%; position: fixed; pointer-events: none; z-index: 200000; transform: translate(-50%, -50%); transition: width 0.2s, height 0.2s, background 0.2s; mix-blend-mode: difference; }
-        #cursor.hovered { width: 50px; height: 50px; background: rgba(255, 42, 109, 0.2); border-color: var(--primary-pink); box-shadow: 0 0 20px var(--primary-pink); }
+
+        #cursor {
+            width: 20px; height: 20px;
+            border: 2px solid var(--primary-cyan); border-radius: 50%;
+            position: fixed; pointer-events: none; z-index: 200000;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s, background 0.2s, border-color 0.2s;
+            mix-blend-mode: difference;
+        }
+        #cursor.hovered {
+            width: 50px; height: 50px;
+            background: rgba(255, 42, 109, 0.2); border-color: var(--primary-pink);
+            box-shadow: 0 0 20px var(--primary-pink);
+        }
+
         #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
-        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 99990; transition: opacity 1s ease; }
-        .loader-text { font-family: 'Orbitron', sans-serif; font-size: 3rem; font-weight: 900; color: transparent; -webkit-text-stroke: 2px var(--primary-pink); animation: pulse 2s infinite; }
+
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; display: none;
+            justify-content: center; align-items: center;
+            flex-direction: column; z-index: 99990; transition: opacity 1s ease;
+        }
+        .loader-text {
+            font-family: 'Orbitron', sans-serif; font-size: 3rem; font-weight: 900;
+            color: transparent; -webkit-text-stroke: 2px var(--primary-pink);
+            position: relative; animation: pulse 2s infinite;
+        }
         .loader-sub { margin-top: 10px; color: var(--primary-cyan); letter-spacing: 5px; font-size: 0.8rem; }
-        nav { position: fixed; top: 0; width: 100%; padding: 20px 50px; display: flex; justify-content: space-between; align-items: center; z-index: 100; backdrop-filter: blur(10px); background: rgba(0,0,0,0.5); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .logo { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 1.5rem; background: linear-gradient(90deg, var(--primary-pink), var(--primary-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 20px rgba(255, 42, 109, 0.5); }
-        .nav-links a { color: white; text-decoration: none; margin-left: 30px; font-size: 0.9rem; position: relative; transition: color 0.3s; font-family: 'Orbitron', sans-serif; }
+
+        nav {
+            position: fixed; top: 0; width: 100%; padding: 20px 50px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100; backdrop-filter: blur(10px);
+            background: rgba(0,0,0,0.5); border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .logo {
+            font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 1.5rem;
+            background: linear-gradient(90deg, var(--primary-pink), var(--primary-cyan));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(255, 42, 109, 0.5);
+        }
+        .nav-links a {
+            color: white; text-decoration: none; margin-left: 30px; font-size: 0.9rem;
+            position: relative; transition: color 0.3s; font-family: 'Orbitron', sans-serif;
+        }
         .nav-links a:hover { color: var(--primary-cyan); text-shadow: 0 0 8px var(--primary-cyan); }
-        .hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; position: relative; }
-        .hero h1 { font-family: 'Orbitron', sans-serif; font-size: 5rem; line-height: 1; margin-bottom: 20px; text-transform: uppercase; position: relative; z-index: 2; }
-        .glitch { position: relative; color: white; } .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+        .hero {
+            height: 100vh; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center; position: relative;
+        }
+        .hero h1 {
+            font-family: 'Orbitron', sans-serif; font-size: 5rem; line-height: 1;
+            margin-bottom: 20px; text-transform: uppercase; position: relative; z-index: 2;
+        }
+        .glitch { position: relative; color: white; }
+        .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         .glitch::before { left: 2px; text-shadow: -1px 0 var(--primary-pink); clip: rect(24px, 550px, 90px, 0); animation: glitch-anim-2 3s infinite linear alternate-reverse; }
         .glitch::after { left: -2px; text-shadow: -1px 0 var(--primary-cyan); clip: rect(85px, 550px, 140px, 0); animation: glitch-anim 2.5s infinite linear alternate-reverse; }
         .hero p { font-size: 1.2rem; max-width: 600px; color: #ccc; margin-bottom: 40px; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
         .cta-btn { padding: 15px 40px; font-size: 1.2rem; font-family: 'Orbitron', sans-serif; background: rgba(0,0,0,0.5); color: white; border: 2px solid var(--primary-pink); border-radius: 4px; position: relative; overflow: hidden; transition: all 0.3s; box-shadow: 0 0 15px var(--primary-pink); text-shadow: 0 0 5px var(--primary-pink); }
         .cta-btn:hover { background: var(--primary-pink); box-shadow: 0 0 40px var(--primary-pink); transform: scale(1.05) translateY(-2px); }
+
         .section-title { font-family: 'Orbitron', sans-serif; font-size: 3rem; margin-bottom: 60px; background: linear-gradient(to bottom, #fff, #aaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 30px rgba(5, 217, 232, 0.3); text-align: center; letter-spacing: 5px; }
+
+        /* Pledges */
         .pledges { padding: 120px 20px; display: flex; flex-direction: column; align-items: center; background: linear-gradient(to bottom, transparent, rgba(17, 0, 28, 0.9)); position: relative; }
         .pledge-container { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; max-width: 1000px; width: 90%; perspective: 1000px; }
         .pledge-card { background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 25px 30px; border-radius: 8px; position: relative; overflow: hidden; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; min-height: 100px; }
@@ -130,6 +202,8 @@
         .pledge-num { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 5rem; position: absolute; top: 50%; transform: translateY(-50%); opacity: 0.1; z-index: 0; pointer-events: none; transition: opacity 0.3s; }
         .pledge-card:nth-child(odd) .pledge-num { left: 10px; color: var(--primary-pink); } .pledge-card:nth-child(even) .pledge-num { right: 10px; color: var(--primary-cyan); } .pledge-card:hover .pledge-num { opacity: 0.3; }
         .pledge-text { font-size: 1.1rem; z-index: 1; font-weight: 500; width: 100%; padding: 0 10px; }
+
+        /* World */
         #world { padding: 100px 20px; background: #0b0514; position: relative; background-image: radial-gradient(circle at 50% 50%, rgba(217, 5, 232, 0.05) 0%, transparent 60%), url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2305d9e8' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
         .world-container { max-width: 1000px; margin: 0 auto; border: 1px solid var(--glass-border); background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px); border-radius: 10px; overflow: hidden; box-shadow: 0 0 50px rgba(5, 217, 232, 0.1); }
         .world-tabs { display: flex; border-bottom: 1px solid var(--primary-cyan); background: rgba(5, 217, 232, 0.1); }
@@ -137,12 +211,20 @@
         .world-tab.active { color: #fff; background: rgba(5, 217, 232, 0.2); text-shadow: 0 0 10px var(--primary-cyan); } .world-tab.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: var(--primary-cyan); box-shadow: 0 0 15px var(--primary-cyan); }
         .world-content { padding: 40px; min-height: 400px; color: #ddd; line-height: 1.8; position: relative; } .world-content h3 { font-family: 'Orbitron', sans-serif; font-size: 2rem; color: var(--primary-pink); margin-bottom: 20px; border-bottom: 1px dashed var(--primary-purple); padding-bottom: 10px; display: inline-block; } .world-text { font-family: 'Noto Sans SC', sans-serif; font-size: 1.1rem; text-align: justify; }
         .exceed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; } .exceed-card { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 15px; border-radius: 4px; position: relative; transition: 0.3s; } .exceed-card:hover { background: rgba(217, 5, 232, 0.2); border-color: var(--primary-purple); transform: scale(1.05); box-shadow: 0 0 15px var(--primary-purple); } .rank-badge { font-family: 'Orbitron', sans-serif; font-weight: 900; color: rgba(255,255,255,0.2); font-size: 2rem; position: absolute; top: 0; right: 10px; } .race-name { font-weight: bold; color: var(--primary-cyan); font-size: 1.1rem; } .race-detail { font-size: 0.8rem; color: #aaa; margin-top: 5px; }
+
+        /* Characters */
         .characters { padding: 100px 50px; position: relative; } .char-gallery { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; } .char-card { width: 280px; height: 400px; position: relative; perspective: 1000px; } .char-inner { width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; position: relative; cursor: pointer; } .char-card:hover .char-inner { transform: rotateY(180deg); } .char-front, .char-back { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 15px; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: rgba(20, 20, 30, 0.9); box-shadow: 0 0 20px rgba(0,0,0,0.5); } .char-front { background: linear-gradient(135deg, rgba(42, 14, 54, 0.9), rgba(0, 0, 0, 0.95)); border-top: 2px solid var(--primary-purple); } .char-avatar { width: 140px; height: 140px; border-radius: 50%; background-color: #fff; margin-bottom: 20px; border: 3px solid white; box-shadow: 0 0 25px var(--primary-pink); background-size: cover; background-repeat: no-repeat; } .char-name { font-family: 'Orbitron', sans-serif; font-size: 1.5rem; color: var(--primary-pink); text-transform: uppercase; letter-spacing: 2px; } .char-race { color: var(--primary-cyan); font-size: 0.9rem; margin-top: 5px; } .char-back { background: linear-gradient(135deg, var(--primary-pink), var(--primary-purple)); transform: rotateY(180deg); padding: 25px; text-align: center; } .char-desc { font-size: 0.9rem; line-height: 1.8; }
+
+        /* Reader PRO */
         #novel-reader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--hud-bg); z-index: 5000; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; backdrop-filter: blur(20px); } #novel-reader.active { opacity: 1; pointer-events: all; } .reader-header { height: 60px; width: 100%; border-bottom: 1px solid rgba(255, 42, 109, 0.3); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; background: rgba(0,0,0,0.5); box-shadow: 0 5px 20px rgba(255, 42, 109, 0.1); } .reader-title { font-family: 'Orbitron', sans-serif; color: var(--primary-cyan); font-weight: 700; letter-spacing: 2px; display: flex; align-items: center; gap: 10px; } .reader-title::before { content: ''; display: block; width: 10px; height: 10px; background: var(--primary-pink); box-shadow: 0 0 10px var(--primary-pink); transform: rotate(45deg); } .reader-body { flex: 1; display: flex; overflow: hidden; height: calc(100vh - 60px); } .sidebar { width: 300px; background: rgba(0,0,0,0.4); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; transition: transform 0.3s; } .sidebar-tabs { display: flex; height: 50px; border-bottom: 1px solid var(--glass-border); } .sidebar-tab { flex: 1; background: transparent; border: none; color: #888; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; transition: 0.3s; border-bottom: 2px solid transparent; } .sidebar-tab.active { color: white; background: rgba(255, 255, 255, 0.05); border-bottom-color: var(--primary-cyan); text-shadow: 0 0 10px var(--primary-cyan); } .sidebar-content { flex: 1; overflow-y: auto; padding: 0; } .list-item { padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #ccc; font-size: 0.9rem; transition: 0.2s; position: relative; } .list-item:hover { background: rgba(5, 217, 232, 0.1); color: var(--primary-cyan); padding-left: 25px; } .list-item.active-chapter { background: linear-gradient(90deg, rgba(255, 42, 109, 0.2), transparent); border-left: 3px solid var(--primary-pink); color: white; } .delete-bm { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #555; font-size: 0.8rem; padding: 5px; } .delete-bm:hover { color: var(--primary-pink); } .text-area-container { flex: 1; display: flex; flex-direction: column; position: relative; background-image: linear-gradient(rgba(5, 217, 232, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(5, 217, 232, 0.03) 1px, transparent 1px); background-size: 40px 40px; } .text-viewport { flex: 1; padding: 60px 100px; overflow-y: auto; color: #ddd; font-size: 1.2rem; line-height: 2; font-family: 'ZCOOL XiaoWei', 'Noto Sans SC', serif; text-shadow: 0 0 1px rgba(0,0,0,0.8); } .text-viewport p { margin-bottom: 24px; text-align: justify; } .reader-controls { height: 60px; border-top: 1px solid var(--glass-border); display: flex; justify-content: center; align-items: center; gap: 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); } .ctrl-btn { padding: 8px 25px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--primary-cyan); font-family: 'Orbitron', sans-serif; border-radius: 4px; transition: 0.3s; } .ctrl-btn:hover:not(:disabled) { background: var(--primary-cyan); color: black; box-shadow: 0 0 15px var(--primary-cyan); } .ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; } .page-indicator { font-family: 'Orbitron', sans-serif; color: #888; font-size: 0.8rem; width: 250px; text-align: center; letter-spacing: 1px; } .bm-btn { border-color: var(--primary-purple); color: var(--primary-purple); } .bm-btn:hover { background: var(--primary-purple); color: white; box-shadow: 0 0 15px var(--primary-purple); } .close-btn { border-color: var(--primary-pink); color: var(--primary-pink); } .close-btn:hover { background: var(--primary-pink); color: white; box-shadow: 0 0 15px var(--primary-pink); } .fallback-ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; } #file-input { display: none; }
+
         @keyframes pulse { 0% { opacity: 0.5; text-shadow: 0 0 10px var(--primary-pink); } 50% { opacity: 1; text-shadow: 0 0 30px var(--primary-pink), 0 0 50px var(--primary-purple); } 100% { opacity: 0.5; text-shadow: 0 0 10px var(--primary-pink); } }
         @keyframes glitch-anim-2 { 0% { clip: rect(65px, 9999px, 100px, 0); } 100% { clip: rect(60px, 9999px, 90px, 0); } }
         @keyframes glitch-anim { 0% { clip: rect(12px, 9999px, 5px, 0); } 100% { clip: rect(10px, 9999px, 80px, 0); } }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-10px); } 50% { transform: translateX(10px); } 75% { transform: translateX(-10px); } 100% { transform: translateX(0); } }
+
         footer { text-align: center; padding: 30px; border-top: 1px solid var(--glass-border); color: rgba(255,255,255,0.3); font-size: 0.8rem; background: #050505; }
+
         @media (max-width: 768px) { .hero h1 { font-size: 2.5rem; } .nav-links { display: none; } .pledge-container { grid-template-columns: 1fr; } .sidebar { display: none; } .text-viewport { padding: 30px; font-size: 1rem; } .exceed-grid { grid-template-columns: 1fr 1fr; } .login-box { width: 90%; } }
     </style>
 </head>
@@ -155,7 +237,7 @@
         <div class="login-box hover-target">
             <h2 class="login-title" id="auth-title">SYSTEM LOGIN</h2>
             
-            <!-- 1. LOGIN -->
+            <!-- 1. LOGIN FORM -->
             <div id="login-form">
                 <div class="input-group"><input type="email" id="login-email" class="login-input" placeholder="EMAIL" autocomplete="off"></div>
                 <div class="input-group"><input type="password" id="login-password" class="login-input" placeholder="PASSWORD"></div>
@@ -201,11 +283,13 @@
         </div>
     </div>
 
-    <!-- SITE CONTENT -->
+    <!-- SITE WRAPPER (Blurred when locked) -->
     <div id="site-wrapper">
         <div class="bg-layer" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background-image: radial-gradient(circle at 10% 10%, rgba(255, 42, 109, 0.1) 0%, transparent 40%), radial-gradient(circle at 90% 90%, rgba(5, 217, 232, 0.1) 0%, transparent 40%), linear-gradient(rgba(17, 0, 28, 0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(17, 0, 28, 0.8) 1px, transparent 1px); background-size: 100% 100%, 100% 100%, 50px 50px, 50px 50px;"></div>
+        
         <div id="loader"><div class="loader-text">ASCHENTE</div><div class="loader-sub">向盟约宣誓</div></div>
         <canvas id="bg-canvas"></canvas>
+
         <nav>
             <div class="logo">NO GAME NO LIFE</div>
             <div class="nav-links">
@@ -215,35 +299,95 @@
                 <a href="#characters" class="hover-target">主要人物</a>
             </div>
         </nav>
-        <!-- READER (Same as before) -->
+
+        <!-- READER -->
         <div id="novel-reader">
-            <header class="reader-header"><div class="reader-title" id="book-title">NOVEL DATABASE // CONNECTED</div><button class="ctrl-btn close-btn hover-target" onclick="closeReader()">EXIT GAME</button></header>
+            <header class="reader-header">
+                <div class="reader-title" id="book-title">NOVEL DATABASE // CONNECTED</div>
+                <button class="ctrl-btn close-btn hover-target" onclick="closeReader()">EXIT GAME</button>
+            </header>
             <div class="reader-body">
                 <aside class="sidebar">
-                    <div class="sidebar-tabs"><button class="sidebar-tab active hover-target" onclick="switchTab('toc')">INDEX</button><button class="sidebar-tab hover-target" onclick="switchTab('bookmarks')">MEMORY</button></div>
-                    <div id="toc-list" class="sidebar-content"></div><div id="bookmark-list" class="sidebar-content" style="display:none;"></div>
+                    <div class="sidebar-tabs">
+                        <button class="sidebar-tab active hover-target" onclick="switchTab('toc')">INDEX (目录)</button>
+                        <button class="sidebar-tab hover-target" onclick="switchTab('bookmarks')">MEMORY (书签)</button>
+                    </div>
+                    <div id="toc-list" class="sidebar-content"></div>
+                    <div id="bookmark-list" class="sidebar-content" style="display:none;"></div>
                 </aside>
-                <div class="text-area-container"><div id="reader-content" class="text-viewport"></div><div class="reader-controls"><button class="ctrl-btn hover-target" id="prev-btn" onclick="changeView(-1)">UP</button><span class="page-indicator" id="page-info">LOADING...</span><button class="ctrl-btn hover-target" id="next-btn" onclick="changeView(1)">DOWN</button><div style="width:20px;"></div><button class="ctrl-btn bm-btn hover-target" onclick="addBookmark()">SAVE</button></div></div>
+                <div class="text-area-container">
+                    <div id="reader-content" class="text-viewport"></div>
+                    <div class="reader-controls">
+                        <button class="ctrl-btn hover-target" id="prev-btn" onclick="changeView(-1)">SCROLL UP</button>
+                        <span class="page-indicator" id="page-info">LOADING...</span>
+                        <button class="ctrl-btn hover-target" id="next-btn" onclick="changeView(1)">SCROLL DOWN</button>
+                        <div style="width: 20px;"></div>
+                        <button class="ctrl-btn bm-btn hover-target" onclick="addBookmark()">SAVE SPOT</button>
+                    </div>
+                </div>
             </div>
             <input type="file" id="file-input" accept=".txt" onchange="loadFromFile(this)">
         </div>
+
         <header id="hero" class="hero">
             <h1 class="glitch" data-text="NO GAME NO LIFE">NO GAME NO LIFE</h1>
             <p>在这个一切都由游戏决定的世界，「空白」将挑战神灵。</p>
             <button class="cta-btn hover-target" onclick="startGame()">GAME START</button>
         </header>
-        <!-- SECTIONS (Pledges, World, Characters) are structurally same -->
-        <section id="pledges" class="pledges"><h2 class="section-title">THE TEN PLEDGES</h2><div class="pledge-container"><div class="pledge-card hover-target"><div class="pledge-num">I</div><div class="pledge-text">这个世界禁止一切杀伤、战争与掠夺。</div></div><div class="pledge-card hover-target"><div class="pledge-num">II</div><div class="pledge-text">所有纠纷一律通过在游戏中决胜负来解决。</div></div><div class="pledge-card hover-target"><div class="pledge-num">III</div><div class="pledge-text">游戏中须赌上双方认为对等的赌注。</div></div><div class="pledge-card hover-target"><div class="pledge-num">IV</div><div class="pledge-text">在不违反第三条的情况下，游戏内容、赌注皆不限。</div></div><div class="pledge-card hover-target"><div class="pledge-num">V</div><div class="pledge-text">受挑战的一方有权决定游戏的内容。</div></div><div class="pledge-card hover-target"><div class="pledge-num">VI</div><div class="pledge-text">「向盟约宣誓」的赌注绝对要遵守。</div></div><div class="pledge-card hover-target"><div class="pledge-num">VII</div><div class="pledge-text">集团纠纷应指定全权代理人。</div></div><div class="pledge-card hover-target"><div class="pledge-num">VIII</div><div class="pledge-text">游戏中若有不正当行为，一旦败露即视同败北。</div></div><div class="pledge-card hover-target"><div class="pledge-num">IX</div><div class="pledge-text">以神之名宣布，以上各条皆为绝对不变的规则。</div></div><div class="pledge-card hover-target"><div class="pledge-num">X</div><div class="pledge-text">大家一起和平地玩吧。</div></div></div></section>
-        <section id="world"><h2 class="section-title">WORLD DATABASE</h2><div class="world-container"><div class="world-tabs"><div class="world-tab active hover-target" onclick="switchWorldTab('disboard')">DISBOARD</div><div class="world-tab hover-target" onclick="switchWorldTab('exceed')">IXSEED</div><div class="world-tab hover-target" onclick="switchWorldTab('history')">ARCHIVE</div></div><div class="world-content" id="world-display-area"></div></div></section>
-        <section id="characters" class="characters"><h2 class="section-title">PLAYERS</h2><div class="char-gallery"><div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('sora.png'); background-position: top center;"></div><div class="char-name">SORA</div><div class="char-race">Imanity</div></div><div class="char-back"><h3>空 (Sora)</h3><br><p class="char-desc">十八岁。无业、处男、沟通障碍、游戏废人。擅长策略与读心，是「空白」中的策略担当。</p></div></div></div><div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('shiro.png'); background-position: center;"></div><div class="char-name">SHIRO</div><div class="char-race">Imanity</div></div><div class="char-back"><h3>白 (Shiro)</h3><br><p class="char-desc">十一岁。空的义妹。拥有超乎常人的计算能力，只要是完全情报游戏，无人能出其右。</p></div></div></div><div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('jibril.png'); background-position: top center;"></div><div class="char-name">JIBRIL</div><div class="char-race">Flügel</div></div><div class="char-back"><h3>吉普莉尔</h3><br><p class="char-desc">位阶序列第六位。拥有极强的战斗力与知识欲，现隶属于「空白」的所有物。</p></div></div></div><div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('steph.png'); background-position: top center;"></div><div class="char-name">STEPH</div><div class="char-race">Imanity</div></div><div class="char-back"><h3>史蒂芬妮</h3><br><p class="char-desc">艾尔奇亚的前王族孙女。虽然经常被“空白”捉弄，但在政务和人际关系上支撑着整个国家。</p></div></div></div><div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('izuna.png'); background-position: top center;"></div><div class="char-name">IZUNA</div><div class="char-race">Werebeast</div></div><div class="char-back"><h3>初濑伊纲</h3><br><p class="char-desc">八岁。东部联合的大使。拥有极其敏锐的五感和名为“血坏”的身体能力突破技能。</p></div></div></div><div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('tet.png'); background-position: top center;"></div><div class="char-name">TET</div><div class="char-race">One True God</div></div><div class="char-back"><h3>特图 (Tet)</h3><br><p class="char-desc">游戏之神，也是唯一的全权神。住在国际象棋棋子的王座上，将“空白”召唤到这个世界的始作俑者。</p></div></div></div></div></section>
-        <footer><p>© 2024 Yuu Kamiya, PUBLISHED BY KADOKAWA CORPORATION / NO GAME NO LIFE PARTNERS</p><p>Fan Site Demo - Not Official</p></footer>
+
+        <section id="pledges" class="pledges">
+            <h2 class="section-title">THE TEN PLEDGES</h2>
+            <div class="pledge-container">
+                <div class="pledge-card hover-target"><div class="pledge-num">I</div><div class="pledge-text">这个世界禁止一切杀伤、战争与掠夺。</div></div>
+                <div class="pledge-card hover-target"><div class="pledge-num">II</div><div class="pledge-text">所有纠纷一律通过在游戏中决胜负来解决。</div></div>
+                <div class="pledge-card hover-target"><div class="pledge-num">III</div><div class="pledge-text">游戏中须赌上双方认为对等的赌注。</div></div>
+                <div class="pledge-card hover-target"><div class="pledge-num">IV</div><div class="pledge-text">在不违反第三条的情况下，游戏内容、赌注皆不限。</div></div>
+                <div class="pledge-card hover-target"><div class="pledge-num">V</div><div class="pledge-text">受挑战的一方有权决定游戏的内容。</div></div>
+                <div class="pledge-card hover-target"><div class="pledge-num">VI</div><div class="pledge-text">「向盟约宣誓」的赌注绝对要遵守。</div></div>
+                <div class="pledge-card hover-target"><div class="pledge-num">VII</div><div class="pledge-text">集团纠纷应指定全权代理人。</div></div>
+                <div class="pledge-card hover-target"><div class="pledge-num">VIII</div><div class="pledge-text">游戏中若有不正当行为，一旦败露即视同败北。</div></div>
+                <div class="pledge-card hover-target"><div class="pledge-num">IX</div><div class="pledge-text">以神之名宣布，以上各条皆为绝对不变的规则。</div></div>
+                <div class="pledge-card hover-target"><div class="pledge-num">X</div><div class="pledge-text">大家一起和平地玩吧。</div></div>
+            </div>
+        </section>
+
+        <section id="world">
+            <h2 class="section-title">WORLD DATABASE</h2>
+            <div class="world-container">
+                <div class="world-tabs">
+                    <div class="world-tab active hover-target" onclick="switchWorldTab('disboard')">DISBOARD (盘上世界)</div>
+                    <div class="world-tab hover-target" onclick="switchWorldTab('exceed')">IXSEED (十六种族)</div>
+                    <div class="world-tab hover-target" onclick="switchWorldTab('history')">ARCHIVE (古大战)</div>
+                </div>
+                <div class="world-content" id="world-display-area"></div>
+            </div>
+        </section>
+
+        <section id="characters" class="characters">
+            <h2 class="section-title">PLAYERS</h2>
+            <div class="char-gallery">
+                <div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('sora.png'); background-position: top center;"></div><div class="char-name">SORA</div><div class="char-race">Imanity</div></div><div class="char-back"><h3>空 (Sora)</h3><br><p class="char-desc">十八岁。无业、处男、沟通障碍、游戏废人。擅长策略与读心，是「空白」中的策略担当。</p></div></div></div>
+                <div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('shiro.png'); background-position: center;"></div><div class="char-name">SHIRO</div><div class="char-race">Imanity</div></div><div class="char-back"><h3>白 (Shiro)</h3><br><p class="char-desc">十一岁。空的义妹。拥有超乎常人的计算能力，只要是完全情报游戏，无人能出其右。</p></div></div></div>
+                <div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('jibril.png'); background-position: top center;"></div><div class="char-name">JIBRIL</div><div class="char-race">Flügel</div></div><div class="char-back"><h3>吉普莉尔</h3><br><p class="char-desc">位阶序列第六位。拥有极强的战斗力与知识欲，现隶属于「空白」的所有物。</p></div></div></div>
+                <div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('steph.png'); background-position: top center;"></div><div class="char-name">STEPH</div><div class="char-race">Imanity</div></div><div class="char-back"><h3>史蒂芬妮</h3><br><p class="char-desc">艾尔奇亚的前王族孙女。虽然经常被“空白”捉弄，但在政务和人际关系上支撑着整个国家。</p></div></div></div>
+                <div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('izuna.png'); background-position: top center;"></div><div class="char-name">IZUNA</div><div class="char-race">Werebeast</div></div><div class="char-back"><h3>初濑伊纲</h3><br><p class="char-desc">八岁。东部联合的大使。拥有极其敏锐的五感和名为“血坏”的身体能力突破技能。</p></div></div></div>
+                <div class="char-card hover-target"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image: url('tet.png'); background-position: top center;"></div><div class="char-name">TET</div><div class="char-race">One True God</div></div><div class="char-back"><h3>特图 (Tet)</h3><br><p class="char-desc">游戏之神，也是唯一的全权神。住在国际象棋棋子的王座上，将“空白”召唤到这个世界的始作俑者。</p></div></div></div>
+            </div>
+        </section>
+
+        <footer>
+            <p>© 2024 Yuu Kamiya, PUBLISHED BY KADOKAWA CORPORATION / NO GAME NO LIFE PARTNERS</p>
+            <p>Fan Site Demo - Not Official</p>
+        </footer>
     </div>
 
     <script>
-        // REPLACE WITH YOUR NEW DEPLOYED URL
+        // ==========================================
+        // ⚠️ 必须替换：你的 Google Apps Script URL
+        // ==========================================
         const API_URL = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec"; 
 
-        // --- UI Switcher ---
+        // --- UI Switching ---
         function switchAuth(mode) {
             const ids = ['login-form', 'register-step1', 'register-step2', 'forgot-step1', 'forgot-step2'];
             ids.forEach(id => document.getElementById(id).classList.add('hidden'));
@@ -262,12 +406,15 @@
             }
         }
 
-        // --- API Helper ---
+        // --- API Helper (Fixed CORS) ---
         async function callApi(data) {
             return fetch(API_URL, {
                 method: 'POST',
+                redirect: 'follow',
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify(data)
-            }).then(res => res.json());
+            })
+            .then(res => res.json());
         }
 
         // --- 1. Login ---
@@ -278,15 +425,27 @@
             const err = document.getElementById('error-msg');
             if(!e || !p) { err.innerText = "INPUT REQUIRED"; return; }
             btn.disabled = true; btn.innerText = "VERIFYING...";
+            err.innerText = "";
             
-            callApi({action: 'login', email: e, password: p}).then(data => {
-                if(data.status === 'success') unlockSite(data.username);
-                else { err.innerText = data.message; btn.disabled = false; btn.innerText = "LOGIN"; }
-            }).catch(() => { err.innerText = "CONNECTION ERROR"; btn.disabled = false; });
+            callApi({action: 'login', email: e, password: p})
+            .then(data => {
+                if(data.status === 'success') {
+                    unlockSite(data.username);
+                } else { 
+                    err.innerText = data.message || "LOGIN FAILED"; 
+                    btn.disabled = false; btn.innerText = "LOGIN"; 
+                    shakeBox();
+                }
+            }).catch(e => { 
+                console.log(e);
+                err.innerText = "CONNECTION ERROR"; 
+                btn.disabled = false; btn.innerText = "LOGIN";
+            });
         }
 
         // --- 2. Register Flow ---
         let tempRegData = {};
+        
         function requestRegCode() {
             const u = document.getElementById('reg-user').value;
             const e = document.getElementById('reg-email').value;
@@ -295,17 +454,23 @@
             const err = document.getElementById('error-msg');
             if(!u || !e || !p) { err.innerText = "INPUT REQUIRED"; return; }
             btn.disabled = true; btn.innerText = "SENDING...";
+            err.innerText = "";
 
-            callApi({action: 'req_reg_code', email: e}).then(data => {
+            callApi({action: 'req_reg_code', email: e})
+            .then(data => {
                 if(data.status === 'success') {
                     tempRegData = {username: u, email: e, password: p};
                     document.getElementById('register-step1').classList.add('hidden');
                     document.getElementById('register-step2').classList.remove('hidden');
-                    err.innerText = "";
+                    alert("CODE SENT TO EMAIL (Check Spam)"); 
                 } else {
                     err.innerText = data.message;
                     btn.disabled = false; btn.innerText = "GET CODE";
                 }
+            })
+            .catch(e => {
+                err.innerText = "NETWORK ERROR";
+                btn.disabled = false; btn.innerText = "GET CODE";
             });
         }
 
@@ -316,7 +481,8 @@
             if(!code) { err.innerText = "CODE REQUIRED"; return; }
             btn.disabled = true; btn.innerText = "VERIFYING...";
 
-            callApi({action: 'confirm_register', ...tempRegData, code: code}).then(data => {
+            callApi({action: 'confirm_register', ...tempRegData, code: code})
+            .then(data => {
                 if(data.status === 'success') {
                     alert("REGISTERED SUCCESSFULLY. ASCHENTE!");
                     unlockSite(data.username);
@@ -324,11 +490,16 @@
                     err.innerText = data.message;
                     btn.disabled = false; btn.innerText = "CONFIRM REGISTER";
                 }
+            })
+            .catch(e => {
+                err.innerText = "ERROR VERIFYING";
+                btn.disabled = false; btn.innerText = "CONFIRM REGISTER";
             });
         }
 
         // --- 3. Forgot Password Flow ---
         let tempResetEmail = "";
+        
         function requestResetCode() {
             const e = document.getElementById('reset-email').value;
             const btn = document.getElementById('btn-reset-code');
@@ -336,12 +507,12 @@
             if(!e) { err.innerText = "EMAIL REQUIRED"; return; }
             btn.disabled = true; btn.innerText = "SENDING...";
 
-            callApi({action: 'req_reset_code', email: e}).then(data => {
+            callApi({action: 'req_reset_code', email: e})
+            .then(data => {
                 if(data.status === 'success') {
                     tempResetEmail = e;
                     document.getElementById('forgot-step1').classList.add('hidden');
                     document.getElementById('forgot-step2').classList.remove('hidden');
-                    err.innerText = "";
                 } else {
                     err.innerText = data.message;
                     btn.disabled = false; btn.innerText = "SEND CODE";
@@ -357,7 +528,8 @@
             if(!code || !pass) { err.innerText = "INPUT REQUIRED"; return; }
             btn.disabled = true; btn.innerText = "UPDATING...";
 
-            callApi({action: 'confirm_reset', email: tempResetEmail, code: code, password: pass}).then(data => {
+            callApi({action: 'confirm_reset', email: tempResetEmail, code: code, password: pass})
+            .then(data => {
                 if(data.status === 'success') {
                     alert("PASSWORD UPDATED. PLEASE LOGIN.");
                     switchAuth('login');
@@ -368,6 +540,7 @@
             });
         }
 
+        // --- General Logic ---
         function unlockSite(username) {
             const overlay = document.getElementById('login-overlay');
             overlay.style.opacity = '0';
@@ -376,7 +549,18 @@
             setTimeout(() => { overlay.style.display = 'none'; initSite(); }, 800);
         }
 
-        // --- Site Init & Visuals (Same as V6) ---
+        function shakeBox() {
+            document.querySelector('.login-box').style.animation = "shake 0.5s";
+            setTimeout(() => { document.querySelector('.login-box').style.animation = ""; }, 500);
+        }
+
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                if (!document.getElementById('login-form').classList.contains('hidden')) handleLogin();
+            }
+        });
+
+        // --- Original Site Logic ---
         function initSite() { const loader = document.getElementById('loader'); loader.style.display = 'flex'; setTimeout(() => { loader.style.opacity = '1'; }, 10); setTimeout(() => { loader.style.opacity = '0'; setTimeout(() => { loader.style.display = 'none'; }, 1000); }, 2000); initParticles(); animate(); }
         const canvas = document.getElementById('bg-canvas'); const ctx = canvas.getContext('2d'); let width = window.innerWidth, height = window.innerHeight; canvas.width = width; canvas.height = height; const symbols = ['♔', '♕', '♖', '♗', '♘', '♙', '♠', '♥', '♦', '♣', '■', '▲']; const particles = [];
         class Particle { constructor() { this.reset(); this.y = Math.random() * height; } reset() { this.x = Math.random() * width; this.y = -20; this.speed = Math.random() * 1.5 + 0.5; this.size = Math.random() * 20 + 10; this.text = symbols[Math.floor(Math.random() * symbols.length)]; this.color = ['#ff2a6d', '#05d9e8', '#d905e8', '#ffffff'][Math.floor(Math.random() * 4)]; this.opacity = Math.random() * 0.5 + 0.1; this.rotation = Math.random() * 360; this.rotationSpeed = (Math.random() - 0.5) * 2; } update() { this.y += this.speed; this.rotation += this.rotationSpeed; if (this.y > height) this.reset(); } draw() { ctx.save(); ctx.globalAlpha = this.opacity; ctx.fillStyle = this.color; ctx.font = `${this.size}px Arial`; ctx.translate(this.x, this.y); ctx.rotate(this.rotation * Math.PI / 180); ctx.fillText(this.text, 0, 0); ctx.restore(); } }
@@ -385,6 +569,20 @@
         const worldDisplay = document.getElementById('world-display-area'); const worldData = { disboard: `<h3>DISBOARD (盘上世界)</h3><div class="world-text"><p>一切都由游戏决定的世界。在这个世界中，包括国境线在内的所有纠纷都必须通过游戏来解决。</p><br><p>这个世界由唯一神特图（Tet）所创造的“十条盟约”所约束。暴力是被绝对禁止的。</p></div>`, exceed: `<h3>IXSEED (十六种族)</h3><div class="world-text"><div class="exceed-grid"><div class="exceed-card hover-target"><div class="rank-badge">1</div><div class="race-name">Old Deus</div><div class="race-detail">神灵种</div></div><div class="exceed-card hover-target"><div class="rank-badge">6</div><div class="race-name">Flügel</div><div class="race-detail">天翼种</div></div><div class="exceed-card hover-target"><div class="rank-badge">14</div><div class="race-name">Werebeast</div><div class="race-detail">兽人种</div></div><div class="exceed-card hover-target"><div class="rank-badge">16</div><div class="race-name">Imanity</div><div class="race-detail">人类种</div></div></div></div>`, history: `<h3>ARCHIVE (古大战)</h3><div class="world-text"><p>诸神争夺唯一神宝座的远古战争，最终由特图取得星杯而结束。</p></div>` }; if(worldDisplay) worldDisplay.innerHTML = worldData.disboard; function switchWorldTab(tabName) { const tabs = document.querySelectorAll('.world-tab'); tabs.forEach(t => t.classList.remove('active')); if(tabName === 'disboard') tabs[0].classList.add('active'); if(tabName === 'exceed') tabs[1].classList.add('active'); if(tabName === 'history') tabs[2].classList.add('active'); worldDisplay.style.opacity = 0; setTimeout(() => { worldDisplay.innerHTML = worldData[tabName]; worldDisplay.style.opacity = 1; }, 200); }
         const readerOverlay = document.getElementById('novel-reader'); const readerContent = document.getElementById('reader-content'); const pageInfo = document.getElementById('page-info'); const tocList = document.getElementById('toc-list'); const bookmarkList = document.getElementById('bookmark-list'); let allLines = [], chapters = [], currentLine = 0, totalLines = 0; const LINES_PER_VIEW = 200;
         function startGame() { readerOverlay.classList.add('active'); fetch('novel.txt').then(res => { if (!res.ok) throw new Error(); return res.text(); }).then(text => processNovelData(text)).catch(() => { readerContent.innerHTML = `<div class="fallback-ui"><h2>FILE ERROR</h2><p>无法自动加载 novel.txt</p><button class="ctrl-btn hover-target" onclick="document.getElementById('file-input').click()">SELECT FILE</button></div>`; }); } function loadFromFile(input) { const file = input.files[0]; if (file) { const reader = new FileReader(); reader.onload = (e) => processNovelData(e.target.result); reader.readAsText(file, "UTF-8"); } } function processNovelData(text) { allLines = text.split('\n'); totalLines = allLines.length; currentLine = 0; generateTOC(); renderView(currentLine); renderBookmarks(); } function generateTOC() { chapters = []; tocList.innerHTML = ''; const chapterRegex = /(?:^\s*第\s*[0-9零一二三四五六七八九十百千]+\s*[章回卷节])|(?:^\s*Chapter\s*\d+)|(?:^\s*序章)|(?:^\s*终章)/i; allLines.forEach((line, index) => { if (line.length < 50 && chapterRegex.test(line)) { chapters.push({ title: line.trim(), lineIndex: index }); } }); if (chapters.length === 0) { tocList.innerHTML = '<div class="list-item">SYSTEM: No Chapter Indexes Found</div>'; } else { chapters.forEach(chap => { const div = document.createElement('div'); div.className = 'list-item hover-target'; div.innerText = chap.title; div.onclick = () => { currentLine = chap.lineIndex; renderView(currentLine); }; tocList.appendChild(div); }); } } function renderView(startLine) { if (totalLines === 0) return; if (startLine < 0) startLine = 0; if (startLine >= totalLines) startLine = totalLines - LINES_PER_VIEW; const endLine = Math.min(startLine + LINES_PER_VIEW, totalLines); const viewLines = allLines.slice(startLine, endLine); readerContent.innerHTML = viewLines.map(line => { const l = line.trim(); return l ? `<p>${l}</p>` : '<br>'; }).join(''); readerContent.scrollTop = 0; const percent = ((startLine / totalLines) * 100).toFixed(1); pageInfo.innerText = `LINE: ${startLine} / ${totalLines} | ${percent}%`; document.getElementById('prev-btn').disabled = (startLine <= 0); document.getElementById('next-btn').disabled = (endLine >= totalLines); highlightCurrentChapter(); } function changeView(dir) { const nextLine = currentLine + (dir * LINES_PER_VIEW); if (nextLine >= -LINES_PER_VIEW && nextLine < totalLines) { currentLine = nextLine; renderView(currentLine); } } function highlightCurrentChapter() { const items = tocList.getElementsByClassName('list-item'); for(let i=0; i<items.length; i++) items[i].classList.remove('active-chapter'); for (let i = chapters.length - 1; i >= 0; i--) { if (chapters[i].lineIndex <= currentLine) { if (items[i]) items[i].classList.add('active-chapter'); break; } } } function getBookmarks() { return JSON.parse(localStorage.getItem('ngnl_bookmarks_v2') || '[]'); } function addBookmark() { const bms = getBookmarks(); let previewText = ""; for(let i=0; i<5; i++) { if(allLines[currentLine+i] && allLines[currentLine+i].trim()) { previewText = allLines[currentLine+i].trim(); break; } } const preview = previewText.substring(0, 25) + "..." || "Line " + currentLine; const newBm = { id: Date.now(), lineIndex: currentLine, preview: preview, date: new Date().toLocaleDateString() }; bms.unshift(newBm); localStorage.setItem('ngnl_bookmarks_v2', JSON.stringify(bms)); renderBookmarks(); alert("MEMORY SAVED: Position Logged."); } function deleteBookmark(id, event) { event.stopPropagation(); let bms = getBookmarks().filter(b => b.id !== id); localStorage.setItem('ngnl_bookmarks_v2', JSON.stringify(bms)); renderBookmarks(); } function renderBookmarks() { const bms = getBookmarks(); bookmarkList.innerHTML = ''; if (bms.length === 0) { bookmarkList.innerHTML = '<div class="list-item">NO DATA</div>'; return; } bms.forEach(bm => { const div = document.createElement('div'); div.className = 'list-item hover-target'; div.innerHTML = `<div style="font-size:0.8rem; color:var(--primary-purple)">${bm.date}</div><div>Line ${bm.lineIndex}: ${bm.preview}</div><span class="delete-bm hover-target" onclick="deleteBookmark(${bm.id}, event)">[DEL]</span>`; div.onclick = () => { currentLine = bm.lineIndex; renderView(currentLine); }; bookmarkList.appendChild(div); }); } function switchTab(tab) { const tabs = document.querySelectorAll('.sidebar-tab'); tabs.forEach(t => t.classList.remove('active')); if (tab === 'toc') { tabs[0].classList.add('active'); tocList.style.display = 'block'; bookmarkList.style.display = 'none'; } else { tabs[1].classList.add('active'); tocList.style.display = 'none'; bookmarkList.style.display = 'block'; } } function closeReader() { readerOverlay.classList.remove('active'); setTimeout(() => { readerContent.innerHTML = ''; }, 500); }
+
+        /* KEYFRAMES FOR SHAKE */
+        const styleSheet = document.createElement("style");
+        styleSheet.innerText = `
+            @keyframes shake {
+                0% { transform: translateX(0); }
+                25% { transform: translateX(-10px); }
+                50% { transform: translateX(10px); }
+                75% { transform: translateX(-10px); }
+                100% { transform: translateX(0); }
+            }
+        `;
+        document.head.appendChild(styleSheet);
+
     </script>
 </body>
 </html>
