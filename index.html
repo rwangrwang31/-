@@ -10,9 +10,7 @@
         :root {
             --pink: #ff2a6d; --cyan: #05d9e8; --purple: #d905e8; --gold: #ffd700;
             --dark: #05010d; --glass: rgba(20, 20, 35, 0.9); --border: rgba(255, 255, 255, 0.1);
-            --rank-god: #ffd700; --rank- Flügel: #9b59b6; --rank-elf: #2ecc71; --rank-imanity: #e74c3c;
         }
-
         * { margin:0; padding:0; box-sizing:border-box; cursor:none; outline:none; user-select:none; }
         html { scroll-behavior: smooth; }
         body { background-color:var(--dark); color:white; font-family:'Noto Sans SC', sans-serif; height:100vh; overflow-x:hidden; }
@@ -21,139 +19,112 @@
         #cursor { width:25px; height:25px; border:2px solid var(--cyan); border-radius:50%; position:fixed; pointer-events:none; z-index:999999; transform:translate(-50%,-50%); transition: all 0.1s ease-out; mix-blend-mode:difference; }
         #cursor.hover { width:60px; height:60px; background:rgba(5, 217, 232, 0.2); border-color:var(--pink); }
         #cursor.click { transform:translate(-50%,-50%) scale(0.8); border-width: 4px; }
-        
         ::-webkit-scrollbar { width:8px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:linear-gradient(180deg, var(--pink), var(--purple), var(--cyan)); border-radius:4px; }
-        
         .btn { background:transparent; border:2px solid var(--cyan); color:var(--cyan); padding:10px 25px; font-family:'Orbitron', sans-serif; font-weight:bold; transition:0.3s; position:relative; overflow:hidden; text-transform:uppercase; text-shadow: 0 0 5px var(--cyan); }
         .btn:hover { background:var(--cyan); color:black; box-shadow:0 0 25px var(--cyan), inset 0 0 10px rgba(255,255,255,0.5); transform:scale(1.05) translateY(-2px); text-shadow: none; }
         .btn:disabled { border-color:#444; color:#444; cursor:not-allowed; box-shadow:none; transform:none; text-shadow:none; }
-        
         .input { width:100%; padding:14px; background:rgba(0,0,0,0.5); border:1px solid #444; color:white; font-family:'Orbitron', sans-serif; text-align:center; transition:0.3s; margin-bottom:15px; border-radius: 4px; }
         .input:focus { border-color:var(--cyan); box-shadow:0 0 15px rgba(5,217,232,0.3), inset 0 0 10px rgba(5,217,232,0.1); }
-
         .hidden { display:none !important; }
         .section-title { font-family:'Orbitron'; font-size: 2.5rem; text-align: center; margin-bottom: 50px; color: white; text-shadow: 0 0 15px var(--cyan); }
 
         /* ================= 2. 布局与背景特效 ================= */
         #app-container { transition: filter 0.5s ease-out, transform 0.5s ease-out; }
         body.auth-active #app-container { filter:blur(10px) brightness(0.4); transform: scale(0.98); pointer-events:none; }
-        
         .bg-anim { position:fixed; inset:0; z-index:-10; background:radial-gradient(circle at 50% 0%, rgba(189,0,255,0.1), transparent 60%), url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2305d9e8' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
         #canvas-bg { position:fixed; inset:0; z-index:-5; opacity:0.6; }
 
-        /* ================= 3. 登录/注册系统 ================= */
-        #auth-overlay { position:fixed; inset:0; z-index:20000; background:rgba(5,2,10,0.8); display:flex; justify-content:center; align-items:center; backdrop-filter: blur(5px); opacity:0; pointer-events:none; transition: opacity 0.5s; }
-        #auth-overlay.active { opacity:1; pointer-events:all; }
-        .auth-box { width:420px; padding:40px; background:rgba(0,0,0,0.7); border:2px solid var(--pink); box-shadow:0 0 60px rgba(255,42,109,0.4), inset 0 0 30px rgba(255,42,109,0.2); text-align:center; position:relative; animation: fadeIn 0.5s ease-out; }
+        /* ================= 3. 登录/注册系统 & Profile Viewer ================= */
+        #auth-overlay, #profile-viewer-overlay { position:fixed; inset:0; z-index:20000; background:rgba(5,2,10,0.8); display:flex; justify-content:center; align-items:center; backdrop-filter: blur(5px); opacity:0; pointer-events:none; transition: opacity 0.5s; }
+        #auth-overlay.active, #profile-viewer-overlay.active { opacity:1; pointer-events:all; }
+        .auth-box, .profile-viewer-box { width:420px; padding:40px; background:rgba(0,0,0,0.7); border:2px solid var(--pink); box-shadow:0 0 60px rgba(255,42,109,0.4), inset 0 0 30px rgba(255,42,109,0.2); text-align:center; position:relative; animation: fadeIn 0.5s ease-out; border-radius: 8px; }
         @keyframes fadeIn { from { opacity:0; transform: scale(0.9); } to { opacity:1; transform: scale(1); } }
         .auth-title { font-family:'Orbitron', sans-serif; font-size:2rem; margin-bottom:30px; color:white; text-shadow:0 0 10px var(--cyan); }
         .auth-link { font-size:0.8rem; color:#888; text-decoration:underline; margin-top:10px; display:inline-block; transition: 0.2s; }
         .auth-link:hover { color:var(--cyan); }
         .err-msg { color:var(--pink); margin-top:15px; font-family:'Orbitron'; font-size:0.8rem; min-height:20px; text-shadow: 0 0 5px var(--pink); }
 
-        /* ================= 4. 主页板块 ================= */
+        /* ================= 4. 主页板块 (角色卡片特效升级) ================= */
         nav { position:fixed; top:0; width:100%; height:70px; padding:0 40px; display:flex; justify-content:space-between; align-items:center; z-index:1000; background:rgba(5,1,10,0.8); border-bottom:1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
         .brand { font-family:'Orbitron', sans-serif; font-weight:900; font-size:1.5rem; color:white; text-shadow:0 0 10px var(--cyan), 0 0 20px var(--purple); }
         .nav-item { margin-left:30px; color:#aaa; text-decoration:none; font-family:'Orbitron'; font-size:0.9rem; transition:0.3s; position:relative; padding: 5px 0; }
         .nav-item:after { content:''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px; background: var(--cyan); transition: width 0.3s; }
         .nav-item:hover { color:var(--cyan); text-shadow:0 0 8px var(--cyan); }
         .nav-item:hover:after { width: 100%; }
-        
         .user-badge { border:2px solid var(--gold); padding:5px 15px; color:var(--gold); border-radius:4px; font-family:'Orbitron'; display:flex; gap:10px; align-items: center; transition: 0.3s; text-shadow: 0 0 8px var(--gold); }
         .user-badge:hover { background:rgba(255,215,0,0.1); box-shadow:0 0 15px rgba(255,215,0,0.3); transform: scale(1.05); }
-
         section { padding:120px 40px; max-width:1400px; margin:0 auto; }
         .hero { min-height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
         h1 { font-family:'Orbitron', sans-serif; font-size:6rem; margin-bottom:20px; text-shadow:0 0 25px var(--pink), 0 0 40px var(--purple); animation:glitch 3s infinite alternate; }
-        @keyframes glitch { 0%, 100% { text-shadow: 0 0 25px var(--pink), 0 0 40px var(--purple); } 49% { text-shadow: 0 0 25px var(--pink), 0 0 40px var(--purple); } 50% { transform: skew(-0.5deg); text-shadow: 2px 2px 0 var(--cyan), -2px -2px 0 var(--pink); } 51% { transform: skew(0.5deg); text-shadow: -2px 2px 0 var(--cyan), 2px -2px 0 var(--pink); } }
-        
-        /* Pledges */
+        @keyframes glitch { 0%, 100% { text-shadow: 0 0 25px var(--pink), 0 0 40px var(--purple); } 50% { transform: skew(-0.5deg); text-shadow: 2px 2px 0 var(--cyan), -2px -2px 0 var(--pink); } 51% { transform: skew(0.5deg); text-shadow: -2px 2px 0 var(--cyan), 2px -2px 0 var(--pink); } }
         .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(350px, 1fr)); gap:25px; }
-        .card { background:var(--glass); border:1px solid var(--border); padding:25px; border-radius:10px; transition:0.4s ease-out; position:relative; overflow:hidden; }
-        .card:hover { transform:translateY(-10px) scale(1.02); border-color:var(--cyan); box-shadow:0 10px 30px rgba(5,217,232,0.2); }
-        .card-num { font-family:'Orbitron'; font-size:5rem; opacity:0.08; position:absolute; right:15px; top: 5px; font-weight:900; transition: 0.4s; }
-        .card:hover .card-num { opacity: 0.2; transform: rotate(-5deg); color: var(--cyan); }
-        .card-title { font-family: 'ZCOOL XiaoWei', serif; font-size: 1.5rem; color: var(--pink); margin-bottom: 10px; }
-        
-        /* World (Ixseed) */
         .chess-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:20px; margin-top:30px; }
-        .piece { height:240px; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:20px; border-radius:8px; display:flex; flex-direction:column; justify-content:flex-end; position:relative; overflow:hidden; transition:0.4s; }
-        .piece:hover { transform:scale(1.08); background:rgba(255,255,255,0.08); z-index:5; box-shadow:0 10px 40px rgba(0,0,0,0.5); }
-        .p-icon { position:absolute; bottom:-30px; right:-30px; font-size:10rem; opacity:0.05; transition:0.5s; font-family: initial; }
-        .piece:hover .p-icon { opacity:0.15; transform:rotate(-15deg) scale(1.1); }
-        .p-rank { font-family: 'Orbitron'; font-size: 1.2rem; }
-        .p-name { font-size: 1.5rem; font-weight: bold; }
-        .p-jname { color: #aaa; }
-        .rank-1 { border-color:var(--gold); box-shadow:inset 0 0 25px rgba(255,215,0,0.2); } .rank-1 .p-name { color:var(--gold); }
-        .rank-16:hover { animation:rainbow-border 2s infinite; border-color:white; }
-        @keyframes rainbow-border { 0%{box-shadow:0 0 15px var(--pink);} 50%{box-shadow:0 0 15px var(--cyan);} 100%{box-shadow:0 0 15px var(--purple);} }
 
-        /* Players */
-        .char-gallery { display:flex; justify-content:center; gap:30px; flex-wrap:wrap; }
-        .char { width:260px; height:380px; perspective:1000px; }
-        .char-in { width:100%; height:100%; transition:0.6s; transform-style:preserve-3d; position:relative; }
-        .char:hover .char-in { transform:rotateY(180deg); }
-        .c-front, .c-back { position:absolute; inset:0; backface-visibility:hidden; border-radius:15px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(145deg, #1a1025, #050505); border:1px solid var(--border); box-shadow:0 10px 30px rgba(0,0,0,0.5); }
-        .c-back { transform:rotateY(180deg); background:linear-gradient(135deg, var(--pink), #2a0e36); padding:20px; text-align:center; }
-        .c-av { width:150px; height:150px; border-radius:50%; border:4px solid white; background-size:cover; background-position:center; margin-bottom:20px; box-shadow:0 0 25px var(--cyan), 0 0 40px var(--purple); transition: 0.4s; }
+        /* 角色卡片特效 */
+        .char-gallery { display:flex; justify-content:center; gap:40px; flex-wrap:wrap; }
+        .char { width:280px; height:400px; perspective:1500px; transform-style: preserve-3d; }
+        .char-in { width:100%; height:100%; transition: transform 0.8s, box-shadow 0.5s; transform-style:preserve-3d; position:relative; }
+        .char:hover .char-in { transform: rotateY(180deg); }
+        .c-front, .c-back { position:absolute; inset:0; backface-visibility:hidden; border-radius:15px; overflow: hidden; transform-style: preserve-3d; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(145deg, #1a1025, #050505); border:1px solid var(--border); box-shadow:0 10px 30px rgba(0,0,0,0.5); }
+        .c-back { transform:rotateY(180deg); background:linear-gradient(135deg, var(--purple), #1f0c29); padding:20px; text-align:center; }
+        .c-av-wrapper { width: 100%; height: 100%; position: absolute; transition: transform 0.5s ease-out; }
+        .c-av { width: 100%; height: 100%; background-size: cover; background-position: center; transition: transform 0.5s ease-out; }
         .char:hover .c-av { transform: scale(1.1); }
-        .char-name { font-family: 'Orbitron'; font-size: 1.5rem; }
-        .char-race { color: var(--cyan); }
+        .char:hover .c-front { border-color: var(--cyan); box-shadow: 0 0 25px rgba(5,217,232,0.3), 0 0 10px rgba(255,42,109,0.2) inset; }
+        .c-front-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 10%, transparent 50%); padding: 20px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+        .char-name { font-family: 'Orbitron'; font-size: 1.8rem; text-shadow: 0 2px 10px black; color: #fff; }
+        .char-race { color: var(--cyan); text-shadow: 0 2px 5px black; }
         .char-desc { font-size: 0.9rem; color: #ddd; margin-top: 15px; }
 
-        /* ================= 5. USER SYSTEM (重制) ================= */
-        #user-overlay { position:fixed; inset:0; z-index:8000; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; opacity:0; pointer-events:none; transition:0.5s; backdrop-filter: blur(8px); }
-        #user-overlay.active { opacity:1; pointer-events:all; }
-        .profile-ui { width:1000px; height:650px; background:#111; border:1px solid var(--cyan); display:flex; border-radius:10px; overflow:hidden; box-shadow:0 0 50px rgba(5,217,232,0.2); transform: scale(0.9); transition: transform 0.5s; }
+        /* ================= 5. USER SYSTEM (UI重制) ================= */
+        #user-overlay { backdrop-filter: blur(8px); }
+        .profile-ui { width:1000px; height:650px; background-color: #0d0d18; background-image: linear-gradient(45deg, rgba(5, 217, 232, 0.05) 25%, transparent 25%, transparent 75%, rgba(5, 217, 232, 0.05) 75%, rgba(5, 217, 232, 0.05)), linear-gradient(45deg, rgba(5, 217, 232, 0.05) 25%, transparent 25%, transparent 75%, rgba(5, 217, 232, 0.05) 75%, rgba(5, 217, 232, 0.05)); background-size: 60px 60px; background-position: 0 0, 30px 30px; border:1px solid var(--cyan); display:flex; border-radius:10px; overflow:hidden; box-shadow:0 0 50px rgba(5,217,232,0.2); transform: scale(0.9); transition: transform 0.5s; }
         #user-overlay.active .profile-ui { transform: scale(1); }
-        
-        .p-side { width:280px; background:rgba(0,0,0,0.5); border-right:1px solid #333; display:flex; flex-direction:column; }
+        .p-side { width:300px; background:rgba(0,0,0,0.5); border-right:1px solid #333; display:flex; flex-direction:column; }
         .p-head { padding:20px; border-bottom:1px solid #333; font-family:'Orbitron'; color:var(--pink); display:flex; justify-content:space-between; align-items: center; }
-        .p-head .btn { padding: 5px 10px; font-size: 0.8rem; }
         .f-list { flex:1; overflow-y:auto; }
-        .f-item { padding:15px; border-bottom:1px solid #222; display:flex; align-items:center; gap:10px; transition:0.2s; position: relative; }
+        .f-item { padding:15px 20px; border-bottom:1px solid #222; display:flex; align-items:center; gap:10px; transition:0.2s; position: relative; }
         .f-item:hover, .f-item.active { background:linear-gradient(90deg, rgba(5,217,232,0.2), transparent); border-right:3px solid var(--cyan); }
         .f-name { flex: 1; }
         .f-status { font-size: 0.7rem; color: #888; }
         .f-actions { display: flex; gap: 5px; }
         .f-actions .btn { padding: 3px 8px; font-size: 0.7rem; border-width: 1px; }
-
-        .p-content { flex:1; display:flex; flex-direction:column; background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><path d="M.5 20v-1M20 .5h1M39.5 20v1M20 39.5h-1" stroke-width="1" stroke="rgba(255,255,255,0.05)"/></svg>'); }
-        /* Stats View */
-        .stats-view { padding:40px; text-align:center; animation: fadeIn 0.5s; }
-        .big-av { width:120px; height:120px; border-radius:50%; background:#333; border:3px solid var(--gold); margin:0 auto 20px; box-shadow: 0 0 20px var(--gold); }
-        .stat-grid { display:flex; justify-content:center; gap:20px; margin:30px 0; }
-        .stat-box { background:rgba(255,255,255,0.05); padding:20px; border-radius:8px; width:140px; text-align:center; border: 1px solid #333; transition: 0.3s; }
-        .stat-box:hover { transform: translateY(-5px); background:rgba(255,255,255,0.1); }
-        /* Chat View */
-        .chat-view { display:flex; flex-direction:column; height:100%; animation: fadeIn 0.5s; }
+        .p-content { flex:1; display:flex; flex-direction:column; position: relative; }
+        .view { position: absolute; inset: 0; padding: 40px; transition: opacity 0.4s, transform 0.4s; }
+        .view.hidden { opacity: 0; pointer-events: none; transform: scale(0.98); }
+        .stats-view h2 { font-family: 'Orbitron'; font-size: 2.5rem; color: var(--pink); text-shadow: 0 0 10px var(--pink); }
+        .stat-box { background:rgba(255,255,255,0.05); padding:20px; border-radius:8px; width:100%; text-align:center; border: 1px solid #333; transition: 0.3s; }
+        .exp-bar { width: 100%; height: 20px; background: #222; border-radius: 10px; margin: 10px 0; overflow: hidden; border: 1px solid #444; padding: 2px; }
+        .exp-fill { height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--cyan), var(--purple)); box-shadow: 0 0 10px var(--cyan); transition: width 0.8s ease-out; }
+        .exp-text { font-family: 'Orbitron'; color: #ccc; text-align: right; }
+        .chat-view { display:flex; flex-direction:column; height:100%; }
         .chat-header { padding: 15px; border-bottom: 1px solid #333; font-family: 'Orbitron'; font-size: 1.2rem; color: var(--cyan); }
         .chat-box { flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:15px; }
-        .msg { max-width:70%; padding:10px 15px; border-radius:15px; font-size:0.9rem; line-height: 1.4; position: relative; animation: msg-in 0.3s; }
-        @keyframes msg-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .msg { max-width:70%; padding:10px 15px; border-radius:15px; font-size:0.9rem; line-height: 1.4; position: relative; }
         .msg.me { align-self:flex-end; background:linear-gradient(45deg, var(--cyan), #00b8c5); color:black; border-bottom-right-radius: 3px; }
         .msg.them { align-self:flex-start; background:#333; border:1px solid #444; border-bottom-left-radius: 3px; }
-        .chat-input { height:60px; border-top:1px solid #333; padding:10px; display:flex; gap:10px; background:rgba(0,0,0,0.5); }
 
-        /* ================= 6. NOVEL READER & DISCUSSION ================= */
+        /* ================= 6. NOVEL READER (段评功能) ================= */
         .modal-layer { position:fixed; inset:0; z-index:9000; background:rgba(5,5,10,0.98); display:flex; flex-direction:column; opacity:0; pointer-events:none; transition: all 0.5s; backdrop-filter: blur(5px); }
         .modal-layer.active { opacity:1; pointer-events:all; }
         .m-head { height:60px; background:rgba(0,0,0,0.5); border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center; padding:0 30px; flex-shrink: 0; }
-        .m-title { font-family: 'Orbitron'; color: var(--cyan); font-size: 1.2rem; }
-        .m-body { flex:1; display:flex; overflow:hidden; }
-
-        /* Reader: TOC Sidebar */
-        .r-side-l { width:280px; background:rgba(0,0,0,0.3); border-right:1px solid #333; display:flex; flex-direction:column; }
-        .toc-item:hover { color:white; background:rgba(5,217,232,0.1); border-left:3px solid var(--cyan); padding-left: 12px; }
-        /* Reader: Text Area */
-        .r-text-area { flex:1; display:flex; flex-direction:column; position:relative; }
-        .r-content { flex:1; overflow-y:auto; padding:50px 8%; font-family:'ZCOOL XiaoWei', serif; font-size:1.5rem; line-height:2.4; color:#ddd; }
-        /* Reader: Comment Sidebar */
-        .r-side-r.open { width:360px; }
-        /* Discussion Page */
-        #discussion-page { padding: 40px; overflow-y: auto; max-width: 900px; margin: 0 auto; width: 100%; }
-        .d-card { background:rgba(255,255,255,0.02); border:1px solid #333; padding:20px; margin-bottom:20px; border-radius: 8px; transition: 0.3s; }
-        .d-card:hover { border-color: var(--purple); box-shadow: 0 0 15px rgba(217, 5, 232, 0.1); }
+        .m-body { flex:1; display:flex; overflow:hidden; position: relative; }
+        .r-text-area { flex:1; overflow-y:auto; padding: 50px 8%; font-family:'ZCOOL XiaoWei', serif; font-size:1.5rem; line-height:2.4; color:#ddd; scroll-behavior: smooth; }
+        .line { position:relative; padding-right: 40px; transition: background-color 0.2s; }
+        .line:hover { background:rgba(255,255,255,0.05); }
+        .comment-bubble { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: all 0.3s; }
+        .line:hover .comment-bubble { opacity: 1; transform: translateY(-50%) scale(1.1); }
+        .comment-bubble:hover { background: var(--cyan); color: black; transform: translateY(-50%) scale(1.2); }
+        .comment-icon { font-family: initial; font-size: 1.2rem; }
+        .comment-count { font-family: 'Orbitron'; font-size: 0.7rem; position: absolute; top: -5px; right: -5px; background: var(--pink); border-radius: 50%; width: 16px; height: 16px; line-height: 16px; text-align: center; box-shadow: 0 0 5px var(--pink); }
+        .r-side-r { position: absolute; top: 0; right: 0; width: 380px; height: 100%; background: #0a0a0a; border-left: 1px solid #333; transform: translateX(100%); transition: transform 0.4s ease-out; display: flex; flex-direction: column; z-index: 10; }
+        .r-side-r.open { transform: translateX(0); box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
+        .cmt-header { padding: 15px; border-bottom: 1px solid #333; font-family:'Orbitron'; color: var(--pink); display: flex; justify-content: space-between; align-items: center; }
+        .cmt-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .cmt-card { background: #1a1a1a; padding: 12px; margin-bottom: 8px; border-radius: 5px; border-left: 2px solid transparent; transition: border-color 0.3s; }
+        .cmt-card:hover { border-color: var(--cyan); }
+        .mention-link { color: var(--cyan); text-decoration: none; font-weight: bold; }
+        .mention-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body id="body">
@@ -163,14 +134,12 @@
     <div id="auth-overlay">
         <div class="auth-box">
             <h2 id="auth-head" class="auth-title">SYSTEM LOGIN</h2>
-            <!-- Login Form -->
             <div id="form-login">
                 <input id="login-email" class="input" type="email" placeholder="EMAIL">
                 <input id="login-pass" type="password" class="input" placeholder="PASSWORD">
                 <button class="btn" style="width:100%" onclick="auth.login()">CONNECT</button>
                 <div class="auth-link" onclick="ui.switchAuth('register')">New Player? Register</div>
             </div>
-            <!-- Register Form Step 1 -->
             <div id="form-register" class="hidden">
                 <input id="reg-user" class="input" placeholder="USERNAME">
                 <input id="reg-email" class="input" type="email" placeholder="EMAIL">
@@ -178,11 +147,10 @@
                 <button id="reg-code-btn" class="btn" style="width:100%" onclick="auth.requestCode()">GET CODE</button>
                 <div class="auth-link" onclick="ui.switchAuth('login')">Already a Player? Login</div>
             </div>
-            <!-- Register Form Step 2 -->
             <div id="form-confirm" class="hidden">
-                <p style="color:#888; font-size:0.8rem; margin-bottom:10px;">Code sent to your email. (Test code: 123456)</p>
+                <p style="color:#888; font-size:0.8rem; margin-bottom:10px;">Code sent. (Test code: 123456)</p>
                 <input id="reg-code" class="input" placeholder="VERIFICATION CODE">
-                <button class="btn" style="width:100%" onclick="auth.register()">CONFIRM REGISTRATION</button>
+                <button class="btn" style="width:100%" onclick="auth.register()">CONFIRM</button>
                  <div class="auth-link" onclick="ui.switchAuth('register')">Back</div>
             </div>
             <div id="auth-msg" class="err-msg"></div>
@@ -193,76 +161,54 @@
     <div id="app-container">
         <div class="bg-anim"></div>
         <canvas id="canvas-bg"></canvas>
-        
         <nav>
             <div class="brand">DISBOARD</div>
             <div class="nav-links">
                 <a href="#hero" class="nav-item">HOME</a>
-                <a href="#pledges" class="nav-item">PLEDGES</a>
-                <a href="#world" class="nav-item">WORLD</a>
-                <a href="#players" class="nav-item">PLAYERS</a>
-                <a href="#" onclick="ui.showModal('discussion-layer'); return false;" class="nav-item">DISCUSSION</a>
+                <a href="#" onclick="ui.showModal('reader-layer'); return false;" class="nav-item">ARCHIVE</a>
+                <a href="#" onclick="ui.showModal('discussion-layer'); return false;" class="nav-item">FORUM</a>
             </div>
             <div class="user-badge" onclick="ui.showModal('user-overlay')">
                 <span id="hud-username">GUEST</span>
                 <span id="hud-coins">🪙 0</span>
             </div>
         </nav>
-
         <header id="hero" class="hero">
             <h1>NO GAME NO LIFE</h1>
-            <p style="color:#aaa; letter-spacing:2px; margin-bottom:40px;">『さあ、ゲームを始めよう』— "Now, let the games begin."</p>
+            <p style="color:#aaa; letter-spacing:2px; margin-bottom:40px;">『さあ、ゲームを始めよう』</p>
             <button class="btn" onclick="ui.showModal('reader-layer')">READ NOVEL</button>
         </header>
-
-        <section id="pledges">
-            <h2 class="section-title">THE TEN PLEDGES</h2>
-            <div id="pledge-grid" class="grid"></div>
-        </section>
-
-        <section id="world">
-            <h2 class="section-title">IXSEED (THE 16 RACES)</h2>
-            <div class="chess-grid" id="race-grid"></div>
-        </section>
-
         <section id="players">
             <h2 class="section-title">MAIN PLAYERS</h2>
             <div class="char-gallery" id="char-grid"></div>
         </section>
-        
-        <footer style="text-align:center; padding: 40px; color: #555; font-family: 'Orbitron';">
-            <p>DISBOARD SYSTEM v31.0 - All rights reserved to their respective owners.</p>
-        </footer>
+        <footer style="text-align:center; padding: 40px; color: #555; font-family: 'Orbitron';"><p>DISBOARD SYSTEM v32.1</p></footer>
     </div>
 
     <!-- 3. USER PROFILE MODAL -->
     <div id="user-overlay" class="modal-layer">
         <div class="profile-ui">
             <div class="p-side">
-                <div class="p-head">
-                    <span>SOCIAL</span> 
-                    <button class="btn" onclick="social.addFriend()">+</button>
-                </div>
+                <div class="p-head"><span>SOCIAL</span><button class="btn" onclick="social.addFriend()">+</button></div>
                 <div id="friend-list" class="f-list"></div>
-                 <div style="padding: 10px; border-top: 1px solid #333;">
-                    <button class="btn" style="width: 100%; border-color:var(--pink); color:var(--pink)" onclick="auth.logout()">LOGOUT</button>
-                 </div>
+                <div style="padding: 10px; border-top: 1px solid #333;"><button class="btn" style="width: 100%; border-color:var(--pink); color:var(--pink)" onclick="auth.logout()">LOGOUT</button></div>
             </div>
             <div class="p-content">
-                <!-- My Stats View -->
-                <div id="view-stats" class="stats-view">
-                    <div class="big-av" id="profile-avatar"></div>
-                    <h2 id="profile-name" style="color:var(--pink); font-family:'Orbitron'"></h2>
-                    <div class="stat-grid">
-                        <div class="stat-box"><div style="font-size:0.8rem; color:#888">RANK</div><div id="profile-rank" style="font-size:1.5rem"></div></div>
-                        <div class="stat-box"><div style="font-size:0.8rem; color:#888">EXP</div><div id="profile-exp" style="font-size:1.5rem"></div></div>
-                        <div class="stat-box"><div style="font-size:0.8rem; color:#888">COINS</div><div id="profile-coins" style="font-size:1.5rem"></div></div>
+                <div id="view-stats" class="view">
+                    <h2 id="profile-name"></h2>
+                    <p id="profile-bio" style="color:#aaa; margin-top:10px; min-height: 40px;"></p>
+                    <div class="stat-grid" style="margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="stat-box"><div>RANK</div><div id="profile-rank" style="font-size: 2rem;"></div></div>
+                        <div class="stat-box"><div>COINS</div><div id="profile-coins" style="font-size: 2rem;"></div></div>
                     </div>
-                    <p id="profile-bio" style="color:#aaa; max-width: 400px; margin: 0 auto;"></p>
-                    <button class="btn" style="margin-top:30px;" onclick="ui.hideAllModals()">CLOSE</button>
+                    <div style="margin-top: 20px;">
+                        <div class="exp-text">EXP</div>
+                        <div class="exp-bar"><div id="profile-exp-fill" class="exp-fill"></div></div>
+                        <div id="profile-exp-text" class="exp-text"></div>
+                    </div>
+                    <button class="btn" style="position:absolute; bottom:40px; left: 50%; transform: translateX(-50%);" onclick="ui.hideAllModals()">CLOSE</button>
                 </div>
-                <!-- Chat View -->
-                <div id="view-chat" class="chat-view hidden">
+                <div id="view-chat" class="view hidden">
                     <div id="chat-header" class="chat-header"></div>
                     <div id="chat-box" class="chat-box"></div>
                     <div class="chat-input">
@@ -276,61 +222,66 @@
 
     <!-- 4. NOVEL READER MODAL -->
     <div id="reader-layer" class="modal-layer">
-        <div class="m-head">
-            <span class="m-title">ARCHIVE</span>
-            <div>
-                <input type="file" id="file-input" accept=".txt" class="hidden" onchange="reader.loadFile(event)">
-                <button class="btn" onclick="document.getElementById('file-input').click()">LOAD TXT</button>
-                <button class="btn" style="border-color:var(--pink); color:var(--pink); margin-left: 10px;" onclick="ui.hideAllModals()">EXIT</button>
+        <div class="m-head"><span class="m-title">ARCHIVE</span><button class="btn" style="border-color:var(--pink); color:var(--pink);" onclick="ui.hideAllModals()">EXIT</button></div>
+        <div class="m-body">
+            <div id="reader-text-area" class="r-text-area"><p style="text-align:center; color: #888; margin-top: 50px;">Loading novel...</p></div>
+            <div id="reader-comment-sidebar" class="r-side-r">
+                <div class="cmt-header"><span id="cmt-header-title">COMMENTS</span><button onclick="reader.closeCommentSidebar()" style="background:none; border:none; color:white; font-size:1.2rem; float:right;">×</button></div>
+                <div id="cmt-list" class="cmt-list"></div>
+                <div class="cmt-input-box" style="padding:10px; border-top:1px solid #333;">
+                    <textarea id="cmt-input" class="input" rows="3" placeholder="Add a comment..."></textarea>
+                    <button class="btn" style="width:100%; margin-top:5px;" onclick="reader.postComment()">POST</button>
+                </div>
             </div>
-        </div>
-        <div id="reader-body" class="m-body">
-             <div class="r-text-area" style="width: 100%; justify-content: center; align-items: center; text-align: center;">
-                <p style="font-size: 1.5rem; color: #888;">Please load a .txt novel file to begin reading.</p>
-             </div>
         </div>
     </div>
 
-    <!-- 5. DISCUSSION MODAL -->
+    <!-- 5. OTHER USER PROFILE VIEWER -->
+    <div id="profile-viewer-overlay" class="modal-layer">
+        <div class="profile-viewer-box">
+             <div id="profile-viewer-content"></div>
+             <button class="btn" style="margin-top: 20px;" onclick="document.getElementById('profile-viewer-overlay').classList.remove('active')">CLOSE</button>
+        </div>
+    </div>
+
+    <!-- 6. DISCUSSION MODAL -->
     <div id="discussion-layer" class="modal-layer">
         <div class="m-head">
-            <span class="m-title">DISCUSSION FORUM</span>
+            <span class="m-title">FORUM</span>
             <button class="btn" style="border-color:var(--pink); color:var(--pink);" onclick="ui.hideAllModals()">CLOSE</button>
         </div>
-        <div class="m-body">
-            <div id="discussion-page">
-                <div class="post-box" style="margin-bottom: 40px;">
-                    <textarea id="discussion-input" class="input" rows="3" style="text-align:left; margin:0;" placeholder="Join the discussion..."></textarea>
-                    <button class="btn" style="width: 100%; margin-top: 10px;" onclick="community.postDiscussion()">POST (+10 EXP, +2 COINS)</button>
-                </div>
-                <div id="discussion-list"></div>
-            </div>
+        <div class="m-body" style="display: block; padding: 20px; overflow-y: auto;">
+            <!-- Discussion content goes here -->
         </div>
     </div>
-
+    
 <script>
-    // =================================================
-    // NGNL SYSTEM FRONTEND v31.1 (ULTIMATE & UNIFIED)
-    // =================================================
+    // ==========================================================
+    // NGNL SYSTEM FRONTEND v32.1 (ULTIMATE & UNABRIDGED)
+    // ==========================================================
     
-    // --- ⚠️ CONFIGURATION ---
-    const API_URL = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec"; // ！！！请务必替换成你自己的后端URL ！！！
+    const API_URL = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec";
     
-    // --- STATE MANAGEMENT ---
     const state = {
         user: { name: "Guest", rank: 16, exp: 0, coins: 0, bio: "", avatar: "" },
         isLoggedIn: false,
         activeChat: null,
-        currentNovelLine: -1,
+        novel: {
+            lines: [],
+            comments: {}, // Format: { lineIndex: [commentObj, ...] }
+            activeCommentLine: -1,
+        }
     };
     
-    // --- API HELPER ---
     async function apiRequest(payload) {
-        if (!API_URL.startsWith('https://')) {
-            ui.showAuthError("API URL is not configured. Please paste your Google Script URL in the script.");
+        if (!API_URL.startsWith('https')) {
+            const errorTarget = document.getElementById('auth-msg');
+            if (errorTarget && !state.isLoggedIn) {
+                errorTarget.innerText = "API URL is not configured in the script.";
+            }
+            console.error("API URL is not configured.");
             return { status: 'error', message: 'API URL not configured.' };
         }
-        // Add the current user to the payload if logged in, for actions that need it
         if (state.isLoggedIn) {
             payload.username = state.user.name;
         }
@@ -349,12 +300,10 @@
             return result;
         } catch (error) {
             console.error("API Error:", error);
-            ui.showAuthError("Network or Server Error. Check console (F12) for details.");
             return { status: 'error', message: 'Network or server error.' };
         }
     }
 
-    // --- MODULE: UI ---
     const ui = {
         elements: {
             authOverlay: document.getElementById('auth-overlay'),
@@ -364,7 +313,7 @@
             hudCoins: document.getElementById('hud-coins'),
         },
         showModal(modalId) {
-            if (!state.isLoggedIn && modalId !== 'auth-overlay') {
+            if (!state.isLoggedIn && !['auth-overlay', 'profile-viewer-overlay'].includes(modalId)) {
                 alert("Please log in to access this feature.");
                 this.elements.body.classList.add('auth-active');
                 this.elements.authOverlay.classList.add('active');
@@ -372,10 +321,12 @@
             }
             this.hideAllModals();
             const modal = document.getElementById(modalId);
-            modal.classList.add('active');
-            // Specific actions on modal open
+            if(modal) modal.classList.add('active');
+            
             if (modalId === 'user-overlay') social.init();
-            if (modalId === 'discussion-layer') community.loadDiscussions();
+            if (modalId === 'discussion-layer') {
+                // Future implementation: community.loadDiscussions();
+            }
         },
         hideAllModals() {
             document.querySelectorAll('.modal-layer').forEach(m => m.classList.remove('active'));
@@ -386,7 +337,9 @@
             document.getElementById('auth-head').innerText = view === 'login' ? 'SYSTEM LOGIN' : 'PLAYER REGISTRATION';
             this.elements.authMsg.innerText = '';
         },
-        showAuthError(msg) { this.elements.authMsg.innerText = msg; },
+        showAuthError(msg) {
+            this.elements.authMsg.innerText = msg;
+        },
         updateHUD() {
             this.elements.hudUsername.innerText = state.user.name.toUpperCase();
             this.elements.hudCoins.innerText = `🪙 ${state.user.coins}`;
@@ -394,13 +347,38 @@
         updateProfileView() {
             document.getElementById('profile-name').innerText = state.user.name;
             document.getElementById('profile-rank').innerText = state.user.rank;
-            document.getElementById('profile-exp').innerText = `${state.user.exp} / 100`;
-            document.getElementById('profile-coins').innerText = state.user.coins;
+            document.getElementById('profile-coins').innerText = `🪙 ${state.user.coins}`;
             document.getElementById('profile-bio').innerText = state.user.bio;
+            const expPercent = state.user.exp;
+            document.getElementById('profile-exp-fill').style.width = `${expPercent}%`;
+            document.getElementById('profile-exp-text').innerText = `${state.user.exp} / 100`;
         },
+        showOtherUserProfile(username) {
+            if (username === state.user.name) {
+                ui.showModal('user-overlay');
+                return;
+            }
+            const container = document.getElementById('profile-viewer-content');
+            container.innerHTML = `<p>Loading ${username}'s profile...</p>`;
+            document.getElementById('profile-viewer-overlay').classList.add('active');
+            apiRequest({ action: 'get_profile', target_user: username }).then(res => {
+                if (res.status === 'success') {
+                    const p = res.profile;
+                    container.innerHTML = `
+                        <h2 style="color:var(--cyan); font-family:'Orbitron'">${p.username}</h2>
+                        <p style="color:#aaa; margin-top:10px;">${p.bio}</p>
+                        <div class="stat-grid" style="margin-top:20px; display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                            <div class="stat-box"><div>RANK</div><div style="font-size:1.5rem">${p.rank}</div></div>
+                            <div class="stat-box"><div>COINS</div><div style="font-size:1.5rem">🪙 ${p.coins}</div></div>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `<p style="color:var(--pink);">${res.message}</p>`;
+                }
+            });
+        }
     };
 
-    // --- MODULE: AUTHENTICATION ---
     const auth = {
         tempRegData: {},
         async login() {
@@ -409,7 +387,7 @@
             if (!email || !password) return ui.showAuthError("Email and password are required.");
             
             ui.showAuthError("Connecting...");
-            const res = await apiRequest({ action: 'login', email, password });
+            const res = await apiRequest({ action: 'login', email: email, password: password });
             if (res.status === 'success') {
                 state.user = { name: res.username, rank: res.level, exp: res.exp, coins: res.coins, bio: res.bio, avatar: res.avatar };
                 state.isLoggedIn = true;
@@ -426,21 +404,20 @@
             const user = document.getElementById('reg-user').value.trim();
             const email = document.getElementById('reg-email').value.trim();
             const pass = document.getElementById('reg-pass').value;
-            if(!user || !email || !pass) return ui.showAuthError("All fields are required.");
-            if(pass.length < 6) return ui.showAuthError("Password must be at least 6 characters long.");
+            if (!user || !email || !pass) return ui.showAuthError("All fields are required.");
 
             const codeBtn = document.getElementById('reg-code-btn');
             codeBtn.disabled = true;
             codeBtn.innerText = "REQUESTING...";
             ui.showAuthError("Requesting code...");
 
-            const res = await apiRequest({ action: 'request_code', email });
+            const res = await apiRequest({ action: 'request_code', email: email });
             
             codeBtn.disabled = false;
             codeBtn.innerText = "GET CODE";
 
-            if(res.status === 'success') {
-                this.tempRegData = { user, email, pass };
+            if (res.status === 'success') {
+                this.tempRegData = { user: user, email: email, pass: pass };
                 ui.switchAuth('confirm');
                 alert(res.message);
             } else {
@@ -449,7 +426,7 @@
         },
         async register() {
             const code = document.getElementById('reg-code').value.trim();
-            if(!code) return ui.showAuthError("Verification code is required.");
+            if (!code) return ui.showAuthError("Verification code is required.");
             
             ui.showAuthError("Registering...");
             const payload = {
@@ -460,22 +437,21 @@
                 code: code
             };
             const res = await apiRequest(payload);
-            if(res.status === 'success') {
-                alert("Registration successful! 『Welcome to Disboard!』 Please log in.");
+            if (res.status === 'success') {
+                alert("Registration successful! Please log in.");
                 ui.switchAuth('login');
             } else {
                 ui.showAuthError(res.message);
             }
         },
         logout() {
-            if(confirm("Are you sure you want to log out?")) {
+            if (confirm("Are you sure you want to log out?")) {
                 sessionStorage.removeItem('ngnlUser');
                 window.location.reload();
             }
         }
     };
-    
-    // --- MODULE: SOCIAL & FRIENDS ---
+
     const social = {
         init() {
             this.loadFriends();
@@ -522,10 +498,10 @@
         },
         async addFriend() {
             const name = prompt("Enter the player's name to send a friend request:");
-            if(name && name.trim()) {
+            if (name && name.trim()) {
                 const res = await apiRequest({ action: 'add_friend', target_user: name.trim() });
                 alert(res.message);
-                if(res.status === 'success') this.loadFriends();
+                if (res.status === 'success') this.loadFriends();
             }
         },
         startChat(target, event) {
@@ -542,7 +518,7 @@
             const box = document.getElementById('chat-box');
             box.innerHTML = "Loading messages...";
             const res = await apiRequest({ action: 'get_messages', target_user: state.activeChat });
-            if(res.status === 'success' && res.data) {
+            if (res.status === 'success' && res.data) {
                 box.innerHTML = res.data.map(m => `<div class="msg ${m.sender === state.user.name ? 'me' : 'them'}">${m.content}</div>`).join('') || "No messages yet. Say hi!";
                 box.scrollTop = box.scrollHeight;
             }
@@ -551,151 +527,141 @@
             const input = document.getElementById('msg-input');
             const content = input.value.trim();
             if (!content || !state.activeChat) return;
-            // Optimistic UI update
             const box = document.getElementById('chat-box');
             box.innerHTML += `<div class="msg me">${content}</div>`;
             box.scrollTop = box.scrollHeight;
             input.value = "";
-
-            await apiRequest({ action: 'send_message', target_user: state.activeChat, content });
-            // Don't need to reload, message already shown
+            await apiRequest({ action: 'send_message', target_user: state.activeChat, content: content });
+        }
+    };
+    
+    const reader = {
+        async init() {
+            const textArea = document.getElementById('reader-text-area');
+            try {
+                const [novelResponse, commentRes] = await Promise.all([
+                    fetch('novel.txt'),
+                    apiRequest({ action: 'get_all_comments' })
+                ]);
+                if (!novelResponse.ok) throw new Error('novel.txt not found. Please create it in your GitHub repository.');
+                const text = await novelResponse.text();
+                state.novel.lines = text.split('\n');
+                if (commentRes.status === 'success') {
+                    state.novel.comments = commentRes.data;
+                }
+                this.renderNovel();
+            } catch (error) {
+                textArea.innerHTML = `<p style="text-align:center; color:var(--pink);">${error.message}</p>`;
+            }
+        },
+        renderNovel() {
+            const textArea = document.getElementById('reader-text-area');
+            textArea.innerHTML = state.novel.lines.map((line, index) => {
+                if (!line.trim()) return '<br>';
+                const commentCount = state.novel.comments[index] ? state.novel.comments[index].length : 0;
+                return `<div class="line" data-line-index="${index}">${line}<div class="comment-bubble" onclick="reader.openCommentSidebar(${index})"><span class="comment-icon">♟</span>${commentCount > 0 ? `<span class="comment-count">${commentCount}</span>` : ''}</div></div>`;
+            }).join('');
+        },
+        openCommentSidebar(lineIndex) {
+            state.novel.activeCommentLine = lineIndex;
+            document.getElementById('cmt-header-title').innerText = `Comments for Line ${lineIndex + 1}`;
+            const comments = state.novel.comments[lineIndex] || [];
+            document.getElementById('cmt-list').innerHTML = comments.length > 0
+                ? comments.map(c => this.formatComment(c)).join('')
+                : `<p style="text-align:center; color:#888; padding:20px;">No comments yet. Be the first!</p>`;
+            document.getElementById('reader-comment-sidebar').classList.add('open');
+        },
+        closeCommentSidebar() {
+            document.getElementById('reader-comment-sidebar').classList.remove('open');
+        },
+        formatComment(comment) {
+            const formattedContent = comment.content.replace(/@(\w+)/g, `<span class="mention-link" onclick="ui.showOtherUserProfile('$1')">@$1</span>`);
+            return `
+                <div class="cmt-card">
+                    <div class="cmt-user" style="color:var(--cyan); font-weight:bold; cursor:pointer;" onclick="ui.showOtherUserProfile('${comment.user}')">${comment.user}</div>
+                    <div class="cmt-content" style="margin: 5px 0; white-space: pre-wrap;">${formattedContent}</div>
+                    <div class="cmt-actions" style="font-size:0.8rem; color:#888; display:flex; gap:15px; margin-top:5px;">
+                        <span style="cursor:pointer" onclick="community.interact('like', '${comment.id}', 'comment')">♥ ${comment.likes}</span>
+                        <span style="cursor:pointer" onclick="community.interact('tip', '${comment.id}', 'comment')">🪙 ${comment.coins || 0}</span>
+                    </div>
+                </div>`;
+        },
+        async postComment() {
+            const input = document.getElementById('cmt-input');
+            const content = input.value.trim();
+            if (!content || state.novel.activeCommentLine < 0) return;
+            
+            input.disabled = true;
+            await apiRequest({ 
+                action: 'post_line_comment', 
+                line_index: state.novel.activeCommentLine, 
+                content: content 
+            });
+            input.value = '';
+            input.disabled = false;
+            
+            const commentRes = await apiRequest({ action: 'get_all_comments' });
+            if (commentRes.status === 'success') {
+                state.novel.comments = commentRes.data;
+                this.renderNovel();
+                this.openCommentSidebar(state.novel.activeCommentLine);
+            }
         }
     };
 
-    // --- MODULE: COMMUNITY (Discussion/Comments) ---
     const community = {
-        async loadDiscussions() {
-            const listEl = document.getElementById('discussion-list');
-            listEl.innerHTML = '<p style="text-align:center; color:#888;">Loading discussions...</p>';
-            const res = await apiRequest({ action: 'get_discussions' });
-            if (res.status === 'success' && res.data) {
-                listEl.innerHTML = res.data.map(d => `
-                    <div class="d-card">
-                        <div style="color:var(--cyan); border-bottom:1px solid #333; padding-bottom:10px; margin-bottom: 10px; display:flex; justify-content:space-between">
-                            <span>${d.user}</span>
-                            <span style="color:#888; font-size: 0.8rem;">${d.time}</span>
-                        </div>
-                        <div style="margin:10px 0; font-size:1.1rem; color: #eee; white-space: pre-wrap;">${d.content}</div>
-                        <div class="act-bar" style="display:flex; gap:20px; font-size:0.8rem; color:#888; margin-top:15px; align-items:center;">
-                            <span class="act-btn" style="transition:0.2s; color: #aaa;" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#aaa'" onclick="community.interact('like','${d.id}','disc')">♥ ${d.likes} Like</span>
-                            <span class="act-btn" style="transition:0.2s; color: #aaa;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='#aaa'" onclick="community.interact('tip','${d.id}','disc')">🪙 ${d.coins} Tip</span>
-                        </div>
-                    </div>
-                `).join('') || '<p style="text-align:center; color:#888;">No discussions yet. Be the first to post!</p>';
-            }
-        },
-        async postDiscussion() {
-            const input = document.getElementById('discussion-input');
-            const content = input.value.trim();
-            if(!content) return;
-            input.disabled = true;
-            await apiRequest({ action: 'post_discussion', content });
-            input.value = "";
-            input.disabled = false;
-            this.loadDiscussions();
-        },
         async interact(subAction, id, type) {
             if (!state.isLoggedIn) return alert("Login required to interact.");
-            if (subAction === 'tip' && !confirm("Spend 1 coin to tip this post?")) return;
+            if (subAction === 'tip' && !confirm("Spend 1 coin?")) return;
             
             const res = await apiRequest({ action: 'interact', sub_action: subAction, type: type, id: id });
+            
             if (res.status === 'success') {
                 if (subAction === 'tip') {
                     state.user.coins = res.new_balance;
-                    sessionStorage.setItem('ngnlUser', JSON.stringify(state.user)); // Update session storage
+                    sessionStorage.setItem('ngnlUser', JSON.stringify(state.user));
                     ui.updateHUD();
                 }
-                if (type === 'disc') this.loadDiscussions();
+                if (type === 'comment') {
+                    const commentRes = await apiRequest({ action: 'get_all_comments' });
+                    if (commentRes.status === 'success') {
+                        state.novel.comments = commentRes.data;
+                        reader.renderNovel(); 
+                        reader.openCommentSidebar(state.novel.activeCommentLine);
+                    }
+                } else if (type === 'disc') {
+                    // Future implementation: this.loadDiscussions();
+                }
             } else {
                 alert(res.message);
             }
         }
     };
     
-    // --- MODULE: NOVEL READER ---
-    const reader = {
-        loadFile(event) {
-            const input = event.target;
-            if (input.files && input.files[0]) {
-                const fileReader = new FileReader();
-                fileReader.onload = (e) => {
-                    const content = e.target.result;
-                    document.getElementById('reader-body').innerHTML = `
-                    <div class="r-text-area" style="width: 100%;">
-                       <div class="r-content" style="white-space: pre-wrap;">${content}</div>
-                    </div>`;
-                    alert(`Novel "${input.files[0].name}" loaded successfully.`);
-                };
-                fileReader.readAsText(input.files[0]);
-            }
-            input.value = ''; // Reset file input to allow re-uploading the same file
-        }
-    };
-    
-    // --- MODULE: VISUALS & INITIAL CONTENT ---
     const visuals = {
         init() {
-            this.initPledges();
-            this.initRaces();
             this.initPlayers();
             this.initCursor();
             this.initCanvas();
         },
-        initPledges() {
-            const pledges = [
-                { title: '一、禁止一切杀伤、战争、抢夺', text: '所有暴力冲突皆被禁止。' },
-                { title: '二、纠纷一律通过在游戏中胜出来解决', text: '所有形式的冲突和分歧，都必须通过游戏来解决。' },
-                { title: '三、游戏中，双方要赌上对等的赌注', text: '赌注可以超越常识，甚至包括生命或种族存亡。' },
-                { title: '四、在不违反第三条的情况下，游戏内容、赌注皆不受限制', text: '只要双方同意，任何游戏、任何赌注都是允许的。' },
-                { title: '五、受挑战的一方，有权决定游戏内容', text: '这给予了被挑战者一定的战略优势。' },
-                { title: '六、“向盟约宣誓”的打赌，绝对要遵守', text: '一旦以盟约之名起誓，就必须履行诺言。' },
-                { title: '七、集团间的纠纷，由全权代理人进行游戏', text: '国家或种族之间的游戏，由指定的代表进行。' },
-                { title: '八、游戏当中，一旦被发现有不正当行为，即为败北', text: '作弊被揭发，则立刻输掉游戏。' },
-                { title: '九、以神之名宣布，以上规则皆为绝对不变', text: '这是由唯一神特图制定的，无法改变的世界法则。' },
-                { title: '十、大家一起和平地玩游戏吧！', text: '这是盟约的核心精神，旨在创造一个没有战争的世界。' },
-            ];
-            document.getElementById('pledge-grid').innerHTML = pledges.map((p, i) => `
-                <div class="card">
-                    <div class="card-num">${i + 1}</div>
-                    <h3 class="card-title">${p.title}</h3>
-                    <p>${p.text}</p>
-                </div>`).join('');
-        },
-        initRaces() {
-             const races = [
-                {r:'I',n:'Old Deus',j:'神灵种',c:'♔',cls:'rank-1'},{r:'II',n:'Phantasma',j:'幻想种',c:'♕'},{r:'III',n:'Dragonia',j:'龙精种',c:'♖'},
-                {r:'IV',n:'Gigant',j:'巨人种',c:'♙'},{r:'V',n:'Flügel',j:'天翼种',c:'♗'},{r:'VI',n:'Elf',j:'森精种',c:'♘'},
-                {r:'VII',n:'Dwarf',j:'地精种',c:'♙'},{r:'VIII',n:'Fairy',j:'妖精种',c:'♘'},{r:'IX',n:'Ex-Machina',j:'机凯种',c:'♜'},
-                {r:'X',n:'Demonia',j:'妖魔种',c:'♗'},{r:'XI',n:'Dhampir',j:'吸血种',c:'♙'},{r:'XII',n:'Lunamana',j:'月咏种',c:'♙'},
-                {r:'XIII',n:'Werebeast',j:'兽人种',c:'🨠'},{r:'XIV',n:'Seiren',j:'海栖种',c:'♕'},{r:'XV',n:'Laphnil',j:'??种',c:'♙'},
-                {r:'XVI',n:'Imanity',j:'人类种',c:'♙',cls:'rank-16'}
-            ];
-            document.getElementById('race-grid').innerHTML = races.map(r => `
-                <div class="piece ${r.cls||''}">
-                    <div class="p-icon">${r.c}</div>
-                    <div style="z-index:1">
-                        <div class="p-rank">Rank ${r.r}</div>
-                        <div class="p-name">${r.n}</div>
-                        <div class="p-jname">${r.j}</div>
-                    </div>
-                </div>`).join('');
-        },
         initPlayers() {
             const players = [
-                {n:'SORA',r:'Imanity',i:'https://i.imgur.com/8Q8E2a2.png', d: '『 』的男性玩家，擅长心理战和策略，对人类抱有无与伦比的信任。'},
-                {n:'SHIRO',r:'Imanity',i:'https://i.imgur.com/5J3b3dJ.png', d: '『 』的女性玩家，拥有超乎常人的计算能力，是一位游戏天才。'},
+                {n:'SORA',r:'Imanity',i:'https://i.imgur.com/gA3plv3.png', d: '『 』的男性玩家，擅长心理战和策略，对人类抱有无与伦比的信任。'},
+                {n:'SHIRO',r:'Imanity',i:'https://i.imgur.com/Z4oV5O8.png', d: '『 』的女性玩家，拥有超乎常人的计算能力，是一位游戏天才。'},
                 {n:'JIBRIL',r:'Flügel',i:'https://i.imgur.com/oWk4s4Y.png', d: '天翼种，对知识有着极端的渴望，拥有强大的战斗力。'},
                 {n:'STEPH',r:'Imanity',i:'https://i.imgur.com/E8w6V2a.png', d: '艾尔奇亚先王的孙女，虽然游戏能力平庸，但内政能力出众，是『 』可靠的伙伴。'},
                 {n:'IZUNA',r:'Werebeast',i:'https://i.imgur.com/t4x7yL5.png', d: '兽人种的少女，拥有“血坏”能力，在游戏中展现出惊人的直觉和实力。'},
                 {n:'TET',r:'Old Deus',i:'https://i.imgur.com/U3F2A0I.png', d: '游戏之神，将十六种族召唤到异世界并制定了“十条盟约”的唯一神。'}
             ];
             document.getElementById('char-grid').innerHTML = players.map(p => `
-                <div class="char">
+                <div class="char" onmousemove="visuals.moveCard(event)" onmouseleave="visuals.resetCard(event)">
                     <div class="char-in">
                         <div class="c-front">
-                            <div class="c-av" style="background-image:url(${p.i})"></div>
-                            <div class="char-name">${p.n}</div>
-                            <div class="char-race">${p.r}</div>
+                            <div class="c-av-wrapper"><div class="c-av" style="background-image:url(${p.i})"></div></div>
+                            <div class="c-front-overlay">
+                                <div class="char-name">${p.n}</div>
+                                <div class="char-race">${p.r}</div>
+                            </div>
                         </div>
                         <div class="c-back">
                             <h3>${p.n}</h3>
@@ -703,6 +669,22 @@
                         </div>
                     </div>
                 </div>`).join('');
+        },
+        moveCard(e) {
+            const card = e.currentTarget;
+            const cardInner = card.querySelector('.char-in');
+            const { width, height, left, top } = card.getBoundingClientRect();
+            const x = e.clientX - left;
+            const y = e.clientY - top;
+            const rotateX = -10 * ((y - height / 2) / height);
+            const rotateY = 10 * ((x - width / 2) / width);
+            cardInner.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            card.querySelector('.c-av-wrapper').style.transform = `translateX(${rotateY * 1.5}px) translateY(${rotateX * 1.5}px)`;
+        },
+        resetCard(e) {
+            const cardInner = e.currentTarget.querySelector('.char-in');
+            cardInner.style.transform = `rotateX(0) rotateY(0)`;
+             e.currentTarget.querySelector('.c-av-wrapper').style.transform = `translateX(0) translateY(0)`;
         },
         initCursor() {
             const cursor = document.getElementById('cursor');
@@ -754,30 +736,29 @@
             });
         }
     };
-
-    // --- INITIALIZATION ---
+    
     document.addEventListener('DOMContentLoaded', () => {
         visuals.init();
+        reader.init();
         const storedUser = sessionStorage.getItem('ngnlUser');
         if (storedUser) {
             try {
                 state.user = JSON.parse(storedUser);
                 state.isLoggedIn = true;
-                document.getElementById('body').classList.remove('auth-active');
+                document.body.classList.remove('auth-active');
                 document.getElementById('auth-overlay').classList.remove('active');
                 ui.updateHUD();
             } catch (e) {
                 console.error("Failed to parse stored user data:", e);
                 sessionStorage.removeItem('ngnlUser');
-                document.getElementById('body').classList.add('auth-active');
+                document.body.classList.add('auth-active');
                 document.getElementById('auth-overlay').classList.add('active');
             }
         } else {
-            document.getElementById('body').classList.add('auth-active');
+            document.body.classList.add('auth-active');
             document.getElementById('auth-overlay').classList.add('active');
         }
     });
-
 </script>
 </body>
 </html>
