@@ -4,255 +4,191 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NO GAME NO LIFE | DISBOARD SYSTEM</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     <style>
-        /* ================= 0. CORE VARIABLES (NGNL PALETTE) ================= */
+        /* ================= 0. 核心变量 ================= */
         :root {
-            --pink: #ff2a6d;
-            --cyan: #05d9e8;
-            --purple: #bd00ff;
-            --gold: #ffd700;
-            --dark-bg: #05010d;
-            --glass: rgba(20, 20, 35, 0.9);
-            --glass-border: rgba(255, 255, 255, 0.15);
-            --hud-bg: rgba(8, 4, 12, 0.98);
-            --font-main: 'Orbitron', sans-serif;
-            --font-text: 'Noto Sans SC', sans-serif;
-            --font-novel: 'ZCOOL XiaoWei', serif;
+            --pink: #ff2a6d; --cyan: #05d9e8; --purple: #d905e8; --gold: #ffd700;
+            --dark: #05010d; --glass: rgba(20, 20, 35, 0.95); --border: rgba(255, 255, 255, 0.15);
+            --rank-god: #ffd700; --rank-high: #9b59b6; --rank-mid: #2ecc71; --rank-low: #e74c3c;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; cursor: none; outline: none; user-select: none; }
+        * { margin:0; padding:0; box-sizing:border-box; cursor:none; outline:none; user-select:none; }
+        body { background-color:var(--dark); color:white; font-family:'Noto Sans SC'; height:100vh; overflow:hidden; }
+        body.unlocked { overflow-y:auto; overflow-x:hidden; }
+
+        /* ================= 1. 基础组件 ================= */
+        #cursor { width:20px; height:20px; border:2px solid var(--cyan); border-radius:50%; position:fixed; pointer-events:none; z-index:999999; transform:translate(-50%,-50%); transition:0.1s; mix-blend-mode:difference; }
+        #cursor.hover { width:60px; height:60px; background:rgba(255,42,109,0.2); border-color:var(--pink); }
         
-        body {
-            background-color: var(--dark-bg);
-            color: white;
-            font-family: var(--font-text);
-            min-height: 100vh;
-            overflow-x: hidden;
-            overflow-y: hidden; /* Initial Lock */
-        }
+        ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:#000; } ::-webkit-scrollbar-thumb { background:linear-gradient(var(--cyan), var(--purple)); border-radius:3px; }
         
-        body.unlocked { overflow-y: auto; }
-
-        /* ================= 1. ANIMATIONS & EFFECTS ================= */
-        @keyframes glitch { 0%{transform:skew(0deg);} 20%{transform:skew(-2deg);} 40%{transform:skew(2deg);} 100%{transform:skew(0deg);} }
-        @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
-        @keyframes pulse { 0%{box-shadow:0 0 5px var(--cyan);} 50%{box-shadow:0 0 20px var(--cyan), 0 0 10px var(--purple);} 100%{box-shadow:0 0 5px var(--cyan);} }
-        @keyframes rainbow { 0%{border-color:var(--pink);} 50%{border-color:var(--cyan);} 100%{border-color:var(--purple);} }
-
-        #cursor {
-            width: 20px; height: 20px; border: 2px solid var(--cyan); border-radius: 50%;
-            position: fixed; pointer-events: none; z-index: 999999; transform: translate(-50%, -50%);
-            transition: width 0.2s, background 0.2s; mix-blend-mode: difference;
-        }
-        #cursor.hover { width: 60px; height: 60px; background: rgba(255, 42, 109, 0.3); border-color: var(--pink); }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #000; }
-        ::-webkit-scrollbar-thumb { background: linear-gradient(var(--cyan), var(--purple)); border-radius: 3px; }
-
-        /* ================= 2. UI COMPONENTS ================= */
-        .btn {
-            background: rgba(5, 217, 232, 0.05); border: 1px solid var(--cyan); color: var(--cyan);
-            padding: 10px 25px; font-family: var(--font-main); font-weight: bold; cursor: none;
-            transition: 0.3s; position: relative; overflow: hidden; text-transform: uppercase;
-        }
-        .btn:hover { background: var(--cyan); color: #000; box-shadow: 0 0 25px var(--cyan); }
-        .btn-pink { border-color: var(--pink); color: var(--pink); }
-        .btn-pink:hover { background: var(--pink); color: white; box-shadow: 0 0 25px var(--pink); }
-
-        .input {
-            width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #444;
-            color: white; font-family: var(--font-main); text-align: center; transition: 0.3s;
-        }
-        .input:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(5, 217, 232, 0.2); }
-
-        /* ================= 3. LAYOUT STRUCTURE ================= */
-        .bg-layer {
-            position: fixed; inset: 0; z-index: -10;
-            background: radial-gradient(circle at 50% 0%, rgba(189,0,255,0.15), transparent 60%),
-                        linear-gradient(0deg, #000, transparent 80%);
-        }
-        #canvas-bg { position: fixed; inset: 0; z-index: -5; opacity: 0.5; }
-
-        #site-wrapper { transition: filter 0.8s, opacity 0.8s; filter: blur(20px); opacity: 0.3; pointer-events: none; }
-        body.unlocked #site-wrapper { filter: blur(0); opacity: 1; pointer-events: all; }
-
-        /* ================= 4. AUTH SYSTEM ================= */
-        #auth-overlay {
-            position: fixed; inset: 0; z-index: 10000; background: rgba(5, 2, 10, 0.96);
-            display: flex; justify-content: center; align-items: center; backdrop-filter: blur(20px);
-        }
-        .auth-box {
-            width: 420px; padding: 50px 40px; background: rgba(0,0,0,0.8);
-            border: 2px solid var(--pink); box-shadow: 0 0 60px rgba(255, 42, 109, 0.3);
-            text-align: center; position: relative;
-        }
-        .auth-title { font-family: var(--font-main); font-size: 2rem; color: white; margin-bottom: 30px; text-shadow: 0 0 10px var(--cyan); }
-        .hidden { display: none !important; }
-        .link { margin-top: 15px; color: #888; font-size: 0.8rem; text-decoration: underline; cursor: none; }
-        .link:hover { color: var(--cyan); }
-        .err { color: var(--pink); margin-top: 15px; font-family: var(--font-main); font-size: 0.9rem; }
-
-        /* ================= 5. MAIN INTERFACE ================= */
-        nav {
-            position: fixed; top: 0; width: 100%; height: 70px; padding: 0 40px;
-            display: flex; justify-content: space-between; align-items: center;
-            z-index: 1000; background: rgba(5, 1, 10, 0.9); border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        .brand { font-family: var(--font-main); font-weight: 900; font-size: 1.5rem; color: white; text-shadow: 0 0 10px var(--pink); }
-        .nav-links { display: flex; gap: 30px; align-items: center; }
-        .nav-item { color: #aaa; text-decoration: none; font-family: var(--font-main); font-size: 0.9rem; transition: 0.3s; }
-        .nav-item:hover { color: var(--cyan); text-shadow: 0 0 8px var(--cyan); }
-        .user-badge {
-            color: var(--gold); border: 1px solid var(--gold); padding: 5px 12px; border-radius: 4px;
-            font-family: var(--font-main); font-size: 0.8rem; display: flex; gap: 10px; cursor: none;
-        }
-        .user-badge:hover { background: rgba(255, 215, 0, 0.1); }
-
-        .hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        .hero h1 { font-family: var(--font-main); font-size: 5rem; text-shadow: 0 0 20px var(--pink); animation: glitch 3s infinite alternate; }
+        .btn { background:rgba(5,217,232,0.05); border:1px solid var(--cyan); color:var(--cyan); padding:10px 25px; font-family:'Orbitron'; font-weight:bold; cursor:none; transition:0.3s; position:relative; overflow:hidden; text-transform:uppercase; }
+        .btn:hover { background:var(--cyan); color:black; box-shadow:0 0 25px var(--cyan); transform:scale(1.05); }
+        .btn:disabled { border-color:#555; color:#555; cursor:not-allowed; box-shadow:none; transform:none; }
         
-        section { padding: 100px 20px; max-width: 1300px; margin: 0 auto; }
-        .sec-title { font-family: var(--font-main); font-size: 3rem; text-align: center; margin-bottom: 60px; color: white; text-shadow: 0 0 20px var(--cyan); letter-spacing: 5px; }
+        .input { width:100%; padding:12px; background:rgba(255,255,255,0.05); border:1px solid #444; color:white; font-family:'Orbitron'; text-align:center; transition:0.3s; margin-bottom:15px; }
+        .input:focus { border-color:var(--cyan); box-shadow:0 0 15px rgba(5,217,232,0.3); }
 
-        /* 10 Pledges */
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
-        .card {
-            background: var(--glass); border: 1px solid var(--glass-border); padding: 30px; border-radius: 12px;
-            position: relative; overflow: hidden; transition: 0.3s; display: flex; align-items: center;
-        }
-        .card:hover { transform: translateY(-5px); border-color: var(--cyan); box-shadow: 0 0 20px rgba(5,217,232,0.2); }
-        .num { position: absolute; right: 15px; font-family: var(--font-main); font-size: 4rem; opacity: 0.1; font-weight: 900; color: var(--pink); }
+        .hidden { display:none !important; }
 
-        /* 16 Races */
-        .chess-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
-        .piece {
-            height: 220px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
-            border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;
-            position: relative; overflow: hidden; transition: 0.4s;
-        }
-        .piece:hover { transform: scale(1.05); background: rgba(255,255,255,0.08); z-index: 5; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        .p-icon { position: absolute; bottom: -20px; right: -20px; font-size: 8rem; opacity: 0.05; color: white; transition: 0.5s; }
-        .piece:hover .p-icon { opacity: 0.2; transform: rotate(-10deg) scale(1.1); }
-        .p-rank { font-family: var(--font-main); font-size: 2rem; font-weight: 900; opacity: 0.3; }
-        .p-name { font-family: var(--font-main); font-weight: bold; font-size: 1.2rem; margin-bottom: 5px; color: white; }
-        .rank-1 { border-color: var(--gold); box-shadow: inset 0 0 20px rgba(255,215,0,0.1); } .rank-1 .p-rank { color: var(--gold); }
-        .rank-16:hover { animation: rainbow 3s infinite; border-color: white; }
+        /* ================= 2. 布局与背景 ================= */
+        #app-layer { transition:1s; filter:blur(20px); opacity:0.3; pointer-events:none; width:100%; }
+        body.unlocked #app-layer { filter:blur(0); opacity:1; pointer-events:all; }
+        
+        .bg-anim { position:fixed; inset:0; z-index:-10; background:radial-gradient(circle at 50% 0%, rgba(189,0,255,0.15), transparent 60%), url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h40v40H0z' fill='none'/%3E%3Cpath d='M0 38h40v2H0z' fill='%2305d9e8' fill-opacity='0.03'/%3E%3C/svg%3E"); }
+        #canvas-bg { position:fixed; inset:0; z-index:-5; opacity:0.5; }
+
+        /* ================= 3. 登录系统 ================= */
+        #auth-overlay { position:fixed; inset:0; z-index:20000; background:rgba(5,2,10,0.98); display:flex; justify-content:center; align-items:center; }
+        .auth-box { width:420px; padding:50px; background:rgba(0,0,0,0.8); border:2px solid var(--pink); box-shadow:0 0 60px rgba(255,42,109,0.3); text-align:center; position:relative; }
+        .auth-title { font-family:'Orbitron'; font-size:2rem; margin-bottom:30px; color:white; text-shadow:0 0 10px var(--cyan); }
+        .auth-link { font-size:0.8rem; color:#888; text-decoration:underline; cursor:none; margin-top:10px; display:inline-block; }
+        .auth-link:hover { color:var(--cyan); }
+        .err-msg { color:var(--pink); margin-top:15px; font-family:'Orbitron'; font-size:0.8rem; min-height:20px; }
+
+        /* ================= 4. 主页板块 ================= */
+        nav { position:fixed; top:0; width:100%; height:70px; padding:0 40px; display:flex; justify-content:space-between; align-items:center; z-index:1000; background:rgba(5,1,10,0.95); border-bottom:1px solid rgba(255,255,255,0.1); }
+        .brand { font-family:'Orbitron'; font-weight:900; font-size:1.5rem; color:white; text-shadow:0 0 10px var(--cyan); }
+        .nav-item { margin-left:30px; color:#aaa; text-decoration:none; font-family:'Orbitron'; font-size:0.9rem; transition:0.3s; }
+        .nav-item:hover { color:var(--cyan); text-shadow:0 0 8px var(--cyan); }
+        
+        .user-badge { border:1px solid var(--gold); padding:5px 15px; color:var(--gold); border-radius:4px; font-family:'Orbitron'; display:flex; gap:10px; cursor:none; }
+        .user-badge:hover { background:rgba(255,215,0,0.1); box-shadow:0 0 15px rgba(255,215,0,0.3); }
+
+        section { padding:100px 20px; max-width:1300px; margin:0 auto; }
+        .hero { height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
+        h1 { font-family:'Orbitron'; font-size:5rem; margin-bottom:20px; text-shadow:0 0 20px var(--pink); animation:glitch 3s infinite alternate; }
+        
+        /* Pledges */
+        .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:25px; }
+        .card { background:var(--glass); border:1px solid var(--border); padding:25px; border-radius:10px; transition:0.3s; position:relative; overflow:hidden; display:flex; align-items:center; min-height:120px; }
+        .card:hover { transform:translateY(-5px); border-color:var(--cyan); box-shadow:0 0 20px rgba(5,217,232,0.2); }
+        .card-num { font-family:'Orbitron'; font-size:4rem; opacity:0.1; position:absolute; right:15px; font-weight:900; }
+
+        /* World (Chess) */
+        .chess-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:20px; margin-top:30px; }
+        .piece { height:220px; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:20px; border-radius:8px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden; transition:0.4s; }
+        .piece:hover { transform:scale(1.05); background:rgba(255,255,255,0.08); z-index:5; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
+        .p-icon { position:absolute; bottom:-20px; right:-20px; font-size:8rem; opacity:0.08; transition:0.5s; }
+        .piece:hover .p-icon { opacity:0.2; transform:rotate(-10deg) scale(1.1); }
+        .rank-1 { border-color:var(--gold); box-shadow:inset 0 0 20px rgba(255,215,0,0.1); } .rank-1 .p-name { color:var(--gold); }
+        .rank-16:hover { animation:rainbow 2s infinite; border-color:white; }
+        @keyframes rainbow { 0%{box-shadow:0 0 10px var(--pink);} 50%{box-shadow:0 0 10px var(--cyan);} 100%{box-shadow:0 0 10px var(--purple);} }
 
         /* Characters */
-        .char-grid { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
-        .char-card { width: 260px; height: 380px; perspective: 1000px; }
-        .char-inner { width: 100%; height: 100%; transition: 0.6s; transform-style: preserve-3d; position: relative; }
-        .char-card:hover .char-inner { transform: rotateY(180deg); }
-        .cf, .cb {
-            position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 15px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: linear-gradient(145deg, #1a1025, #050505); border: 1px solid var(--glass-border);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        .cb { transform: rotateY(180deg); background: linear-gradient(135deg, var(--pink), #2a0e36); padding: 25px; text-align: center; }
-        .c-ava { width: 130px; height: 130px; border-radius: 50%; border: 3px solid white; background-size: cover; margin-bottom: 20px; box-shadow: 0 0 20px var(--cyan); }
+        .char-flex { display:flex; justify-content:center; gap:30px; flex-wrap:wrap; }
+        .char { width:260px; height:380px; perspective:1000px; }
+        .char-in { width:100%; height:100%; transition:0.6s; transform-style:preserve-3d; position:relative; }
+        .char:hover .char-in { transform:rotateY(180deg); }
+        .c-front, .c-back { position:absolute; inset:0; backface-visibility:hidden; border-radius:15px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(145deg, #1a1025, #050505); border:1px solid var(--border); box-shadow:0 10px 30px rgba(0,0,0,0.5); }
+        .c-back { transform:rotateY(180deg); background:linear-gradient(135deg, var(--pink), #2a0e36); padding:20px; text-align:center; }
+        .c-av { width:130px; height:130px; border-radius:50%; border:3px solid white; background-size:cover; background-position:top; margin-bottom:20px; box-shadow:0 0 20px var(--cyan); }
 
-        /* ================= 6. PROFILE & SOCIAL ================= */
-        #profile-overlay { position: fixed; inset: 0; z-index: 6000; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: 0.3s; }
-        #profile-overlay.active { opacity: 1; pointer-events: all; }
-        .profile-box { width: 900px; height: 600px; background: #111; border: 1px solid var(--cyan); display: flex; border-radius: 10px; overflow: hidden; }
+        /* ================= 5. USER SYSTEM (Profile & Friends) ================= */
+        #user-overlay { position:fixed; inset:0; z-index:8000; background:rgba(0,0,0,0.95); display:flex; justify-content:center; align-items:center; opacity:0; pointer-events:none; transition:0.3s; }
+        #user-overlay.active { opacity:1; pointer-events:all; }
+        .profile-ui { width:900px; height:600px; background:#111; border:1px solid var(--cyan); display:flex; border-radius:10px; overflow:hidden; box-shadow:0 0 50px rgba(5,217,232,0.2); }
         
-        .p-side { width: 250px; background: #0a0a0a; border-right: 1px solid #333; display: flex; flex-direction: column; }
-        .f-head { padding: 20px; border-bottom: 1px solid #333; font-family: var(--font-main); color: var(--pink); display: flex; justify-content: space-between; }
-        .f-list { flex: 1; overflow-y: auto; }
-        .f-item { padding: 15px; border-bottom: 1px solid #222; cursor: none; display: flex; align-items: center; gap: 10px; transition: 0.2s; }
-        .f-item:hover { background: #1a1a1a; border-left: 3px solid var(--cyan); }
-        .f-ava { width: 30px; height: 30px; background: #333; border-radius: 50%; }
+        .p-side { width:260px; background:#0a0a0a; border-right:1px solid #333; display:flex; flex-direction:column; }
+        .p-head { padding:20px; border-bottom:1px solid #333; font-family:'Orbitron'; color:var(--pink); display:flex; justify-content:space-between; }
+        .f-list { flex:1; overflow-y:auto; }
+        .f-item { padding:15px; border-bottom:1px solid #222; cursor:none; display:flex; align-items:center; gap:10px; transition:0.2s; }
+        .f-item:hover, .f-item.act { background:#1a1a1a; border-left:3px solid var(--cyan); }
+        .f-av { width:30px; height:30px; background:#333; border-radius:50%; }
         
-        .p-content { flex: 1; display: flex; flex-direction: column; background: #111; padding: 20px; position: relative; }
-        .my-profile { text-align: center; padding-top: 50px; }
-        .big-ava { width: 100px; height: 100px; border-radius: 50%; background: #333; border: 2px solid var(--gold); margin: 0 auto 20px; }
-        .stat-row { display: flex; justify-content: center; gap: 30px; margin: 30px 0; font-family: var(--font-main); }
-        .stat { background: #222; padding: 15px; border-radius: 8px; width: 100px; }
+        .p-content { flex:1; display:flex; flex-direction:column; background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><circle cx="1" cy="1" r="1" fill="rgba(255,255,255,0.05)"/></svg>'); }
+        /* Stats View */
+        .stats-view { padding:40px; text-align:center; display:none; }
+        .stats-view.show { display:block; }
+        .big-av { width:120px; height:120px; border-radius:50%; background:#333; border:2px solid var(--gold); margin:0 auto 20px; }
+        .stat-grid { display:flex; justify-content:center; gap:20px; margin:30px 0; }
+        .stat-box { background:#222; padding:15px; border-radius:8px; width:120px; text-align:center; }
+        /* Chat View */
+        .chat-view { display:none; flex-direction:column; height:100%; }
+        .chat-view.show { display:flex; }
+        .chat-box { flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+        .msg { max-width:70%; padding:10px 15px; border-radius:10px; font-size:0.9rem; }
+        .msg.me { align-self:flex-end; background:var(--cyan); color:black; }
+        .msg.them { align-self:flex-start; background:#333; border:1px solid #444; }
+        .chat-input { height:60px; border-top:1px solid #333; padding:10px; display:flex; gap:10px; background:#0f0f0f; }
+
+        /* ================= 6. NOVEL READER (Anti-Lag) ================= */
+        #reader-layer { position:fixed; inset:0; z-index:99999; background:#050505; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:0.3s; }
+        #reader-layer.active { opacity:1; pointer-events:all; }
         
-        .chat-view { display: none; flex-direction: column; height: 100%; }
-        .chat-box { flex: 1; overflow-y: auto; padding-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { max-width: 70%; padding: 10px 15px; border-radius: 10px; font-size: 0.9rem; }
-        .msg.me { align-self: flex-end; background: var(--cyan); color: black; }
-        .msg.them { align-self: flex-start; background: #333; border: 1px solid #444; }
-        .chat-inp-area { height: 50px; display: flex; gap: 10px; margin-top: 10px; }
-
-        /* ================= 7. NOVEL READER ================= */
-        #reader { position: fixed; inset: 0; background: var(--hud-bg); z-index: 5000; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: 0.3s; }
-        #reader.active { opacity: 1; pointer-events: all; }
-        .reader-top { height: 60px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; background: rgba(0,0,0,0.8); }
-        .reader-body { flex: 1; display: flex; overflow: hidden; }
+        .r-head { height:50px; background:#111; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center; padding:0 20px; }
+        .r-body { flex:1; display:flex; overflow:hidden; }
         
-        .r-side-l { width: 280px; background: rgba(0,0,0,0.5); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; }
-        .tab-head { display: flex; height: 50px; border-bottom: 1px solid var(--glass-border); }
-        .tab-btn { flex: 1; background: transparent; border: none; color: #666; font-family: var(--font-main); font-size: 0.8rem; cursor: none; border-bottom: 2px solid transparent; }
-        .tab-btn.active { color: white; border-color: var(--cyan); background: rgba(255,255,255,0.05); }
-        .list-container { flex: 1; overflow-y: auto; }
-        .list-el { padding: 12px 20px; font-size: 0.9rem; color: #888; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: none; }
-        .list-el:hover { color: white; background: rgba(5,217,232,0.1); padding-left: 25px; }
+        /* TOC Sidebar */
+        .r-side-l { width:250px; background:#0a0a0a; border-right:1px solid #333; display:flex; flex-direction:column; }
+        .r-tabs { display:flex; height:40px; border-bottom:1px solid #333; }
+        .r-tab { flex:1; border:none; background:transparent; color:#666; font-family:'Orbitron'; font-size:0.8rem; cursor:none; }
+        .r-tab.active { color:white; border-bottom:2px solid var(--cyan); background:rgba(255,255,255,0.05); }
+        .toc-content { flex:1; overflow-y:auto; }
+        .toc-item, .bm-item { padding:12px 15px; font-size:0.85rem; color:#888; border-bottom:1px solid rgba(255,255,255,0.05); cursor:none; }
+        .toc-item:hover { color:white; background:rgba(5,217,232,0.1); border-left:3px solid var(--cyan); }
 
-        .r-content { flex: 1; display: flex; flex-direction: column; position: relative; z-index: 1; }
-        .text-view { flex: 1; overflow-y: auto; padding: 50px 100px; font-family: var(--font-novel); font-size: 1.35rem; line-height: 2.2; color: #ddd; }
-        .line-wrap { position: relative; padding: 5px 0; }
-        .line-wrap:hover { background: rgba(255,255,255,0.05); }
-        .bubble { position: absolute; right: -30px; top: 50%; transform: translateY(-50%); color: var(--purple); opacity: 0; cursor: none; pointer-events: auto; z-index: 10; padding: 5px; }
-        .line-wrap:hover .bubble { opacity: 1; right: 10px; }
+        /* Text Area */
+        .r-text-area { flex:1; display:flex; flex-direction:column; position:relative; }
+        .r-content { flex:1; overflow-y:auto; padding:50px 80px; font-family:'ZCOOL XiaoWei'; font-size:1.4rem; line-height:2.2; color:#ddd; }
+        .line { position:relative; padding:5px 0; }
+        .line:hover { background:rgba(255,255,255,0.05); }
+        .bubble { position:absolute; right:-30px; top:0; color:var(--purple); opacity:0; cursor:none; transition:0.2s; pointer-events:auto; z-index:10; padding:5px; font-size:1.2rem; }
+        .line:hover .bubble { opacity:1; right:10px; }
 
-        .r-side-r { width: 0; background: rgba(10,5,20,0.98); border-left: 1px solid var(--glass-border); transition: width 0.3s; display: flex; flex-direction: column; z-index: 30; }
-        .r-side-r.open { width: 350px; }
-        .cmt-list { flex: 1; overflow-y: auto; padding: 20px; }
-        .cmt-item { background: rgba(255,255,255,0.05); padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 0.9rem; border: 1px solid transparent; }
-        .cmt-item:hover { border-color: var(--cyan); }
+        /* Comment Sidebar */
+        .r-side-r { width:0; background:#0a0a0a; border-left:1px solid #333; transition:0.3s; display:flex; flex-direction:column; }
+        .r-side-r.open { width:340px; }
+        .cmt-list { flex:1; overflow-y:auto; padding:15px; }
+        .cmt-card { background:#222; padding:10px; margin-bottom:10px; border-radius:5px; border:1px solid transparent; font-size:0.9rem; }
+        .cmt-card:hover { border-color:var(--cyan); }
 
-        .disc-area { margin-top: 80px; padding: 40px; border-top: 2px solid var(--cyan); background: rgba(5,217,232,0.02); }
-        .d-card { background: rgba(0,0,0,0.6); border: 1px solid var(--glass-border); padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        /* Discussion Zone */
+        .disc-zone { margin-top:80px; padding:30px; border-top:2px solid var(--cyan); background:rgba(5,217,232,0.05); }
+        .d-card { background:rgba(0,0,0,0.6); border:1px solid #333; padding:15px; margin-bottom:15px; }
+        .act-bar { display:flex; gap:15px; font-size:0.8rem; color:#888; margin-top:5px; }
+        .act-btn:hover { color:var(--pink); } .tip-btn:hover { color:var(--gold); }
 
-        /* Loader */
-        #loader { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: var(--font-main); color: var(--cyan); letter-spacing: 2px; }
+        /* Loading */
+        #loader { position:absolute; inset:0; background:#000; z-index:100; display:flex; justify-content:center; align-items:center; color:var(--cyan); font-family:'Orbitron'; }
+        .load-bar { width:200px; height:2px; background:#333; margin-top:10px; } .load-fill { height:100%; width:0%; background:var(--pink); transition:width 0.2s; }
     </style>
 </head>
 <body>
-
     <div id="cursor"></div>
 
-    <!-- AUTH -->
+    <!-- 1. AUTHENTICATION -->
     <div id="auth-layer">
         <div class="auth-box">
-            <h2 id="auth-head" class="auth-title">SYSTEM LOGIN</h2>
+            <h2 id="auth-head" class="auth-title" style="font-family:'Orbitron'; color:white; margin-bottom:20px;">SYSTEM LOGIN</h2>
             <!-- Login -->
-            <div id="view-login">
-                <input id="l-email" class="input" placeholder="EMAIL">
-                <div style="height:10px"></div>
-                <input id="l-pass" type="password" class="input" placeholder="PASSWORD">
-                <div style="height:20px"></div>
+            <div id="f-login">
+                <input id="l-e" class="input" placeholder="EMAIL">
+                <input id="l-p" type="password" class="input" placeholder="PASSWORD">
                 <button class="btn" style="width:100%" onclick="doLogin()">CONNECT</button>
-                <div style="display:flex; justify-content:space-between; margin-top:15px;">
-                    <span class="link" onclick="switchView('reg1')">Register</span>
-                    <span class="link" onclick="switchView('reset1')">Forgot?</span>
-                </div>
+                <div class="link" onclick="uiAuth('reg')">New Player? Register</div>
             </div>
-            <!-- Reg -->
-            <div id="view-reg1" class="hidden">
-                <input id="r-user" class="input" placeholder="USERNAME">
-                <input id="r-email" class="input" placeholder="EMAIL">
-                <input id="r-pass" type="password" class="input" placeholder="PASSWORD">
-                <div style="height:10px"></div>
-                <button class="btn" style="width:100%" onclick="getCode()">GET CODE</button>
-                <div class="link" onclick="switchView('login')" style="text-align:center;">Back</div>
+            <!-- Reg 1 -->
+            <div id="f-reg1" class="hidden">
+                <input id="r-u" class="input" placeholder="USERNAME">
+                <input id="r-e" class="input" placeholder="EMAIL">
+                <input id="r-p" type="password" class="input" placeholder="PASSWORD">
+                <button class="btn" style="width:100%" onclick="reqCode()">GET CODE</button>
+                <div class="link" onclick="uiAuth('login')">Back</div>
             </div>
-            <div id="view-reg2" class="hidden">
-                <p style="color:#888;font-size:0.8rem;margin-bottom:10px">Code sent (Test: 123456)</p>
-                <input id="r-code" class="input" placeholder="CODE">
+            <!-- Reg 2 -->
+            <div id="f-reg2" class="hidden">
+                <p style="color:#888; font-size:0.8rem; margin-bottom:10px;">Check Email (or 123456)</p>
+                <input id="r-c" class="input" placeholder="CODE">
                 <button class="btn" style="width:100%" onclick="doReg()">CONFIRM</button>
             </div>
-            <div id="msg" class="err"></div>
+            <div id="auth-msg" class="err"></div>
         </div>
     </div>
 
-    <!-- APP -->
-    <div id="app">
+    <!-- 2. MAIN APP -->
+    <div id="app-layer">
         <div class="bg-layer"></div>
         <canvas id="canvas-bg"></canvas>
         
@@ -264,77 +200,66 @@
                 <a href="#world" class="nav-item">WORLD</a>
                 <a href="#chars" class="nav-item">PLAYERS</a>
             </div>
-            <div class="user-badge" onclick="openProfile()">
+            <div class="user-badge" onclick="uiProfile(true)">
                 <span id="u-name">GUEST</span>
-                <span id="u-coins" style="color:var(--cyan)">🪙 0</span>
+                <span id="u-coin" style="color:var(--cyan)"></span>
             </div>
         </nav>
 
         <header id="hero" class="hero">
             <h1>NO GAME NO LIFE</h1>
-            <p style="color:#aaa; font-size:1.2rem; letter-spacing:2px; margin-bottom:40px;">The world is just a game. Let's play.</p>
-            <button class="btn-pink" onclick="openReader()">READ NOVEL</button>
+            <p style="color:#aaa; letter-spacing:2px; margin-bottom:40px;">The world is just a game.</p>
+            <button class="btn-pink" onclick="uiReader(true)">READ NOVEL</button>
         </header>
 
         <section id="pledges">
             <h2 class="section-title">THE TEN PLEDGES</h2>
-            <div class="grid" id="pledge-list">
-                <!-- Generated by JS -->
+            <div class="grid">
+                <!-- 10 Cards generated by JS -->
+                <div id="pledge-grid" style="display:contents;"></div>
             </div>
         </section>
 
         <section id="world">
             <h2 class="section-title">IXSEED (16 RACES)</h2>
-            <div class="chess-grid" id="chess-list">
-                <!-- Generated by JS -->
+            <div class="chess-grid" id="chess-grid">
+                <!-- JS Generated -->
             </div>
         </section>
 
         <section id="chars">
             <h2 class="section-title">PLAYERS</h2>
-            <div class="char-gallery">
-                <!-- Chars -->
-                <div class="char-card hover"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image:url('sora.png')"></div><div class="char-name">SORA</div><div class="char-race">Imanity</div></div><div class="char-back"><h3>空</h3><p>十八岁。无业、处男、沟通障碍、游戏废人。</p></div></div></div>
-                <div class="char-card hover"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image:url('shiro.png')"></div><div class="char-name">SHIRO</div><div class="char-race">Imanity</div></div><div class="char-back"><h3>白</h3><p>十一岁。空的义妹。拥有超乎常人的计算能力。</p></div></div></div>
-                <div class="char-card hover"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image:url('jibril.png')"></div><div class="char-name">JIBRIL</div><div class="char-race">Flügel</div></div><div class="char-back"><h3>吉普莉尔</h3><p>位阶序列第六位。拥有极强的战斗力。</p></div></div></div>
-                <div class="char-card hover"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image:url('steph.png')"></div><div class="char-name">STEPH</div><div class="char-race">Imanity</div></div><div class="char-back"><h3>史蒂芬妮</h3><p>艾尔奇亚的前王族孙女。</p></div></div></div>
-                <div class="char-card hover"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image:url('izuna.png')"></div><div class="char-name">IZUNA</div><div class="char-race">Werebeast</div></div><div class="char-back"><h3>初濑伊纲</h3><p>八岁。东部联合的大使。</p></div></div></div>
-                <div class="char-card hover"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image:url('tet.png')"></div><div class="char-name">TET</div><div class="char-race">One True God</div></div><div class="char-back"><h3>特图</h3><p>游戏之神，唯一的全权神。</p></div></div></div>
+            <div class="char-gallery" id="char-grid">
+                <!-- JS Generated -->
             </div>
         </section>
-
-        <footer><p>© NO GAME NO LIFE FAN SITE</p></footer>
     </div>
 
-    <!-- PROFILE -->
-    <div id="profile-overlay">
-        <div class="profile-box">
+    <!-- 3. USER PROFILE & CHAT -->
+    <div id="user-overlay">
+        <div class="profile-ui">
             <div class="p-side">
-                <div class="f-head"><span>FRIENDS</span><span onclick="addFriend()" style="cursor:pointer;">+</span></div>
+                <div class="p-head"><span>FRIENDS</span> <span style="cursor:pointer" onclick="addFriend()">+</span></div>
                 <div id="f-list" class="f-list"></div>
             </div>
             <div class="p-content">
-                <!-- Profile View -->
-                <div id="view-p" class="my-profile">
-                    <div class="big-ava"></div>
-                    <h2 id="p-user" style="color:var(--pink)">USER</h2>
-                    <div class="stat-row">
-                        <div class="stat"><div style="color:#888;font-size:0.8rem">RANK</div><div id="p-rank" style="font-size:1.5rem">16</div></div>
-                        <div class="stat"><div style="color:#888;font-size:0.8rem">EXP</div><div id="p-exp" style="font-size:1.5rem">0</div></div>
-                        <div class="stat"><div style="color:#888;font-size:0.8rem">COINS</div><div id="p-coin" style="font-size:1.5rem">0</div></div>
+                <!-- Stats -->
+                <div id="view-stats" class="stats-view show">
+                    <div class="big-av"></div>
+                    <h2 id="p-name" style="color:var(--pink); font-family:'Orbitron'"></h2>
+                    <div class="stat-grid">
+                        <div class="stat-box"><div style="font-size:0.8rem; color:#888">RANK</div><div id="p-rank" style="font-size:1.5rem"></div></div>
+                        <div class="stat-box"><div style="font-size:0.8rem; color:#888">EXP</div><div id="p-exp" style="font-size:1.5rem"></div></div>
+                        <div class="stat-box"><div style="font-size:0.8rem; color:#888">COINS</div><div id="p-coin2" style="font-size:1.5rem"></div></div>
                     </div>
-                    <p id="p-bio" style="color:#aaa;">This player is blank.</p>
-                    <button class="btn" style="margin-top:30px;" onclick="closeProfile()">CLOSE</button>
+                    <p id="p-bio" style="color:#aaa;"></p>
+                    <button class="btn" style="margin-top:30px;" onclick="uiProfile(false)">CLOSE</button>
                 </div>
-                <!-- Chat View -->
+                <!-- Chat -->
                 <div id="view-chat" class="chat-view">
-                    <div style="padding:10px; border-bottom:1px solid #333; display:flex; justify-content:space-between;">
-                        <span id="chat-title" style="color:var(--cyan)">CHAT</span>
-                        <span onclick="backProfile()" style="cursor:pointer; color:#888;">BACK</span>
-                    </div>
                     <div id="chat-box" class="chat-box"></div>
-                    <div class="chat-inp-area">
-                        <input id="chat-msg" class="input" style="text-align:left" placeholder="Type...">
+                    <div class="chat-input">
+                        <input id="msg-inp" class="input" style="text-align:left; margin:0;" placeholder="Message...">
                         <button class="btn" onclick="sendMsg()">SEND</button>
                     </div>
                 </div>
@@ -342,43 +267,47 @@
         </div>
     </div>
 
-    <!-- READER -->
-    <div id="reader">
-        <div id="loader" class="hidden">INITIALIZING...</div>
-        <div class="reader-head">
-            <span style="color:var(--cyan); font-family:var(--font-main);">DATABASE</span>
-            <button onclick="closeReader()" style="background:none; border:1px solid var(--pink); color:var(--pink); padding:5px 15px; font-family:var(--font-main);">EXIT</button>
+    <!-- 4. NOVEL READER -->
+    <div id="reader-layer">
+        <div id="loader" class="hidden"><div id="load-txt">LOADING...</div><div class="load-bar"><div id="load-prog" class="load-fill"></div></div></div>
+        
+        <div class="r-head">
+            <span style="font-family:'Orbitron'; color:var(--cyan);">ARCHIVE</span>
+            <button class="btn" style="padding:5px 15px;" onclick="uiReader(false)">EXIT</button>
         </div>
-        <div class="reader-body">
+        
+        <div class="r-body">
             <div class="r-side-l">
-                <div class="tab-head">
-                    <button class="tab-btn active" onclick="tab('toc')">INDEX</button>
-                    <button class="tab-btn" onclick="tab('bm')">MEMORY</button>
+                <div class="r-tabs">
+                    <button class="r-tab active" onclick="tab('toc')">INDEX</button>
+                    <button class="r-tab" onclick="tab('bm')">BM</button>
                 </div>
-                <div id="l-toc" class="list-container"></div>
-                <div id="l-bm" class="list-container hidden"></div>
+                <div id="list-toc" class="toc-content"></div>
+                <div id="list-bm" class="toc-content hidden"></div>
             </div>
-            <div class="r-content">
-                <div id="text-view" class="text-view">
+            
+            <div class="r-text-area">
+                <div id="txt-view" class="r-content">
                     <div style="text-align:center; margin-top:100px;">
-                        <button class="btn" onclick="document.getElementById('file').click()">LOAD NOVEL.TXT</button>
+                        <p style="color:#666;">NO DATA</p>
+                        <button class="btn" onclick="document.getElementById('file').click()">LOAD TXT</button>
                     </div>
                 </div>
-                <div style="padding:10px; background:rgba(0,0,0,0.8); display:flex; justify-content:center; gap:20px;">
-                    <button class="btn" onclick="turnPage(-1)">PREV</button>
-                    <span id="pg-info" style="align-self:center; color:#aaa; font-family:var(--font-main);">0%</span>
-                    <button class="btn" onclick="turnPage(1)">NEXT</button>
-                    <button class="btn-pink" style="margin-left:20px;" onclick="saveBM()">SAVE</button>
+                <div style="padding:10px; background:rgba(0,0,0,0.8); display:flex; justify-content:center; gap:20px; border-top:1px solid #333;">
+                    <button class="btn" onclick="pgTurn(-1)">PREV</button>
+                    <span id="pg-info" style="align-self:center; font-family:'Orbitron'; color:#888;">0%</span>
+                    <button class="btn" onclick="pgTurn(1)">NEXT</button>
+                    <button class="btn" style="border-color:var(--gold); color:var(--gold);" onclick="saveBM()">SAVE</button>
                 </div>
             </div>
+
             <div id="r-side-r" class="r-side-r">
-                <div style="padding:15px; border-bottom:1px solid #333; display:flex; justify-content:space-between;">
-                    <span style="color:var(--pink); font-family:var(--font-main);">COMMENTS</span>
-                    <span onclick="toggleR()" style="cursor:pointer;">X</span>
+                <div style="padding:10px; border-bottom:1px solid #333; display:flex; justify-content:space-between;">
+                    <span style="color:var(--pink)">COMMENTS</span> <span onclick="toggleCmt()" style="cursor:pointer;">X</span>
                 </div>
-                <div id="cmt-list" class="cmt-list"></div>
-                <div style="padding:15px; background:rgba(0,0,0,0.5);">
-                    <textarea id="c-inp" class="input" rows="2" style="text-align:left; resize:none;"></textarea>
+                <div id="c-list" class="cmt-list"></div>
+                <div style="padding:10px;">
+                    <textarea id="c-inp" class="input" rows="2" style="text-align:left; margin:0;"></textarea>
                     <button class="btn" style="width:100%; margin-top:5px;" onclick="postCmt()">POST</button>
                 </div>
             </div>
@@ -388,204 +317,275 @@
     <input type="file" id="file" accept=".txt" style="display:none" onchange="loadFile(this)">
 
     <script>
-        // ==================================================
-        // ⚠️ 必须替换：Google Apps Script URL
+        // =================================================
+        // ⚠️ CONFIG
         const API = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec"; 
-        // ==================================================
+        // =================================================
 
-        let user = {name:"Guest", rank:16, coins:0, exp:0};
-        let lines=[], curStart=0, curCmtLine=-1, chatTarget="";
-        const PG=150;
+        let user = {name:"Guest", rank:16, exp:0, coins:0, bio:"", avatar:""};
+        let lines=[], start=0, cmtLine=-1, chatTarget="";
+        const PG_SIZE=150;
 
-        // --- API ---
-        async function req(data) {
-            console.log("TX:", data);
+        // --- CORE ---
+        async function req(d) {
+            console.log("TX:",d);
             try {
-                const r = await fetch(API, {
-                    method:'POST', redirect:'follow',
-                    headers:{'Content-Type':'text/plain;charset=utf-8'},
-                    body:JSON.stringify(data)
-                });
-                return await r.json();
-            } catch(e) { console.error(e); return {status:'error', message:'Net Error'}; }
+                const r=await fetch(API, {method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(d)});
+                const j=await r.json(); console.log("RX:",j); return j;
+            } catch(e){ return {status:'error', message:'Network Error'}; }
         }
 
-        // --- Auth ---
-        function switchView(v) {
-            ['view-login','view-reg1','view-reg2'].forEach(id=>document.getElementById(id).classList.add('hidden'));
-            document.getElementById('view-'+v).classList.remove('hidden');
-            document.getElementById('msg').innerText="";
-            document.getElementById('auth-head').innerText = v==='login'?"SYSTEM LOGIN":"REGISTER";
+        // --- AUTH ---
+        function uiAuth(v) {
+            ['login','reg1','reg2'].forEach(id=>document.getElementById('f-'+id).classList.add('hidden'));
+            document.getElementById('f-'+v).classList.remove('hidden');
+            document.getElementById('auth-msg').innerText="";
         }
         async function doLogin() {
-            const e=document.getElementById('l-email').value, p=document.getElementById('l-pass').value;
-            const res = await req({action:'login', email:e, password:p});
-            if(res.status==='success') {
-                user = {name:res.username, rank:res.level, exp:res.exp, coins:res.coins, bio:res.bio};
+            const e=document.getElementById('l-e').value, p=document.getElementById('l-p').value;
+            const msg=document.getElementById('auth-msg');
+            if(!e||!p) return msg.innerText="Input required";
+            msg.innerText="Verifying...";
+            const r=await req({action:'login', email:e, password:p});
+            if(r.status==='success') {
+                user = {name:r.username, rank:r.level, exp:r.exp, coins:r.coins, bio:r.bio, avatar:r.avatar};
                 document.getElementById('auth-layer').style.display='none';
                 document.body.classList.add('unlocked');
-                updateHUD();
-                initVisuals();
-            } else document.getElementById('msg').innerText = res.message;
+                updHUD(); initAssets();
+            } else msg.innerText=r.message;
         }
-        let tmpReg={};
-        async function getCode() {
-            const u=document.getElementById('r-user').value, e=document.getElementById('r-email').value, p=document.getElementById('r-pass').value;
-            const res = await req({action:'req_code', email:e});
-            if(res.status==='success') { tmpReg={u,e,p}; switchView('reg2'); alert(res.message); }
-            else document.getElementById('msg').innerText = res.message;
+        let tmp={};
+        async function reqCode() {
+            const u=document.getElementById('r-u').value, e=document.getElementById('r-e').value, p=document.getElementById('r-p').value;
+            const res=await req({action:'req_code', email:e});
+            if(res.status==='success'){ tmp={u,e,p}; uiAuth('reg2'); alert(res.message); }
+            else document.getElementById('auth-msg').innerText=res.message;
         }
         async function doReg() {
-            const c=document.getElementById('r-code').value;
-            const res = await req({action:'register', username:tmpReg.u, email:tmpReg.e, password:tmpReg.p, code:c});
-            if(res.status==='success') { alert("Success"); switchView('login'); }
-            else document.getElementById('msg').innerText = res.message;
-        }
-        function updateHUD() {
-            document.getElementById('u-name').innerText = user.name.toUpperCase();
-            document.getElementById('u-coins').innerText = `🪙 ${user.coins}`;
-            document.getElementById('p-user').innerText = user.name;
-            document.getElementById('p-rank').innerText = user.rank;
-            document.getElementById('p-exp').innerText = user.exp;
-            document.getElementById('p-coin').innerText = user.coins;
+            const c=document.getElementById('r-c').value;
+            const res=await req({action:'register', username:tmp.u, email:tmp.e, password:tmp.p, code:c});
+            if(res.status==='success'){ alert("Success"); uiAuth('login'); }
+            else document.getElementById('auth-msg').innerText=res.message;
         }
 
-        // --- Reader ---
-        function openReader() { document.getElementById('reader').classList.add('active'); fetch('novel.txt').then(r=>{if(r.ok)return r.text();throw 1}).then(t=>parse(t)).catch(()=>{}); loadBM(); }
-        function closeReader() { document.getElementById('reader').classList.remove('active'); }
+        function updHUD() {
+            document.getElementById('u-name').innerText=user.name.toUpperCase();
+            document.getElementById('u-coin').innerText=`🪙 ${user.coins}`;
+            // Profile
+            document.getElementById('p-name').innerText=user.name;
+            document.getElementById('p-rank').innerText=user.rank;
+            document.getElementById('p-exp').innerText=user.exp;
+            document.getElementById('p-coin2').innerText=user.coins;
+            document.getElementById('p-bio').innerText=user.bio;
+        }
+
+        // --- READER ---
+        function uiReader(open) {
+            const el=document.getElementById('reader-layer');
+            if(open) {
+                el.classList.add('active');
+                fetch('novel.txt').then(r=>{if(r.ok)return r.text();throw 1}).then(t=>parse(t)).catch(()=>{});
+                bmRender();
+            } else el.classList.remove('active');
+        }
         function loadFile(i) { const r=new FileReader(); r.onload=e=>parse(e.target.result); r.readAsText(i.files[0]); }
         
         async function parse(txt) {
             document.getElementById('loader').classList.remove('hidden');
             lines = txt.split('\n');
-            let h=""; const reg=/(?:^第.+章)|(?:^Chapter)|(?:^序章)/i;
-            for(let i=0; i<lines.length; i+=2000) {
-                const end=Math.min(i+2000, lines.length);
-                for(let j=i; j<end; j++) if(lines[j].length<50 && reg.test(lines[j])) 
-                    h+=`<div class="list-el" onclick="go(${j})">${lines[j]}</div>`;
+            const toc=document.getElementById('list-toc'); toc.innerHTML="";
+            const reg=/(?:^第.+章)|(?:^Chapter)/i;
+            let h="";
+            
+            for(let i=0; i<lines.length; i+=3000) {
+                const end=Math.min(i+3000, lines.length);
+                for(let j=i; j<end; j++) if(lines[j].length<50 && reg.test(lines[j]))
+                    h+=`<div class="toc-item" onclick="go(${j})">${lines[j]}</div>`;
+                document.getElementById('load-prog').style.width = (i/lines.length*100)+"%";
                 await new Promise(r=>setTimeout(r,0));
             }
-            document.getElementById('l-toc').innerHTML=h;
+            toc.innerHTML=h;
             go(0);
             document.getElementById('loader').classList.add('hidden');
         }
-        function go(i) { curStart=i; render(); }
-        function turnPage(d) { const n=curStart+d*PG; if(n>=0 && n<lines.length) { curStart=n; render(); } }
+
+        function go(i) { start=i; render(); }
+        function pgTurn(d) { const n=start+d*PG_SIZE; if(n>=0&&n<lines.length){start=n;render();} }
         function render() {
-            const end = Math.min(curStart+PG, lines.length);
-            const slice = lines.slice(curStart, end);
-            const div = document.getElementById('text-view');
-            div.innerHTML = slice.map((l,i)=> l.trim()?`<div class="line-wrap">${l}<div class="bubble" onclick="cmt(${curStart+i})">💬</div></div>`:"<br>").join('');
+            const end = Math.min(start+PG_SIZE, lines.length);
+            const slice = lines.slice(start, end);
+            const div = document.getElementById('txt-view');
             
+            div.innerHTML = slice.map((l,i)=>
+                l.trim()?`<div class="line">${l}<div class="bubble" onclick="cmtOpen(${start+i})">💬</div></div>`:"<br>"
+            ).join('');
+            
+            // Discussion
             if(end>=lines.length) {
-                div.innerHTML += `<div class="disc-area"><h3 style="color:var(--cyan);font-family:var(--font-main)">DISCUSSION</h3><textarea id="d-inp" class="input" style="text-align:left" rows="2"></textarea><button class="btn" onclick="postDisc()">POST</button><div id="d-list" style="margin-top:20px"></div></div>`;
+                div.innerHTML += `<div class="disc-zone">
+                    <h3 style="color:var(--cyan); font-family:'Orbitron'">DISCUSSION</h3>
+                    <textarea id="d-inp" class="input" rows="2" style="text-align:left; margin-top:10px;"></textarea>
+                    <button class="btn" onclick="postDisc()">POST (+10 EXP)</button>
+                    <div id="d-list" style="margin-top:20px"></div>
+                </div>`;
                 loadDisc();
             }
             div.scrollTop=0;
             document.getElementById('pg-info').innerText = Math.round((end/lines.length)*100)+"%";
         }
 
-        // --- Social ---
-        function toggleR() { document.getElementById('r-side-r').classList.toggle('open'); }
-        async function cmt(i) {
-            curCmtLine=i; document.getElementById('r-side-r').classList.add('open');
-            const div = document.getElementById('cmt-list'); div.innerHTML="Loading...";
-            const r = await req({action:'get_line_comments', line_index:i});
-            div.innerHTML = r.data.length ? r.data.map(c=>`<div class="cmt-item"><div style="color:var(--cyan)">${c.user}</div>${c.content}</div>`).join('') : "No comments";
+        // --- COMMENTS & SOCIAL ---
+        function toggleCmt() { document.getElementById('r-side-r').classList.toggle('open'); }
+        function cmtOpen(idx) {
+            curCmt=idx; document.getElementById('r-side-r').classList.add('open');
+            const d=document.getElementById('c-list'); d.innerHTML="Loading...";
+            req({action:'get_line_comments', line_index:idx}).then(r=>{
+                d.innerHTML = r.data.map(c=>
+                    `<div class="cmt-card"><div style="color:var(--cyan); display:flex; justify-content:space-between"><span>${c.user}</span><span style="cursor:pointer" onclick="interact('like','${c.id}','comment')">♥ ${c.likes}</span></div><div>${c.content}</div></div>`
+                ).join('') || "No comments";
+            });
         }
         async function postCmt() {
-            const t=document.getElementById('c-inp').value; if(!t)return;
-            await req({action:'post_line_comment', line_index:curCmtLine, username:user.name, content:t});
-            document.getElementById('c-inp').value=""; cmt(curCmtLine);
+            const t=document.getElementById('c-inp').value;
+            await req({action:'post_line_comment', line_index:curCmt, username:user.name, content:t});
+            document.getElementById('c-inp').value=""; cmtOpen(curCmt);
         }
-        async function loadDisc() {
-            const r = await req({action:'get_discussion'});
-            document.getElementById('d-list').innerHTML = r.data.map(d=>`<div class="d-card"><div style="display:flex;justify-content:space-between;color:var(--cyan)"><span>${d.user}</span><span style="color:var(--gold)">🪙 ${d.coins}</span></div><div style="margin:10px 0">${d.content}</div><div style="color:#888;font-size:0.8rem;cursor:pointer" onclick="interact('like','${d.id}','disc')">♥ ${d.likes} | <span onclick="interact('tip','${d.id}','disc')">TIP</span></div></div>`).join('');
+        
+        function loadDisc() {
+            req({action:'get_discussion'}).then(r=>{
+                document.getElementById('d-list').innerHTML = r.data.map(d=>
+                    `<div class="d-card">
+                        <div style="color:var(--cyan); border-bottom:1px solid #333; padding-bottom:5px; display:flex; justify-content:space-between"><span>${d.user}</span><span style="color:var(--gold)">🪙 ${d.coins}</span></div>
+                        <div style="margin:10px 0; font-size:1.1rem;">${d.content}</div>
+                        <div class="act-bar"><span class="act-btn" onclick="interact('like','${d.id}','disc')">♥ ${d.likes}</span><span class="act-btn tip-btn" onclick="interact('tip','${d.id}','disc')">TIP</span><span style="margin-left:auto">${d.time}</span></div>
+                    </div>`
+                ).join('');
+            });
         }
         async function postDisc() {
-            const t=document.getElementById('d-inp').value; if(!t)return;
+            const t=document.getElementById('d-inp').value;
             await req({action:'post_discussion', username:user.name, content:t});
             document.getElementById('d-inp').value=""; loadDisc();
         }
         async function interact(a,id,t) {
-            if(user.name==='Guest') return alert("Login");
-            if(a==='tip' && !confirm("Tip 1 Coin?")) return;
+            if(user.name==='Guest') return alert("Login first");
+            if(a==='tip' && !confirm("Spend 1 coin?")) return;
             const r = await req({action:'interact', sub_action:a, type:t, id:id, username:user.name, target_id:id});
             if(r.status==='success') {
-                if(a==='tip') { user.coins=r.new_balance; updateHUD(); }
-                if(t==='disc') loadDisc(); else cmt(curCmtLine);
+                if(a==='tip') { user.coins=r.new_balance; updHUD(); }
+                if(t==='comment') cmtOpen(curCmt); else loadDisc();
             } else alert(r.message);
         }
 
-        // --- Profile & Chat ---
-        function openProfile() { document.getElementById('profile-overlay').classList.add('active'); loadFriends(); }
-        function closeProfile() { document.getElementById('profile-overlay').classList.remove('active'); }
-        function backProfile() { document.getElementById('view-chat').style.display='none'; document.getElementById('view-p').style.display='block'; }
-        async function loadFriends() {
-            const r = await req({action:'get_friends', username:user.name});
-            let h = `<div class="f-item" onclick="backProfile()"><div class="f-ava"></div><span>MY PROFILE</span></div>`;
-            r.data.forEach(f=>{
-                h+=`<div class="f-item" onclick="openChat('${f.name}')"><div class="f-ava"></div><span>${f.name}</span> ${f.status==='Pending'?'(P)':''}</div>`;
-            });
-            document.getElementById('f-list').innerHTML = h;
-        }
-        async function addFriend() {
-            const n=prompt("Username:"); if(n) { const r=await req({action:'add_friend', username:user.name, target_user:n}); alert(r.message); }
-        }
-        function openChat(n) {
-            chatTarget=n; document.getElementById('view-p').style.display='none'; document.getElementById('view-chat').style.display='flex';
-            document.getElementById('chat-title').innerText = "CHAT: "+n; loadMsgs();
-        }
-        async function loadMsgs() {
-            if(!chatTarget) return;
-            const r = await req({action:'get_messages', username:user.name, target_user:chatTarget});
-            document.getElementById('chat-box').innerHTML = r.data.map(m=>`<div class="msg ${m.sender===user.name?'me':'them'}">${m.content}</div>`).join('');
-        }
-        async function sendMsg() {
-            const t=document.getElementById('chat-msg').value; if(!t)return;
-            await req({action:'send_message', username:user.name, target_user:chatTarget, content:t});
-            document.getElementById('chat-msg').value=""; loadMsgs();
-        }
-
-        // --- Bookmarks ---
+        // --- BOOKMARKS ---
         function tab(t) {
-            document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+            document.querySelectorAll('.r-tab').forEach(e=>e.classList.remove('active'));
             event.target.classList.add('active');
-            document.getElementById('l-toc').className = t==='toc'?'list-container':'hidden';
-            document.getElementById('l-bm').className = t==='bm'?'list-container':'hidden';
+            document.getElementById('list-toc').className = t==='toc'?'toc-content':'hidden';
+            document.getElementById('list-bm').className = t==='bm'?'toc-content':'hidden';
         }
         function saveBM() {
-            let b = JSON.parse(localStorage.getItem('ngnl_bm')||'[]');
-            b.unshift({t:new Date().toLocaleDateString(), i:curStart, txt:lines[curStart].substr(0,15)+"..."});
-            localStorage.setItem('ngnl_bm', JSON.stringify(b));
-            loadBM(); alert("Saved");
+            let bms = JSON.parse(localStorage.getItem('ngnl_bm')||'[]');
+            bms.unshift({t:new Date().toLocaleDateString(), i:start, txt:lines[start].substring(0,20)+"..."});
+            localStorage.setItem('ngnl_bm', JSON.stringify(bms));
+            bmRender(); alert("Saved");
         }
-        function loadBM() {
-            let b = JSON.parse(localStorage.getItem('ngnl_bm')||'[]');
-            document.getElementById('l-bm').innerHTML = b.map((v,k)=>`<div class="list-el" onclick="go(${v.i})"><div style="display:flex;justify-content:space-between"><span>${v.txt}</span><span onclick="delBM(${k},event)" style="color:var(--pink)">X</span></div></div>`).join('');
+        function bmRender() {
+            const bms = JSON.parse(localStorage.getItem('ngnl_bm')||'[]');
+            document.getElementById('list-bm').innerHTML = bms.map((b,k)=>
+                `<div class="bm-item" onclick="go(${b.i})">
+                    <div><div style="font-size:0.7rem; color:var(--purple)">${b.t}</div><div>${b.txt}</div></div>
+                    <div class="delete-bm" onclick="bmDel(${k},event)">X</div>
+                </div>`
+            ).join('');
         }
-        function delBM(k,e) { e.stopPropagation(); let b=JSON.parse(localStorage.getItem('ngnl_bm')); b.splice(k,1); localStorage.setItem('ngnl_bm',JSON.stringify(b)); loadBM(); }
+        function bmDel(k,e) { e.stopPropagation(); let b = JSON.parse(localStorage.getItem('ngnl_bm')); b.splice(k,1); localStorage.setItem('ngnl_bm',JSON.stringify(b)); bmRender(); }
 
-        // --- Visuals ---
-        function initVisuals() {
-            // Pledges
-            const p=["禁止杀伤","纠纷游戏决","赌注对等","内容不限","受挑战决定","遵守盟约","全权代理","作弊即败","绝对不变","和平玩吧"];
-            document.getElementById('pledge-list').innerHTML = p.map((t,i)=>`<div class="pledge-card hover"><div class="pledge-num">${i+1}</div>${t}</div>`).join('');
-            
-            // Races
-            const c=[{r:1,n:'Old Deus',i:'♔',s:'rank-god'},{r:2,n:'Phantasma',i:'♕',s:'rank-god'},{r:6,n:'Flügel',i:'♗',s:'rank-high'},{r:16,n:'Imanity',i:'♙',s:'rank-imanity'}];
-            document.getElementById('chess-list').innerHTML = c.map(x=>`<div class="piece ${x.s} hover"><div class="p-icon">${x.i}</div><div class="p-rank">${x.r}</div><div class="p-name">${x.n}</div></div>`).join('');
-            
-            // Canvas
-            const cvs=document.getElementById('canvas-bg'), ctx=cvs.getContext('2d');
-            let w=window.innerWidth, h=window.innerHeight; cvs.width=w; cvs.height=h;
-            const parts=Array.from({length:40},()=>({x:Math.random()*w,y:Math.random()*h,s:Math.random()+0.5}));
-            function loop(){ctx.clearRect(0,0,w,h);parts.forEach(i=>{i.y+=i.s;if(i.y>h)i.y=-20;ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fillRect(i.x,i.y,2,2)});requestAnimationFrame(loop);}
-            loop();
+        // --- PROFILE & CHAT ---
+        function uiProfile(show) {
+            document.getElementById('user-overlay').className = show ? 'active' : '';
+            if(show) {
+                document.getElementById('view-stats').classList.add('show');
+                document.getElementById('view-chat').classList.remove('show');
+                loadFriends();
+            }
         }
-        const cursor = document.getElementById('cursor');
-        document.addEventListener('mousemove', e=>{ cursor.style.left=e.clientX+'px'; cursor.style.top=e.clientY+'px'; });
-        document.body.addEventListener('mouseover', e=>{ if(e.target.closest('.hover')) cursor.classList.add('hover'); else cursor.classList.remove('hover'); });
+        function loadFriends() {
+            req({action:'get_friends', username:user.name}).then(d=>{
+                let h = `<div class="f-item act" onclick="showStats()"><div class="f-av"></div>MY STATS</div>`;
+                d.data.forEach(f=>h+=`<div class="f-item" onclick="startChat('${f.name}')"><div class="f-av"></div>${f.name} (${f.status})</div>`);
+                document.getElementById('f-list').innerHTML = h;
+            });
+        }
+        function showStats() {
+            document.getElementById('view-chat').classList.remove('show');
+            document.getElementById('view-stats').classList.add('show');
+        }
+        function addFriend() {
+            const n=prompt("Username:");
+            if(n) req({action:'add_friend', username:user.name, target_user:n}).then(d=>alert(d.message));
+        }
+        function startChat(target) {
+            chatTarget = target;
+            document.getElementById('view-stats').classList.remove('show');
+            document.getElementById('view-chat').classList.add('show');
+            loadMsgs();
+        }
+        function loadMsgs() {
+            if(!chatTarget) return;
+            req({action:'get_messages', username:user.name, target_user:chatTarget}).then(d=>{
+                const b = document.getElementById('chat-box');
+                b.innerHTML = d.data.map(m=>`<div class="msg ${m.sender===user.name?'me':'them'}">${m.content}</div>`).join('');
+                b.scrollTop = b.scrollHeight;
+            });
+        }
+        async function sendMsg() {
+            const t = document.getElementById('msg-inp').value;
+            await req({action:'send_message', username:user.name, target_user:chatTarget, content:t});
+            document.getElementById('msg-inp').value=""; loadMsgs();
+        }
+
+        // --- VISUALS & INIT ---
+        function initAssets() {
+            // 1. Pledges
+            const ps = ["禁止杀伤","纠纷游戏决","赌注对等","内容不限","受挑战决定","遵守盟约","全权代理","作弊即败","绝对不变","和平玩吧"];
+            document.getElementById('pledge-grid').innerHTML = ps.map((t,i)=>`<div class="pledge-card hover"><div class="pledge-num">${i+1}</div><div class="pledge-text">${t}</div></div>`).join('');
+
+            // 2. Chess (Exceed)
+            const chess = [
+                {r:'I',n:'Old Deus',j:'神灵种',c:'♔',cls:'rank-1'},{r:'II',n:'Phantasma',j:'幻想种',c:'♕'},{r:'III',n:'Dragonia',j:'龙精种',c:'♖'},
+                {r:'IV',n:'Flügel',j:'天翼种',c:'♗'},{r:'V',n:'Elf',j:'森精种',c:'♘'},{r:'VI',n:'Gigant',j:'巨神种',c:'♙'},
+                {r:'VII',n:'Werebeast',j:'兽人种',c:'🨠'},{r:'VIII',n:'Goblin',j:'地精种',c:'♙'},{r:'IX',n:'Dragonblood',j:'天龙种',c:'♖'},
+                {r:'X',n:'Demonia',j:'妖魔种',c:'♗'},{r:'XI',n:'Seiren',j:'海神种',c:'♕'},{r:'XII',n:'Fairy',j:'妖精种',c:'♘'},
+                {r:'XIII',n:'Ex-Machina',j:'机凯种',c:'♜'},{r:'XIV',n:'Dhampir',j:'吸血种',c:'♙'},{r:'XV',n:'Moonver',j:'月下种',c:'♙'},
+                {r:'XVI',n:'Imanity',j:'人类种',c:'♙',cls:'rank-16'}
+            ];
+            document.getElementById('chess-grid').innerHTML = chess.map(c=>
+                `<div class="piece ${c.cls||''}"><div class="p-icon">${c.c}</div><div style="z-index:1"><div class="piece-rank">${c.r}</div><div class="piece-name">${c.n}</div><div class="piece-desc">${c.j}</div></div></div>`
+            ).join('');
+
+            // 3. Chars
+            const chars = [
+                {n:'SORA',r:'Imanity',i:'sora.png'},{n:'SHIRO',r:'Imanity',i:'shiro.png'},{n:'JIBRIL',r:'Flügel',i:'jibril.png'},
+                {n:'STEPH',r:'Imanity',i:'steph.png'},{n:'IZUNA',r:'Werebeast',i:'izuna.png'},{n:'TET',r:'God',i:'tet.png'}
+            ];
+            document.getElementById('char-grid').innerHTML = chars.map(c=>
+                `<div class="char hover"><div class="char-in"><div class="c-front"><div class="c-av" style="background-image:url(${c.i})"></div><div class="char-name">${c.n}</div><div class="char-race">${c.r}</div></div><div class="c-back"><h3>${c.n}</h3></div></div></div>`
+            ).join('');
+        }
+
+        // Canvas & Cursor
+        const cvs=document.getElementById('canvas-bg'), ctx=cvs.getContext('2d');
+        let w=window.innerWidth, h=window.innerHeight; cvs.width=w; cvs.height=h;
+        const p=Array.from({length:40},()=>({x:Math.random()*w,y:Math.random()*h,s:Math.random()+0.5,t:['♔','♕','♖'][Math.floor(Math.random()*3)]}));
+        function loop(){ctx.clearRect(0,0,w,h);p.forEach(i=>{i.y+=i.s;if(i.y>h)i.y=-20;ctx.fillStyle='rgba(255,255,255,0.1)';ctx.font='20px Arial';ctx.fillText(i.t,i.x,i.y)});requestAnimationFrame(loop);}
+        loop();
+        
+        const cur = document.getElementById('cursor');
+        document.addEventListener('mousemove', e=>{ cur.style.left=e.clientX+'px'; cur.style.top=e.clientY+'px'; });
+        document.body.addEventListener('mouseover', e=>{ if(e.target.closest('.hover,.btn,.btn-pink,.auth-link')) cur.classList.add('hover'); else cur.classList.remove('hover'); });
+        
+        initAssets(); // Load initial assets
     </script>
 </body>
 </html>
