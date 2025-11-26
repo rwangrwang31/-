@@ -3,115 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NO GAME NO LIFE | DISBOARD SYSTEM</title>
+    <title>NO GAME NO LIFE - 游戏人生 | DISBOARD</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     <style>
-        /* --- 0. CORE & ANIMATIONS --- */
+        /* ================= CORE ================= */
         :root {
             --pink: #ff2a6d; --cyan: #05d9e8; --purple: #bd00ff; --gold: #ffd700;
-            --dark: #05010d; --glass: rgba(20, 20, 40, 0.85); --border: rgba(255, 255, 255, 0.15);
-            --rank-god: #ffd700; --rank-mid: #2ecc71; --rank-low: #e74c3c;
+            --dark: #09000f; --glass: rgba(20, 20, 40, 0.9); --border: rgba(255, 255, 255, 0.15);
+            --rank-god: #ffd700; --rank-high: #9b59b6; --rank-mid: #2ecc71; --rank-low: #e74c3c;
         }
         * { margin:0; padding:0; box-sizing:border-box; cursor:none; outline:none; user-select:none; }
         body { background-color:var(--dark); color:white; font-family:'Noto Sans SC'; height:100vh; overflow:hidden; }
         body.unlocked { overflow-y:auto; overflow-x:hidden; }
         
-        @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+        /* FX */
+        @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-5px);} }
         @keyframes glow { 0%{box-shadow:0 0 5px var(--cyan);} 50%{box-shadow:0 0 20px var(--purple);} 100%{box-shadow:0 0 5px var(--cyan);} }
-        
-        /* --- 1. UI COMPONENTS --- */
+        .glitch { position:relative; }
+        .glitch::before, .glitch::after { content:attr(data-text); position:absolute; top:0; left:0; width:100%; height:100%; opacity:0.8; }
+        .glitch::before { left:2px; text-shadow:-1px 0 var(--pink); clip-path:inset(0 0 0 0); animation:glitch-anim 2s infinite linear alternate-reverse; }
+        .glitch::after { left:-2px; text-shadow:-1px 0 var(--cyan); clip-path:inset(0 0 0 0); animation:glitch-anim 3s infinite linear alternate-reverse; }
+        @keyframes glitch-anim { 0%{clip-path:inset(10% 0 80% 0);} 20%{clip-path:inset(80% 0 10% 0);} 100%{clip-path:inset(40% 0 40% 0);} }
+
+        /* UI */
         #cursor { width:20px; height:20px; border:2px solid var(--cyan); border-radius:50%; position:fixed; pointer-events:none; z-index:999999; transform:translate(-50%,-50%); transition:0.1s; mix-blend-mode:difference; }
         #cursor.hover { width:60px; height:60px; background:rgba(255,42,109,0.2); border-color:var(--pink); }
+        ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:#050505; } ::-webkit-scrollbar-thumb { background:linear-gradient(var(--cyan),var(--purple)); border-radius:3px; }
         
-        .btn { background:rgba(5,217,232,0.05); border:1px solid var(--cyan); color:var(--cyan); padding:10px 25px; font-family:'Orbitron'; font-weight:bold; transition:0.3s; position:relative; overflow:hidden; text-transform:uppercase; }
-        .btn:hover { background:var(--cyan); color:black; box-shadow:0 0 30px var(--cyan); }
-        .btn-pink { border-color:var(--pink); color:var(--pink); } .btn-pink:hover { background:var(--pink); color:white; box-shadow:0 0 30px var(--pink); }
-        
-        .input { width:100%; padding:12px; background:rgba(255,255,255,0.05); border:1px solid #444; color:white; font-family:'Orbitron'; text-align:center; transition:0.3s; }
-        .input:focus { border-color:var(--cyan); box-shadow:0 0 15px rgba(5,217,232,0.3); }
+        .btn { background:rgba(5,217,232,0.05); border:1px solid var(--cyan); color:var(--cyan); padding:10px 25px; font-family:'Orbitron'; font-weight:bold; transition:0.3s; text-transform:uppercase; }
+        .btn:hover { background:var(--cyan); color:black; box-shadow:0 0 20px var(--cyan); }
+        .btn-pink { border-color:var(--pink); color:var(--pink); } .btn-pink:hover { background:var(--pink); color:white; box-shadow:0 0 25px var(--pink); }
+        .inp { width:100%; padding:12px; background:rgba(255,255,255,0.05); border:1px solid #444; color:white; font-family:'Orbitron'; text-align:center; transition:0.3s; }
+        .inp:focus { border-color:var(--cyan); box-shadow:0 0 15px rgba(5,217,232,0.3); }
 
-        /* --- 2. LAYOUT --- */
-        #app { transition:1s; filter:blur(15px); opacity:0.3; pointer-events:none; }
+        /* LAYOUT */
+        #app { transition:0.8s; filter:blur(15px); opacity:0.3; pointer-events:none; }
         body.unlocked #app { filter:blur(0); opacity:1; pointer-events:all; }
-        
-        .bg-layer { position:fixed; inset:0; z-index:-10; background:radial-gradient(circle at 50% 0%, rgba(189,0,255,0.15), transparent 60%), linear-gradient(0deg, #000, transparent), url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h40v40H0z' fill='none'/%3E%3Cpath d='M0 38h40v2H0z' fill='%2305d9e8' fill-opacity='0.03'/%3E%3C/svg%3E"); }
-        #canvas-bg { position:fixed; inset:0; z-index:-5; opacity:0.5; }
+        .bg-layer { position:fixed; inset:0; z-index:-10; background:radial-gradient(circle at 50% 0%, #2a0e36, #000); }
+        #bg-canvas { position:fixed; inset:0; z-index:-5; opacity:0.5; pointer-events:none; }
 
-        /* --- 3. AUTH --- */
-        #auth-layer { position:fixed; inset:0; z-index:10000; background:rgba(5,2,10,0.96); display:flex; justify-content:center; align-items:center; backdrop-filter:blur(20px); }
-        .auth-box { width:400px; padding:40px; background:rgba(0,0,0,0.8); border:2px solid var(--pink); box-shadow:0 0 60px rgba(255,42,109,0.3); text-align:center; }
+        /* AUTH */
+        #auth-layer { position:fixed; inset:0; z-index:10000; background:rgba(5,2,10,0.95); display:flex; justify-content:center; align-items:center; backdrop-filter:blur(15px); }
+        .auth-box { width:420px; padding:40px; background:rgba(0,0,0,0.8); border:2px solid var(--pink); box-shadow:0 0 50px rgba(255,42,109,0.2); text-align:center; }
         .hidden { display:none !important; }
-        .link { margin-top:15px; color:#888; font-size:0.8rem; text-decoration:underline; cursor:pointer; } .link:hover { color:var(--cyan); }
-        .err { color:var(--pink); margin-top:10px; font-family:'Orbitron'; font-size:0.8rem; min-height:20px; }
+        .link { margin-top:15px; font-size:0.8rem; color:#888; text-decoration:underline; cursor:pointer; } .link:hover { color:var(--cyan); }
+        .err { color:var(--pink); margin-top:10px; font-size:0.9rem; font-family:'Orbitron'; }
 
-        /* --- 4. MAIN SECTIONS --- */
-        nav { position:fixed; top:0; width:100%; height:70px; padding:0 40px; display:flex; justify-content:space-between; align-items:center; background:rgba(5,1,10,0.9); border-bottom:1px solid rgba(255,255,255,0.1); z-index:1000; }
-        .brand { font-family:'Orbitron'; font-weight:900; font-size:1.5rem; color:white; text-shadow:0 0 10px var(--cyan); }
+        /* MAIN */
+        nav { position:fixed; top:0; width:100%; height:70px; padding:0 40px; display:flex; justify-content:space-between; align-items:center; background:rgba(10,5,20,0.9); border-bottom:1px solid rgba(255,255,255,0.1); z-index:1000; }
+        .brand { font-family:'Orbitron'; font-weight:900; font-size:1.5rem; color:white; text-shadow:0 0 10px var(--pink); }
         .nav-item { margin-left:30px; color:#aaa; text-decoration:none; font-family:'Orbitron'; font-size:0.9rem; transition:0.3s; }
         .nav-item:hover { color:var(--cyan); text-shadow:0 0 10px var(--cyan); }
-        .u-badge { cursor:pointer; border:1px solid var(--gold); padding:5px 10px; color:var(--gold); border-radius:4px; font-family:'Orbitron'; font-size:0.8rem; display:flex; align-items:center; gap:10px; }
-        .u-badge:hover { background:rgba(255,215,0,0.1); }
+        .u-badge { cursor:pointer; border:1px solid var(--gold); padding:5px 10px; color:var(--gold); font-family:'Orbitron'; font-size:0.8rem; display:flex; align-items:center; gap:10px; transition:0.3s; }
+        .u-badge:hover { background:rgba(255,215,0,0.1); box-shadow:0 0 15px var(--gold); }
 
         section { padding:100px 20px; max-width:1300px; margin:0 auto; }
         .hero { height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
-        h1 { font-family:'Orbitron'; font-size:5rem; text-shadow:0 0 20px var(--pink); margin-bottom:20px; }
+        .title { font-family:'Orbitron'; font-size:3rem; text-align:center; margin-bottom:60px; text-shadow:0 0 20px var(--cyan); letter-spacing:5px; }
 
-        /* Pledges & World (Simplified CSS Grid) */
-        .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:25px; }
-        .card { background:var(--glass); border:1px solid var(--border); padding:25px; border-radius:10px; transition:0.3s; position:relative; overflow:hidden; }
-        .card:hover { transform:translateY(-5px); border-color:var(--cyan); box-shadow:0 0 20px rgba(5,217,232,0.2); }
-
-        /* Chess Board */
+        /* Pledges & Races */
+        .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:25px; }
+        .card { background:var(--glass); border:1px solid var(--border); padding:25px; border-radius:10px; transition:0.3s; position:relative; overflow:hidden; display:flex; align-items:center; min-height:100px; }
+        .card:hover { transform:translateY(-5px); border-color:var(--pink); box-shadow:0 0 20px rgba(255,42,109,0.2); }
+        .p-num { position:absolute; right:15px; font-family:'Orbitron'; font-size:4rem; opacity:0.1; font-weight:900; color:var(--pink); }
+        
         .chess-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:20px; }
-        .piece { height:200px; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:20px; border-radius:8px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden; }
-        .piece:hover { transform:scale(1.05); background:rgba(255,255,255,0.08); z-index:5; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
-        .p-icon { position:absolute; bottom:-20px; right:-20px; font-size:7rem; opacity:0.08; transition:0.5s; }
-        .piece:hover .p-icon { opacity:0.2; transform:rotate(-10deg) scale(1.2); }
-        .rank-1 { border-color:var(--gold); } .rank-16 { animation:glow 3s infinite; border-color:white; }
+        .piece { height:220px; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:20px; border-radius:8px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden; transition:0.4s; }
+        .piece:hover { background:rgba(255,255,255,0.08); transform:scale(1.05); z-index:5; box-shadow:0 10px 40px rgba(0,0,0,0.5); }
+        .p-icon { position:absolute; bottom:-20px; right:-20px; font-size:8rem; opacity:0.08; transition:0.5s; }
+        .piece:hover .p-icon { opacity:0.2; transform:rotate(-10deg) scale(1.1); }
+        .rank-txt { font-family:'Orbitron'; font-size:2rem; font-weight:900; opacity:0.3; }
+        .rank-name { font-family:'Orbitron'; font-weight:bold; font-size:1.2rem; margin-bottom:5px; color:white; }
+        .rank-god { border-color:var(--rank-god); box-shadow:inset 0 0 20px rgba(255,215,0,0.1); } .rank-god .rank-txt { color:var(--rank-god); }
+        .rank-imanity:hover { animation:glow 2s infinite; border-color:white; }
 
-        /* --- 5. PROFILE & FRIENDS OVERLAY (Bilibili/LINE Style) --- */
-        #profile-overlay { position:fixed; inset:0; z-index:6000; background:rgba(0,0,0,0.9); display:flex; justify-content:center; align-items:center; opacity:0; pointer-events:none; transition:0.3s; }
-        #profile-overlay.active { opacity:1; pointer-events:all; }
-        .profile-box { width:900px; height:600px; background:#111; border:1px solid var(--cyan); display:flex; border-radius:10px; overflow:hidden; box-shadow:0 0 50px rgba(5,217,232,0.2); }
-        
-        /* Left: Friend List */
-        .p-sidebar { width:250px; background:#0a0a0a; border-right:1px solid #333; display:flex; flex-direction:column; }
-        .f-header { padding:20px; border-bottom:1px solid #333; font-family:'Orbitron'; color:var(--pink); display:flex; justify-content:space-between; }
+        /* Characters */
+        .char-box { width:260px; height:380px; perspective:1000px; }
+        .char-in { width:100%; height:100%; transition:0.6s; transform-style:preserve-3d; position:relative; }
+        .char-box:hover .char-in { transform:rotateY(180deg); }
+        .cf, .cb { position:absolute; width:100%; height:100%; backface-visibility:hidden; border-radius:15px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(145deg,#1a1025,#050505); border:1px solid var(--border); box-shadow:0 10px 30px rgba(0,0,0,0.5); }
+        .cb { transform:rotateY(180deg); background:linear-gradient(135deg,var(--pink),#2a0e36); padding:20px; text-align:center; }
+        .c-ava { width:120px; height:120px; border-radius:50%; border:3px solid white; background-size:cover; margin-bottom:20px; box-shadow:0 0 20px var(--cyan); }
+
+        /* --- PROFILE & SOCIAL OVERLAY --- */
+        #profile-layer { position:fixed; inset:0; z-index:6000; background:rgba(0,0,0,0.9); display:flex; justify-content:center; align-items:center; opacity:0; pointer-events:none; transition:0.3s; }
+        #profile-layer.active { opacity:1; pointer-events:all; }
+        .p-box { width:900px; height:600px; background:#0f0f0f; border:1px solid var(--cyan); display:flex; border-radius:10px; overflow:hidden; box-shadow:0 0 60px rgba(5,217,232,0.15); }
+        .p-side { width:260px; background:#080808; border-right:1px solid #333; display:flex; flex-direction:column; }
+        .p-head { padding:20px; border-bottom:1px solid #333; font-family:'Orbitron'; color:var(--pink); display:flex; justify-content:space-between; }
         .f-list { flex:1; overflow-y:auto; }
-        .f-item { padding:15px; border-bottom:1px solid #222; cursor:pointer; display:flex; align-items:center; gap:10px; transition:0.2s; }
-        .f-item:hover, .f-item.active { background:#1a1a1a; border-left:3px solid var(--cyan); }
-        .f-avatar { width:30px; height:30px; background:#333; border-radius:50%; }
+        .f-item { padding:15px; border-bottom:1px solid #222; cursor:pointer; display:flex; align-items:center; gap:10px; transition:0.2s; color:#aaa; }
+        .f-item:hover, .f-item.active { background:#1a1a1a; border-left:3px solid var(--cyan); color:white; }
+        .f-ava { width:35px; height:35px; background:#333; border-radius:50%; }
+        .p-main { flex:1; display:flex; flex-direction:column; position:relative; background:radial-gradient(circle at 50% 50%, #1a1025 0%, #000 80%); }
         
-        /* Right: Chat / Profile */
-        .p-main { flex:1; display:flex; flex-direction:column; background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><circle cx="1" cy="1" r="1" fill="rgba(255,255,255,0.05)"/></svg>'); }
-        .chat-area { flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:15px; }
+        .chat-view { flex:1; display:flex; flex-direction:column; display:none; }
+        .chat-view.show { display:flex; }
+        .c-area { flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:15px; }
         .msg { max-width:70%; padding:10px 15px; border-radius:10px; font-size:0.9rem; line-height:1.4; }
         .msg.me { align-self:flex-end; background:var(--cyan); color:black; }
         .msg.them { align-self:flex-start; background:#333; color:#ddd; border:1px solid #444; }
-        .chat-input { height:60px; border-top:1px solid #333; padding:10px; display:flex; gap:10px; background:#0f0f0f; }
+        .c-input { height:60px; border-top:1px solid #333; padding:10px; display:flex; gap:10px; background:#0f0f0f; }
         
-        /* Profile View */
-        .my-profile { padding:40px; text-align:center; display:none; }
-        .my-profile.show { display:block; }
-        .big-avatar { width:100px; height:100px; border-radius:50%; background:#333; border:2px solid var(--gold); margin:0 auto 20px; }
-        .stat-row { display:flex; justify-content:center; gap:30px; margin:20px 0; font-family:'Orbitron'; }
-        .stat-box { background:#222; padding:15px; border-radius:8px; width:100px; }
+        .profile-view { padding:40px; text-align:center; display:none; animation:float 3s infinite ease-in-out; }
+        .profile-view.show { display:block; }
+        .big-ava { width:120px; height:120px; border-radius:50%; background:#333; border:2px solid var(--gold); margin:0 auto 20px; }
+        .stat-row { display:flex; justify-content:center; gap:30px; margin:30px 0; font-family:'Orbitron'; }
+        .stat { background:#222; padding:15px; border-radius:8px; width:120px; border:1px solid #444; }
 
-        /* --- 6. READER (Anti-Lag) --- */
-        #reader { position:fixed; inset:0; background:var(--hud-bg); z-index:5000; display:flex; opacity:0; pointer-events:none; transition:0.3s; }
+        /* --- READER --- */
+        #reader { position:fixed; inset:0; background:#050505; z-index:5000; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:0.3s; }
         #reader.active { opacity:1; pointer-events:all; }
-        .side-l { width:280px; background:rgba(0,0,0,0.5); border-right:1px solid var(--border); display:flex; flex-direction:column; }
-        .text-area { flex:1; overflow-y:auto; padding:50px 100px; font-family:'ZCOOL XiaoWei'; font-size:1.35rem; color:#ddd; line-height:2; }
-        .side-r { width:0; background:#0a0a0a; border-left:1px solid var(--border); transition:0.3s; display:flex; flex-direction:column; }
-        .side-r.open { width:350px; }
+        .r-head { height:60px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; padding:0 30px; background:rgba(0,0,0,0.8); }
+        .r-body { flex:1; display:flex; overflow:hidden; position:relative; }
         
-        .line-wrap { position:relative; padding:5px 0; }
-        .line-wrap:hover { background:rgba(255,255,255,0.05); }
-        .bubble { position:absolute; right:-30px; top:0; color:var(--purple); opacity:0; cursor:pointer; transition:0.2s; pointer-events:auto; z-index:10; }
-        .line-wrap:hover .bubble { opacity:1; right:10px; }
+        .r-side-l { width:280px; background:rgba(10,5,15,0.98); border-right:1px solid var(--border); display:flex; flex-direction:column; z-index:20; }
+        .tabs { display:flex; height:50px; border-bottom:1px solid var(--border); }
+        .tab { flex:1; background:transparent; border:none; color:#666; font-family:'Orbitron'; font-size:0.85rem; cursor:pointer; border-bottom:2px solid transparent; }
+        .tab.active { color:white; border-color:var(--cyan); background:rgba(255,255,255,0.05); }
+        .list-c { flex:1; overflow-y:auto; }
+        .l-item { padding:12px 20px; font-size:0.9rem; color:#888; border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer; transition:0.2s; }
+        .l-item:hover { color:white; background:rgba(5,217,232,0.1); padding-left:25px; border-left:3px solid var(--cyan); }
+        .del-bm { float:right; color:#555; font-size:0.8rem; } .del-bm:hover { color:var(--pink); }
 
-        /* Loading */
-        #loader { position:absolute; inset:0; background:#000; z-index:100; display:flex; justify-content:center; align-items:center; color:var(--cyan); font-family:'Orbitron'; }
+        .r-content { flex:1; display:flex; flex-direction:column; position:relative; z-index:10; }
+        .text-box { flex:1; overflow-y:auto; padding:50px 100px; font-family:'ZCOOL XiaoWei'; font-size:1.4rem; line-height:2.2; color:#ddd; }
+        .line { position:relative; padding:5px 0; } .line:hover { background:rgba(255,255,255,0.05); }
+        .bubble { position:absolute; right:-40px; top:50%; transform:translateY(-50%); color:var(--purple); opacity:0; transition:0.2s; font-size:1.2rem; cursor:pointer; z-index:100; padding:5px; }
+        .line:hover .bubble { opacity:1; right:10px; }
+        
+        .r-side-r { width:0; background:rgba(10,5,20,0.98); border-left:1px solid var(--border); transition:0.3s; display:flex; flex-direction:column; z-index:30; }
+        .r-side-r.open { width:360px; }
+        .cmt-list { flex:1; overflow-y:auto; padding:20px; }
+        .cmt { background:rgba(255,255,255,0.05); padding:15px; margin-bottom:15px; border-radius:6px; border:1px solid transparent; }
+        .cmt:hover { border-color:var(--cyan); }
+        
+        .disc-zone { margin-top:80px; padding:40px; border-top:2px solid var(--cyan); background:rgba(5,217,232,0.02); }
+        .d-card { background:rgba(0,0,0,0.6); border:1px solid var(--border); padding:20px; border-radius:8px; margin-bottom:20px; }
+        .acts { display:flex; gap:15px; margin-top:10px; font-size:0.8rem; color:#888; }
+        .act:hover { color:var(--pink); cursor:pointer; } .coin:hover { color:var(--gold); cursor:pointer; }
+
+        #loader { position:absolute; inset:0; background:rgba(0,0,0,0.95); z-index:100; display:flex; justify-content:center; align-items:center; color:var(--cyan); font-family:'Orbitron'; }
+
+        @media(max-width:768px){ .r-side-l{display:none;} .r-side-r.open{position:absolute;right:0;width:90%;height:100%;} .auth-box{width:90%;} }
     </style>
 </head>
 <body>
@@ -120,35 +154,33 @@
 
     <!-- AUTH -->
     <div id="auth-layer">
-        <div class="auth-box">
-            <h2 id="auth-title" style="font-family:'Orbitron'; color:white; margin-bottom:20px;">SYSTEM LOGIN</h2>
-            
-            <!-- Login -->
+        <div class="auth-box hover">
+            <h2 id="auth-head" style="font-family:'Orbitron'; color:white; margin-bottom:20px;">SYSTEM LOGIN</h2>
             <div id="f-login">
-                <input id="l-email" class="input" placeholder="EMAIL">
+                <input id="l-email" class="inp" placeholder="EMAIL">
                 <div style="height:15px"></div>
-                <input id="l-pass" type="password" class="input" placeholder="PASSWORD">
+                <input id="l-pass" type="password" class="inp" placeholder="PASSWORD">
                 <div style="height:20px"></div>
                 <button class="btn" style="width:100%" onclick="doLogin()">CONNECT</button>
-                <div class="link" onclick="switchV('reg')">New Player? Register</div>
+                <div style="display:flex; justify-content:space-between; margin-top:15px;">
+                    <span class="link" onclick="switchV('reg')">New Player?</span>
+                    <span class="link">Forgot?</span>
+                </div>
             </div>
-
-            <!-- Reg -->
             <div id="f-reg" class="hidden">
-                <input id="r-user" class="input" placeholder="USERNAME">
+                <input id="r-user" class="inp" placeholder="USERNAME">
                 <div style="height:10px"></div>
-                <input id="r-email" class="input" placeholder="EMAIL">
+                <input id="r-email" class="inp" placeholder="EMAIL">
                 <div style="height:10px"></div>
-                <input id="r-pass" type="password" class="input" placeholder="PASSWORD">
+                <input id="r-pass" type="password" class="inp" placeholder="PASSWORD">
                 <div style="height:10px"></div>
-                <button class="btn" onclick="getCode()">GET CODE</button>
-                <div id="code-area" class="hidden" style="margin-top:15px; border-top:1px solid #333; padding-top:15px;">
-                    <input id="r-code" class="input" placeholder="123456">
+                <button class="btn" style="width:100%" onclick="getCode()">GET CODE</button>
+                <div id="code-box" class="hidden" style="margin-top:15px; border-top:1px solid #333; padding-top:15px;">
+                    <input id="r-code" class="inp" placeholder="123456">
                     <button class="btn-pink" style="width:100%; margin-top:10px;" onclick="doReg()">CONFIRM</button>
                 </div>
                 <div class="link" onclick="switchV('login')">Back</div>
             </div>
-            
             <div id="msg" class="err"></div>
         </div>
     </div>
@@ -156,7 +188,7 @@
     <!-- APP -->
     <div id="app">
         <div class="bg-layer"></div>
-        <canvas id="canvas-bg"></canvas>
+        <canvas id="bg-canvas"></canvas>
         
         <nav>
             <div class="brand">NGNL</div>
@@ -172,68 +204,71 @@
             </div>
         </nav>
 
-        <div id="hero" class="hero">
-            <h1>NO GAME NO LIFE</h1>
-            <p style="color:#aaa; font-size:1.2rem; letter-spacing:2px; margin-bottom:40px;">Everything is decided by games.</p>
-            <button class="btn-pink" onclick="openReader()">READ NOVEL</button>
+        <div class="hero" id="hero">
+            <h1 class="glitch" data-text="NO GAME NO LIFE" style="font-family:'Orbitron'; font-size:5rem; margin-bottom:20px; background:linear-gradient(to bottom,#fff,#ccc); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">NO GAME NO LIFE</h1>
+            <button class="btn-pink" onclick="openReader()">START GAME</button>
         </div>
 
         <section id="pledges">
-            <h2 class="section-title">THE TEN PLEDGES</h2>
-            <div class="grid" id="pledge-grid">
-                <!-- JS Generated -->
+            <h2 class="section-title" style="text-align:center; font-family:'Orbitron'; font-size:3rem; margin-bottom:50px; text-shadow:0 0 20px var(--cyan);">THE PLEDGES</h2>
+            <div class="grid">
+                <div class="card hover"><div class="p-num">I</div>禁止杀伤、战争与掠夺</div>
+                <div class="card hover"><div class="p-num">II</div>所有纠纷通过游戏解决</div>
+                <div class="card hover"><div class="p-num">III</div>赌注必须对等</div>
+                <div class="card hover"><div class="p-num">VI</div>向盟约宣誓必须遵守</div>
+                <div class="card hover"><div class="p-num">IX</div>规则绝对不变</div>
+                <div class="card hover"><div class="p-num">X</div>大家一起和平地玩吧</div>
             </div>
         </section>
 
         <section id="world">
-            <h2 class="section-title">IXSEED (16 RACES)</h2>
-            <div class="chess-grid" id="chess-grid">
-                <!-- JS Generated -->
+            <h2 class="section-title" style="text-align:center; font-family:'Orbitron'; font-size:3rem; margin-bottom:50px; text-shadow:0 0 20px var(--cyan);">IXSEED</h2>
+            <div class="chess-grid">
+                <div class="piece rank-god hover"><div class="piece-rank">I</div><div class="p-icon">♔</div><div class="piece-name">Old Deus</div><div class="piece-desc">神灵种 / King</div></div>
+                <div class="piece rank-high hover"><div class="piece-rank">VI</div><div class="p-icon">♗</div><div class="piece-name">Flügel</div><div class="piece-desc">天翼种 / Bishop</div></div>
+                <div class="piece rank-mid hover"><div class="piece-rank">XIV</div><div class="p-icon">♙</div><div class="piece-name">Werebeast</div><div class="piece-desc">兽人种 / General</div></div>
+                <div class="piece rank-imanity hover"><div class="piece-rank">XVI</div><div class="p-icon">♙</div><div class="piece-name">Imanity</div><div class="piece-desc">人类种 / Pawn</div></div>
             </div>
         </section>
-
+        
         <section id="chars">
-            <h2 class="section-title">PLAYERS</h2>
-            <div class="char-gallery" style="display:flex; gap:20px; justify-content:center;">
-                <!-- Placeholder for chars -->
-                <div class="card">Sora</div><div class="card">Shiro</div><div class="card">Jibril</div>
-            </div>
+             <h2 class="section-title" style="text-align:center; font-family:'Orbitron'; font-size:3rem; margin-bottom:50px; text-shadow:0 0 20px var(--cyan);">PLAYERS</h2>
+             <div class="char-gallery" style="display:flex; gap:30px; justify-content:center; flex-wrap:wrap;">
+                 <div class="char-box hover"><div class="char-in"><div class="cf"><div class="c-ava" style="background-image:url('sora.png')"></div><div class="char-name">SORA</div><div class="char-race">Imanity</div></div><div class="cb"><h3>空</h3><p>空白的策略担当。</p></div></div></div>
+                 <div class="char-box hover"><div class="char-in"><div class="cf"><div class="c-ava" style="background-image:url('shiro.png')"></div><div class="char-name">SHIRO</div><div class="char-race">Imanity</div></div><div class="cb"><h3>白</h3><p>空白的计算担当。</p></div></div></div>
+                 <div class="char-box hover"><div class="char-in"><div class="cf"><div class="c-ava" style="background-image:url('jibril.png')"></div><div class="char-name">JIBRIL</div><div class="char-race">Flügel</div></div><div class="cb"><h3>吉普莉尔</h3><p>知识欲旺盛的天翼种。</p></div></div></div>
+             </div>
         </section>
     </div>
 
-    <!-- PROFILE & CHAT -->
-    <div id="profile-overlay">
-        <div class="profile-box">
-            <div class="p-sidebar">
-                <div class="f-header">
-                    <span>FRIENDS</span>
-                    <span style="cursor:pointer" onclick="promptAddFriend()">+</span>
-                </div>
-                <div class="f-list" id="friend-list">
-                    <div class="f-item active" onclick="showProfileView()">
-                        <div class="f-avatar"></div> <span>MY PROFILE</span>
-                    </div>
-                    <!-- Friend items here -->
-                </div>
+    <!-- PROFILE -->
+    <div id="profile-layer">
+        <div class="p-box">
+            <div class="p-side">
+                <div class="p-head"><span>FRIENDS</span><span style="cursor:pointer" onclick="addFriend()">+</span></div>
+                <div id="f-list" class="f-list"></div>
             </div>
             <div class="p-main">
-                <!-- My Profile View -->
-                <div id="view-profile" class="my-profile show">
-                    <div class="big-avatar"></div>
-                    <h2 id="p-username" style="color:var(--pink)">GUEST</h2>
+                <button onclick="closeProfile()" style="position:absolute; top:10px; right:10px; background:none; border:none; color:#888; cursor:pointer;">X</button>
+                
+                <!-- My Profile -->
+                <div id="view-profile" class="profile-view show">
+                    <div class="big-ava"></div>
+                    <h2 id="p-username" style="color:var(--pink); font-family:'Orbitron'">USER</h2>
                     <div class="stat-row">
-                        <div class="stat-box"><div style="color:#888; font-size:0.8rem">RANK</div><div id="p-rank" style="font-size:1.5rem">16</div></div>
-                        <div class="stat-box"><div style="color:#888; font-size:0.8rem">EXP</div><div id="p-exp" style="font-size:1.5rem">0</div></div>
-                        <div class="stat-box"><div style="color:#888; font-size:0.8rem">COINS</div><div id="p-coin" style="font-size:1.5rem">0</div></div>
+                        <div class="stat"><div style="color:#888; font-size:0.8rem">RANK</div><div id="p-rank" style="font-size:1.5rem">16</div></div>
+                        <div class="stat"><div style="color:#888; font-size:0.8rem">EXP</div><div id="p-exp" style="font-size:1.5rem">0</div></div>
+                        <div class="stat"><div style="color:#888; font-size:0.8rem">COINS</div><div id="p-coin" style="font-size:1.5rem">0</div></div>
                     </div>
-                    <p id="p-bio" style="color:#aaa;">This player is lazy.</p>
-                    <button class="btn" style="margin-top:30px;" onclick="closeProfile()">CLOSE</button>
+                    <p id="p-bio" style="color:#aaa; font-size:0.9rem;">This player is lazy.</p>
                 </div>
-                <!-- Chat View -->
-                <div id="view-chat" class="my-profile" style="display:none; height:100%; padding:0;">
-                    <div class="chat-area" id="chat-box"></div>
-                    <div class="chat-input">
-                        <input id="chat-msg" class="input" style="text-align:left;" placeholder="Message...">
+
+                <!-- Chat -->
+                <div id="view-chat" class="chat-view">
+                    <div style="padding:10px; border-bottom:1px solid #333; text-align:center; font-family:'Orbitron'; color:var(--cyan);" id="chat-title">CHAT</div>
+                    <div id="chat-box" class="c-area"></div>
+                    <div class="c-input">
+                        <input id="chat-msg" class="inp" style="text-align:left" placeholder="Message...">
                         <button class="btn" onclick="sendMsg()">SEND</button>
                     </div>
                 </div>
@@ -244,80 +279,67 @@
     <!-- READER -->
     <div id="reader">
         <div id="loader" class="hidden">LOADING DATA...</div>
-        <div class="reader-head">
+        <div class="r-head">
             <span style="color:var(--cyan); font-family:'Orbitron'">ARCHIVE</span>
             <button class="btn" style="padding:5px 15px; border:none;" onclick="closeReader()">EXIT</button>
         </div>
-        <div class="reader-body">
-            <div class="side-l">
+        <div class="r-body">
+            <div class="r-side-l">
                 <div class="tabs">
                     <button class="tab active" onclick="tab('toc')">INDEX</button>
                     <button class="tab" onclick="tab('bm')">BM</button>
                 </div>
-                <div id="toc-list" class="sidebar-content"></div>
+                <div id="view-toc" class="list-c"></div>
+                <div id="view-bm" class="list-c hidden"></div>
             </div>
-            <div class="text-area">
-                <div id="text-content"></div>
-                <div style="text-align:center; padding:20px;">
-                    <button class="btn" onclick="turnPage(-1)">PREV</button>
-                    <span id="pg-info" style="margin:0 20px; color:#888;">0%</span>
-                    <button class="btn" onclick="turnPage(1)">NEXT</button>
-                    <button class="btn-pink" style="margin-left:20px;" onclick="addBM()">SAVE</button>
+            <div class="r-content">
+                <div id="text-box" class="text-box">
+                    <div style="text-align:center; margin-top:100px;">
+                        <p style="color:#666;">NO DATA</p>
+                        <button class="btn" onclick="document.getElementById('file').click()">LOAD NOVEL</button>
+                    </div>
                 </div>
-                <!-- Discussion Area -->
-                <div id="disc-zone" class="discuss-area" style="margin-top:50px; display:none;">
-                    <h3 style="color:var(--cyan)">DISCUSSION</h3>
-                    <textarea id="d-input" class="input" rows="2" style="text-align:left; margin-top:10px;"></textarea>
-                    <button class="btn" onclick="postDisc()">POST</button>
-                    <div id="d-list" style="margin-top:20px;"></div>
+                <div style="padding:10px; background:rgba(0,0,0,0.8); display:flex; justify-content:center; gap:20px;">
+                    <button class="btn" onclick="page(-1)">PREV</button>
+                    <span id="pg-num" style="color:#888; align-self:center;">0%</span>
+                    <button class="btn" onclick="page(1)">NEXT</button>
+                    <button class="btn-pink" onclick="saveBM()">SAVE</button>
                 </div>
             </div>
-            <div id="side-r" class="side-r">
+            <div id="r-side-r" class="r-side-r">
                 <div style="padding:15px; border-bottom:1px solid #333; display:flex; justify-content:space-between;">
-                    <span style="color:var(--pink)">COMMENTS</span>
-                    <span onclick="toggleR()">[X]</span>
+                    <span style="color:var(--pink)">COMMENTS</span><span onclick="toggleR()" style="cursor:pointer">[X]</span>
                 </div>
-                <div id="c-list" style="flex:1; overflow:auto; padding:15px;"></div>
-                <div style="padding:15px;">
-                    <textarea id="c-input" class="input" rows="2" style="text-align:left;"></textarea>
-                    <button class="btn" style="width:100%" onclick="postCmt()">POST</button>
+                <div id="c-list" class="cmt-list"></div>
+                <div style="padding:15px; background:rgba(0,0,0,0.5);">
+                    <textarea id="c-inp" class="inp" rows="2" style="text-align:left; resize:none;"></textarea>
+                    <button class="btn" style="width:100%; margin-top:5px;" onclick="postCmt()">POST</button>
                 </div>
             </div>
         </div>
     </div>
-
     <input type="file" id="file" accept=".txt" style="display:none" onchange="loadFile(this)">
 
     <script>
-        // ==================================================
-        // ⚠️ REPLACE WITH YOUR URL
-        const API = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec";
-        // ==================================================
+        // ==========================================
+        // ⚠️ API URL
+        const API = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec"; 
+        // ==========================================
 
-        // State
         let user = {name:"Guest", rank:16, exp:0, coins:0};
         let lines=[], curStart=0, curCmt=-1, chatTarget="";
         const PG=150;
 
-        // --- API Core ---
         async function api(d) {
-            console.log("TX:", d);
             try {
-                const r = await fetch(API, {
-                    method:'POST', redirect:'follow',
-                    headers:{'Content-Type':'text/plain;charset=utf-8'},
-                    body:JSON.stringify(d)
-                });
-                const j = await r.json();
-                console.log("RX:", j);
-                return j;
+                const r = await fetch(API, {method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(d)});
+                return await r.json();
             } catch(e) { return {status:'error', message:'Net Error'}; }
         }
 
-        // --- Auth ---
+        // Auth
         function switchV(v) {
-            document.getElementById('f-login').classList.add('hidden');
-            document.getElementById('f-reg').classList.add('hidden');
+            ['f-login','f-reg'].forEach(id=>document.getElementById(id).classList.add('hidden'));
             document.getElementById('f-'+v).classList.remove('hidden');
             document.getElementById('msg').innerText="";
         }
@@ -325,11 +347,10 @@
             const e=document.getElementById('l-email').value, p=document.getElementById('l-pass').value;
             const res = await api({action:'login', email:e, password:p});
             if(res.status==='success') {
-                user = {name:res.username, rank:res.level, exp:res.exp, coins:res.coins, bio:res.bio, avatar:res.avatar};
+                user = {name:res.username, rank:res.level, exp:res.exp, coins:res.coins, bio:res.bio};
                 document.getElementById('auth-layer').style.display='none';
                 document.body.classList.add('unlocked');
-                updateHUD();
-                initVisuals();
+                updateHUD(); initAnim();
             } else document.getElementById('msg').innerText = res.message;
         }
         let tmpReg={};
@@ -338,173 +359,135 @@
             const res = await api({action:'req_code', email:e});
             if(res.status==='success') {
                 tmpReg={u,e,p:document.getElementById('r-pass').value};
-                document.getElementById('code-area').classList.remove('hidden');
+                document.getElementById('code-box').classList.remove('hidden');
                 alert(res.message);
             } else document.getElementById('msg').innerText=res.message;
         }
         async function doReg() {
             const c=document.getElementById('r-code').value;
             const res = await api({action:'register', username:tmpReg.u, email:tmpReg.e, password:tmpReg.p, code:c});
-            if(res.status==='success') { alert("Success"); switchV('login'); }
-            else document.getElementById('msg').innerText=res.message;
+            if(res.status==='success') { alert("Success!"); switchV('login'); } else document.getElementById('msg').innerText=res.message;
         }
-
-        // --- Main UI ---
         function updateHUD() {
             document.getElementById('u-name').innerText = user.name.toUpperCase();
             document.getElementById('u-coin').innerText = `🪙 ${user.coins}`;
-            // Update Profile View
             document.getElementById('p-username').innerText = user.name;
             document.getElementById('p-rank').innerText = user.rank;
             document.getElementById('p-exp').innerText = user.exp;
             document.getElementById('p-coin').innerText = user.coins;
         }
 
-        // --- Reader ---
-        function openReader() {
-            document.getElementById('reader').classList.add('active');
-            fetch('novel.txt').then(r=>{if(r.ok)return r.text();throw 1}).then(t=>parse(t)).catch(()=>document.getElementById('file').click());
-        }
-        function closeReader() { document.getElementById('reader').classList.remove('active'); }
-        function loadFile(i) { const r=new FileReader(); r.onload=e=>parse(e.target.result); r.readAsText(i.files[0]); }
-        
-        async function parse(txt) {
-            document.getElementById('loader').classList.remove('hidden');
-            lines = txt.split('\n');
-            // Generate TOC
-            let h=""; const r=/(?:^第.+章)|(?:^Chapter)/i;
-            for(let i=0; i<lines.length; i+=2000) {
-                const end=Math.min(i+2000, lines.length);
-                for(let j=i; j<end; j++) if(lines[j].length<50 && r.test(lines[j])) 
-                    h+=`<div style="padding:10px; color:#888; cursor:pointer; border-bottom:1px solid #222;" onclick="go(${j})">${lines[j]}</div>`;
-                await new Promise(res=>setTimeout(res,0));
-            }
-            document.getElementById('toc-list').innerHTML=h;
-            go(0);
-            document.getElementById('loader').classList.add('hidden');
-        }
-
-        function go(i) { curStart=i; render(); }
-        function turnPage(d) { const n=curStart+d*PG; if(n>=0 && n<lines.length) { curStart=n; render(); } }
-        function render() {
-            const end = Math.min(curStart+PG, lines.length);
-            const slice = lines.slice(curStart, end);
-            document.getElementById('text-content').innerHTML = slice.map((l,i)=>
-                l.trim()?`<div class="line-wrap">${l}<div class="bubble" onclick="cmt(${curStart+i})">💬</div></div>`:"<br>"
-            ).join('');
-            document.getElementById('pg-info').innerText = Math.round((end/lines.length)*100)+"%";
-            
-            // Show discussion at end
-            document.getElementById('disc-zone').style.display = (end>=lines.length)?'block':'none';
-            if(end>=lines.length) loadDisc();
-        }
-
-        // --- Comments & Social ---
-        function toggleR() { document.getElementById('side-r').classList.toggle('open'); }
-        function cmt(i) {
-            curCmt = i;
-            document.getElementById('side-r').classList.add('open');
-            const div = document.getElementById('c-list');
-            div.innerHTML = "Loading...";
-            api({action:'get_line_comments', line_index:i}).then(d=>{
-                div.innerHTML = d.data.map(c=>`<div style="background:#222; padding:10px; margin-bottom:10px; border-radius:5px;"><div style="color:var(--cyan); font-size:0.8rem">${c.user}</div><div>${c.content}</div></div>`).join('') || "No comments";
+        // Profile
+        function openProfile() { document.getElementById('profile-layer').classList.add('active'); loadFriends(); }
+        function closeProfile() { document.getElementById('profile-layer').classList.remove('active'); }
+        function showProfile() { document.getElementById('view-chat').classList.remove('show'); document.getElementById('view-profile').classList.add('show'); }
+        async function loadFriends() {
+            const r = await api({action:'get_friends', username:user.name});
+            let h = `<div class="f-item active" onclick="showProfile()"><div class="f-ava"></div><span>MY PROFILE</span></div>`;
+            if(r.status==='success') r.data.forEach(f=>{
+                h+=`<div class="f-item" onclick="openChat('${f.name}')"><div class="f-ava"></div><span>${f.name}</span></div>`;
             });
+            document.getElementById('f-list').innerHTML = h;
         }
-        async function postCmt() {
-            const t = document.getElementById('c-input').value;
-            await api({action:'post_line_comment', line_index:curCmt, username:user.name, content:t});
-            document.getElementById('c-input').value=""; cmt(curCmt);
-        }
-        function loadDisc() {
-            api({action:'get_discussion'}).then(d=>{
-                document.getElementById('d-list').innerHTML = d.data.map(p=>
-                    `<div style="background:rgba(0,0,0,0.5); padding:15px; margin-bottom:15px; border:1px solid #333;">
-                        <div style="display:flex; justify-content:space-between; color:var(--cyan)"><span>${p.user}</span><span style="color:var(--gold)">🪙 ${p.coins}</span></div>
-                        <div style="margin:10px 0">${p.content}</div>
-                        <div style="font-size:0.8rem; cursor:pointer; color:#888;" onclick="act('tip','${p.id}','disc')">TIP COIN</div>
-                    </div>`
-                ).join('');
-            });
-        }
-        async function postDisc() {
-            const t = document.getElementById('d-input').value;
-            await api({action:'post_discussion', username:user.name, content:t});
-            loadDisc();
-        }
-        async function act(a, id, t) {
-            if(user.name==="Guest") return alert("Login first");
-            const r = await api({action:'interact', sub_action:a, type:t, id:id, username:user.name, target_id:id});
-            if(r.status==='success' && a==='tip') {
-                user.coins = r.new_balance; updateHUD(); loadDisc();
-            }
-        }
-
-        // --- Profile & Chat ---
-        function openProfile() { document.getElementById('profile-overlay').classList.add('active'); loadFriends(); }
-        function closeProfile() { document.getElementById('profile-overlay').classList.remove('active'); }
-        function showProfileView() {
-            document.getElementById('view-chat').style.display='none';
-            document.getElementById('view-profile').style.display='block';
-        }
-        function loadFriends() {
-            api({action:'get_friends', username:user.name}).then(d=>{
-                const list = document.getElementById('friend-list');
-                let h = `<div class="f-item active" onclick="showProfileView()"><div class="f-avatar"></div><span>MY PROFILE</span></div>`;
-                d.data.forEach(f=>{
-                    h+=`<div class="f-item" onclick="openChat('${f.name}')"><div class="f-avatar"></div><span>${f.name}</span></div>`;
-                });
-                list.innerHTML = h;
-            });
-        }
-        function promptAddFriend() {
-            const n = prompt("Enter username:");
-            if(n) api({action:'add_friend', username:user.name, target_user:n}).then(d=>alert(d.message||"Sent"));
-        }
-        function openChat(target) {
-            chatTarget = target;
-            document.getElementById('view-profile').style.display='none';
-            document.getElementById('view-chat').style.display='flex';
+        function addFriend() { const n=prompt("Username:"); if(n) api({action:'add_friend', username:user.name, target_user:n}).then(d=>alert(d.message||"Sent")); }
+        async function openChat(n) {
+            chatTarget = n;
+            document.getElementById('view-profile').classList.remove('show');
+            document.getElementById('view-chat').classList.add('show');
+            document.getElementById('chat-title').innerText = "CHAT: " + n;
             loadMsgs();
         }
-        function loadMsgs() {
+        async function loadMsgs() {
             if(!chatTarget) return;
-            api({action:'get_messages', username:user.name, target_user:chatTarget}).then(d=>{
-                const box = document.getElementById('chat-box');
-                box.innerHTML = d.data.map(m=>`<div class="msg ${m.sender===user.name?'me':'them'}">${m.content}</div>`).join('');
-                box.scrollTop = box.scrollHeight;
-            });
+            const r = await api({action:'get_messages', username:user.name, target_user:chatTarget});
+            document.getElementById('chat-box').innerHTML = r.data.map(m=>`<div class="msg ${m.sender===user.name?'me':'them'}">${m.content}</div>`).join('');
         }
         async function sendMsg() {
             const t = document.getElementById('chat-msg').value;
-            await api({action:'send_message', username:user.name, target_user:chatTarget, content:t});
+            await api({action:'send_msg', username:user.name, target_user:chatTarget, content:t});
             document.getElementById('chat-msg').value=""; loadMsgs();
         }
 
-        // --- Visuals & Data ---
-        function initVisuals() {
-            // Pledges
-            const p = ["禁止杀伤","纠纷游戏决","赌注对等","内容不限","受挑战决定","遵守盟约","全权代理","作弊即败","绝对不变","和平玩吧"];
-            document.getElementById('pledge-grid').innerHTML = p.map((t,i)=>`<div class="card hover"><div class="pledge-num" style="position:absolute;right:10px;opacity:0.1;font-size:3rem;font-weight:900;color:var(--pink)">${i+1}</div>${t}</div>`).join('');
-            
-            // Chess Board
-            const chess = [
-                {r:1,n:'Old Deus',c:'♔',cls:'rank-1'},{r:2,n:'Phantasma',c:'♕',cls:''},{r:6,n:'Flügel',c:'♗',cls:''},
-                {r:16,n:'Imanity',c:'♙',cls:'rank-16'} // Simplified for brevity
-            ];
-            document.getElementById('chess-grid').innerHTML = chess.map(c=>
-                `<div class="piece ${c.cls}"><div class="p-icon">${c.c}</div><div style="z-index:1"><div style="font-family:'Orbitron';font-weight:900;opacity:0.3;font-size:1.5rem">${c.r}</div><div style="font-family:'Orbitron';font-weight:bold;color:var(--cyan)">${c.n}</div></div></div>`
-            ).join('');
+        // Reader
+        function openReader() { document.getElementById('reader').classList.add('active'); loadBM(); }
+        function closeReader() { document.getElementById('reader').classList.remove('active'); }
+        function loadFile(i) {
+            const r = new FileReader();
+            r.onload = e => { lines = e.target.result.split('\n'); genTOC(); go(0); };
+            r.readAsText(i.files[0]);
+        }
+        function genTOC() {
+            let h=""; const reg=/(?:^第.+章)|(?:^Chapter)/i;
+            lines.forEach((l,i)=>{ if(l.length<50&&reg.test(l)) h+=`<div class="l-item hover" onclick="go(${i})">${l}</div>`; });
+            document.getElementById('view-toc').innerHTML=h;
+        }
+        function go(i) { curStart=i; render(); }
+        function page(d) { const n=curStart+d*PG; if(n>=0 && n<lines.length){ curStart=n; render(); } }
+        function render() {
+            const end = Math.min(curStart+PG, lines.length);
+            const slice = lines.slice(curStart, end);
+            let h = slice.map((l,i) => l.trim() ? `<div class="line">${l}<div class="bubble" onclick="openCmt(${curStart+i})">💬</div></div>` : "<br>").join('');
+            if(end>=lines.length) h+=`<div class="disc-zone"><h3 style="color:var(--cyan)">DISCUSSION</h3><textarea id="d-inp" class="inp"></textarea><button class="btn" onclick="postDisc()">POST</button><div id="d-list" style="margin-top:20px"></div></div>`;
+            document.getElementById('text-box').innerHTML = h;
+            document.getElementById('text-box').scrollTop = 0;
+            document.getElementById('pg-num').innerText = Math.round((end/lines.length)*100)+"%";
+            if(end>=lines.length) loadDisc();
+        }
 
-            // Canvas
-            const cvs=document.getElementById('canvas-bg'), ctx=cvs.getContext('2d');
-            let w=window.innerWidth, h=window.innerHeight; cvs.width=w; cvs.height=h;
-            const parts=Array.from({length:40},()=>({x:Math.random()*w,y:Math.random()*h,s:Math.random()+0.5}));
-            function loop(){ctx.clearRect(0,0,w,h);parts.forEach(i=>{i.y+=i.s;if(i.y>h)i.y=-20;ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fillRect(i.x,i.y,2,2)});requestAnimationFrame(loop);}
+        // Comments & Disc
+        function toggleR() { document.getElementById('r-side-r').classList.toggle('open'); }
+        async function openCmt(i) {
+            curCmt=i; document.getElementById('r-side-r').classList.add('open');
+            const div = document.getElementById('c-list'); div.innerHTML = "Loading...";
+            const r = await api({action:'get_line_comments', line_index:i});
+            div.innerHTML = r.data.map(c=>`<div class="cmt"><div style="color:var(--cyan)">${c.user}</div><div>${c.content}</div></div>`).join('') || "No comments";
+        }
+        async function postCmt() {
+            const t = document.getElementById('c-inp').value;
+            await api({action:'post_line_comment', line_index:curCmt, username:user.name, content:t});
+            document.getElementById('c-inp').value=""; openCmt(curCmt);
+        }
+        async function loadDisc() {
+            const r = await api({action:'get_discussion'});
+            document.getElementById('d-list').innerHTML = r.data.map(d=>`<div class="d-card"><div style="display:flex;justify-content:space-between;color:var(--cyan)"><span>${d.user}</span><span style="color:var(--gold)">🪙 ${d.coins}</span></div><div>${d.content}</div><div class="acts"><span class="act" onclick="act('like','${d.id}','disc')">♥ ${d.likes}</span><span class="coin" onclick="act('tip','${d.id}','disc')">TIP</span></div></div>`).join('');
+        }
+        async function postDisc() {
+            const t = document.getElementById('d-inp').value;
+            await api({action:'post_discussion', username:user.name, content:t});
+            document.getElementById('d-inp').value=""; loadDisc();
+        }
+        async function act(a, id, t) {
+            const r = await api({action:'interact', sub_action:a, type:t, id:id, username:user.name, target_id:id});
+            if(r.status==='success' && a==='tip') { user.coins=r.new_balance; updateHUD(); loadDisc(); }
+        }
+
+        // BM
+        function tab(t) {
+            document.getElementById('view-toc').className = t==='toc'?'list-c':'hidden';
+            document.getElementById('view-bm').className = t==='bm'?'list-c':'hidden';
+        }
+        function saveBM() {
+            let b = JSON.parse(localStorage.getItem('ngnl_bm')||'[]');
+            b.unshift({t:new Date().toLocaleDateString(), i:curStart, txt:lines[curStart].substr(0,15)+"..."});
+            localStorage.setItem('ngnl_bm', JSON.stringify(b)); loadBM(); alert("Saved");
+        }
+        function loadBM() {
+            let b = JSON.parse(localStorage.getItem('ngnl_bm')||'[]');
+            document.getElementById('view-bm').innerHTML = b.map((i,k)=>`<div class="l-item hover" onclick="go(${i.i})"><div style="display:flex;justify-content:space-between"><span>${i.txt}</span><span class="del-bm" onclick="delBM(${k},event)">X</span></div></div>`).join('');
+        }
+        function delBM(k,e) { e.stopPropagation(); let b=JSON.parse(localStorage.getItem('ngnl_bm')); b.splice(k,1); localStorage.setItem('ngnl_bm', JSON.stringify(b)); loadBM(); }
+
+        // Visuals
+        function initAnim() {
+            const c=document.getElementById('bg-canvas'), x=c.getContext('2d');
+            let w=window.innerWidth, h=window.innerHeight; c.width=w; c.height=h;
+            const p=Array.from({length:50},()=>({x:Math.random()*w,y:Math.random()*h,s:Math.random()+0.5,t:['♔','♕','♖'][Math.floor(Math.random()*3)]}));
+            function loop(){x.clearRect(0,0,w,h);p.forEach(i=>{i.y+=i.s;if(i.y>h)i.y=-20;x.fillStyle='rgba(255,255,255,0.1)';x.font='20px Arial';x.fillText(i.t,i.x,i.y)});requestAnimationFrame(loop);}
             loop();
         }
-        const cursor = document.getElementById('cursor');
-        document.addEventListener('mousemove', e=>{ cursor.style.left=e.clientX+'px'; cursor.style.top=e.clientY+'px'; });
-        document.body.addEventListener('mouseover', e=>{ if(e.target.closest('.hover')) cursor.classList.add('hover'); else cursor.classList.remove('hover'); });
+        const cur=document.getElementById('cursor');
+        document.addEventListener('mousemove', e=>{cur.style.left=e.clientX+'px'; cur.style.top=e.clientY+'px';});
+        document.body.addEventListener('mouseover', e=>{if(e.target.closest('.hover')) cur.classList.add('hover'); else cur.classList.remove('hover');});
     </script>
 </body>
 </html>
