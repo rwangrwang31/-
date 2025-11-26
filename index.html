@@ -3,149 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NO GAME NO LIFE - 游戏人生 | DISBOARD</title>
+    <title>NO GAME NO LIFE | DISBOARD SYSTEM</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     <style>
-        /* ================= CORE ================= */
+        /* ================= 0. CORE VARIABLES (NGNL PALETTE) ================= */
         :root {
-            --pink: #ff2a6d; --cyan: #05d9e8; --purple: #bd00ff; --gold: #ffd700;
-            --dark: #09000f; --glass: rgba(20, 20, 40, 0.9); --border: rgba(255, 255, 255, 0.15);
-            --rank-god: #ffd700; --rank-high: #9b59b6; --rank-mid: #2ecc71; --rank-low: #e74c3c;
+            --pink: #ff2a6d;
+            --cyan: #05d9e8;
+            --purple: #bd00ff;
+            --gold: #ffd700;
+            --dark-bg: #05010d;
+            --glass: rgba(20, 20, 35, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --hud-bg: rgba(8, 4, 12, 0.98);
+            --font-main: 'Orbitron', sans-serif;
+            --font-text: 'Noto Sans SC', sans-serif;
+            --font-novel: 'ZCOOL XiaoWei', serif;
         }
-        * { margin:0; padding:0; box-sizing:border-box; cursor:none; outline:none; user-select:none; }
-        body { background-color:var(--dark); color:white; font-family:'Noto Sans SC'; height:100vh; overflow:hidden; }
-        body.unlocked { overflow-y:auto; overflow-x:hidden; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; cursor: none; outline: none; user-select: none; }
         
-        /* FX */
-        @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-5px);} }
-        @keyframes glow { 0%{box-shadow:0 0 5px var(--cyan);} 50%{box-shadow:0 0 20px var(--purple);} 100%{box-shadow:0 0 5px var(--cyan);} }
-        .glitch { position:relative; }
-        .glitch::before, .glitch::after { content:attr(data-text); position:absolute; top:0; left:0; width:100%; height:100%; opacity:0.8; }
-        .glitch::before { left:2px; text-shadow:-1px 0 var(--pink); clip-path:inset(0 0 0 0); animation:glitch-anim 2s infinite linear alternate-reverse; }
-        .glitch::after { left:-2px; text-shadow:-1px 0 var(--cyan); clip-path:inset(0 0 0 0); animation:glitch-anim 3s infinite linear alternate-reverse; }
-        @keyframes glitch-anim { 0%{clip-path:inset(10% 0 80% 0);} 20%{clip-path:inset(80% 0 10% 0);} 100%{clip-path:inset(40% 0 40% 0);} }
-
-        /* UI */
-        #cursor { width:20px; height:20px; border:2px solid var(--cyan); border-radius:50%; position:fixed; pointer-events:none; z-index:999999; transform:translate(-50%,-50%); transition:0.1s; mix-blend-mode:difference; }
-        #cursor.hover { width:60px; height:60px; background:rgba(255,42,109,0.2); border-color:var(--pink); }
-        ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:#050505; } ::-webkit-scrollbar-thumb { background:linear-gradient(var(--cyan),var(--purple)); border-radius:3px; }
+        body {
+            background-color: var(--dark-bg);
+            color: white;
+            font-family: var(--font-text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: hidden; /* Initial Lock */
+        }
         
-        .btn { background:rgba(5,217,232,0.05); border:1px solid var(--cyan); color:var(--cyan); padding:10px 25px; font-family:'Orbitron'; font-weight:bold; transition:0.3s; text-transform:uppercase; }
-        .btn:hover { background:var(--cyan); color:black; box-shadow:0 0 20px var(--cyan); }
-        .btn-pink { border-color:var(--pink); color:var(--pink); } .btn-pink:hover { background:var(--pink); color:white; box-shadow:0 0 25px var(--pink); }
-        .inp { width:100%; padding:12px; background:rgba(255,255,255,0.05); border:1px solid #444; color:white; font-family:'Orbitron'; text-align:center; transition:0.3s; }
-        .inp:focus { border-color:var(--cyan); box-shadow:0 0 15px rgba(5,217,232,0.3); }
+        body.unlocked { overflow-y: auto; }
 
-        /* LAYOUT */
-        #app { transition:0.8s; filter:blur(15px); opacity:0.3; pointer-events:none; }
-        body.unlocked #app { filter:blur(0); opacity:1; pointer-events:all; }
-        .bg-layer { position:fixed; inset:0; z-index:-10; background:radial-gradient(circle at 50% 0%, #2a0e36, #000); }
-        #bg-canvas { position:fixed; inset:0; z-index:-5; opacity:0.5; pointer-events:none; }
+        /* ================= 1. ANIMATIONS & EFFECTS ================= */
+        @keyframes glitch { 0%{transform:skew(0deg);} 20%{transform:skew(-2deg);} 40%{transform:skew(2deg);} 100%{transform:skew(0deg);} }
+        @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+        @keyframes pulse { 0%{box-shadow:0 0 5px var(--cyan);} 50%{box-shadow:0 0 20px var(--cyan), 0 0 10px var(--purple);} 100%{box-shadow:0 0 5px var(--cyan);} }
+        @keyframes rainbow { 0%{border-color:var(--pink);} 50%{border-color:var(--cyan);} 100%{border-color:var(--purple);} }
 
-        /* AUTH */
-        #auth-layer { position:fixed; inset:0; z-index:10000; background:rgba(5,2,10,0.95); display:flex; justify-content:center; align-items:center; backdrop-filter:blur(15px); }
-        .auth-box { width:420px; padding:40px; background:rgba(0,0,0,0.8); border:2px solid var(--pink); box-shadow:0 0 50px rgba(255,42,109,0.2); text-align:center; }
-        .hidden { display:none !important; }
-        .link { margin-top:15px; font-size:0.8rem; color:#888; text-decoration:underline; cursor:pointer; } .link:hover { color:var(--cyan); }
-        .err { color:var(--pink); margin-top:10px; font-size:0.9rem; font-family:'Orbitron'; }
+        #cursor {
+            width: 20px; height: 20px; border: 2px solid var(--cyan); border-radius: 50%;
+            position: fixed; pointer-events: none; z-index: 999999; transform: translate(-50%, -50%);
+            transition: width 0.2s, background 0.2s; mix-blend-mode: difference;
+        }
+        #cursor.hover { width: 60px; height: 60px; background: rgba(255, 42, 109, 0.3); border-color: var(--pink); }
 
-        /* MAIN */
-        nav { position:fixed; top:0; width:100%; height:70px; padding:0 40px; display:flex; justify-content:space-between; align-items:center; background:rgba(10,5,20,0.9); border-bottom:1px solid rgba(255,255,255,0.1); z-index:1000; }
-        .brand { font-family:'Orbitron'; font-weight:900; font-size:1.5rem; color:white; text-shadow:0 0 10px var(--pink); }
-        .nav-item { margin-left:30px; color:#aaa; text-decoration:none; font-family:'Orbitron'; font-size:0.9rem; transition:0.3s; }
-        .nav-item:hover { color:var(--cyan); text-shadow:0 0 10px var(--cyan); }
-        .u-badge { cursor:pointer; border:1px solid var(--gold); padding:5px 10px; color:var(--gold); font-family:'Orbitron'; font-size:0.8rem; display:flex; align-items:center; gap:10px; transition:0.3s; }
-        .u-badge:hover { background:rgba(255,215,0,0.1); box-shadow:0 0 15px var(--gold); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(var(--cyan), var(--purple)); border-radius: 3px; }
 
-        section { padding:100px 20px; max-width:1300px; margin:0 auto; }
-        .hero { height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
-        .title { font-family:'Orbitron'; font-size:3rem; text-align:center; margin-bottom:60px; text-shadow:0 0 20px var(--cyan); letter-spacing:5px; }
+        /* ================= 2. UI COMPONENTS ================= */
+        .btn {
+            background: rgba(5, 217, 232, 0.05); border: 1px solid var(--cyan); color: var(--cyan);
+            padding: 10px 25px; font-family: var(--font-main); font-weight: bold; cursor: none;
+            transition: 0.3s; position: relative; overflow: hidden; text-transform: uppercase;
+        }
+        .btn:hover { background: var(--cyan); color: #000; box-shadow: 0 0 25px var(--cyan); }
+        .btn-pink { border-color: var(--pink); color: var(--pink); }
+        .btn-pink:hover { background: var(--pink); color: white; box-shadow: 0 0 25px var(--pink); }
 
-        /* Pledges & Races */
-        .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:25px; }
-        .card { background:var(--glass); border:1px solid var(--border); padding:25px; border-radius:10px; transition:0.3s; position:relative; overflow:hidden; display:flex; align-items:center; min-height:100px; }
-        .card:hover { transform:translateY(-5px); border-color:var(--pink); box-shadow:0 0 20px rgba(255,42,109,0.2); }
-        .p-num { position:absolute; right:15px; font-family:'Orbitron'; font-size:4rem; opacity:0.1; font-weight:900; color:var(--pink); }
+        .input {
+            width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #444;
+            color: white; font-family: var(--font-main); text-align: center; transition: 0.3s;
+        }
+        .input:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(5, 217, 232, 0.2); }
+
+        /* ================= 3. LAYOUT STRUCTURE ================= */
+        .bg-layer {
+            position: fixed; inset: 0; z-index: -10;
+            background: radial-gradient(circle at 50% 0%, rgba(189,0,255,0.15), transparent 60%),
+                        linear-gradient(0deg, #000, transparent 80%);
+        }
+        #canvas-bg { position: fixed; inset: 0; z-index: -5; opacity: 0.5; }
+
+        #site-wrapper { transition: filter 0.8s, opacity 0.8s; filter: blur(20px); opacity: 0.3; pointer-events: none; }
+        body.unlocked #site-wrapper { filter: blur(0); opacity: 1; pointer-events: all; }
+
+        /* ================= 4. AUTH SYSTEM ================= */
+        #auth-overlay {
+            position: fixed; inset: 0; z-index: 10000; background: rgba(5, 2, 10, 0.96);
+            display: flex; justify-content: center; align-items: center; backdrop-filter: blur(20px);
+        }
+        .auth-box {
+            width: 420px; padding: 50px 40px; background: rgba(0,0,0,0.8);
+            border: 2px solid var(--pink); box-shadow: 0 0 60px rgba(255, 42, 109, 0.3);
+            text-align: center; position: relative;
+        }
+        .auth-title { font-family: var(--font-main); font-size: 2rem; color: white; margin-bottom: 30px; text-shadow: 0 0 10px var(--cyan); }
+        .hidden { display: none !important; }
+        .link { margin-top: 15px; color: #888; font-size: 0.8rem; text-decoration: underline; cursor: none; }
+        .link:hover { color: var(--cyan); }
+        .err { color: var(--pink); margin-top: 15px; font-family: var(--font-main); font-size: 0.9rem; }
+
+        /* ================= 5. MAIN INTERFACE ================= */
+        nav {
+            position: fixed; top: 0; width: 100%; height: 70px; padding: 0 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 1000; background: rgba(5, 1, 10, 0.9); border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .brand { font-family: var(--font-main); font-weight: 900; font-size: 1.5rem; color: white; text-shadow: 0 0 10px var(--pink); }
+        .nav-links { display: flex; gap: 30px; align-items: center; }
+        .nav-item { color: #aaa; text-decoration: none; font-family: var(--font-main); font-size: 0.9rem; transition: 0.3s; }
+        .nav-item:hover { color: var(--cyan); text-shadow: 0 0 8px var(--cyan); }
+        .user-badge {
+            color: var(--gold); border: 1px solid var(--gold); padding: 5px 12px; border-radius: 4px;
+            font-family: var(--font-main); font-size: 0.8rem; display: flex; gap: 10px; cursor: none;
+        }
+        .user-badge:hover { background: rgba(255, 215, 0, 0.1); }
+
+        .hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .hero h1 { font-family: var(--font-main); font-size: 5rem; text-shadow: 0 0 20px var(--pink); animation: glitch 3s infinite alternate; }
         
-        .chess-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:20px; }
-        .piece { height:220px; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:20px; border-radius:8px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden; transition:0.4s; }
-        .piece:hover { background:rgba(255,255,255,0.08); transform:scale(1.05); z-index:5; box-shadow:0 10px 40px rgba(0,0,0,0.5); }
-        .p-icon { position:absolute; bottom:-20px; right:-20px; font-size:8rem; opacity:0.08; transition:0.5s; }
-        .piece:hover .p-icon { opacity:0.2; transform:rotate(-10deg) scale(1.1); }
-        .rank-txt { font-family:'Orbitron'; font-size:2rem; font-weight:900; opacity:0.3; }
-        .rank-name { font-family:'Orbitron'; font-weight:bold; font-size:1.2rem; margin-bottom:5px; color:white; }
-        .rank-god { border-color:var(--rank-god); box-shadow:inset 0 0 20px rgba(255,215,0,0.1); } .rank-god .rank-txt { color:var(--rank-god); }
-        .rank-imanity:hover { animation:glow 2s infinite; border-color:white; }
+        section { padding: 100px 20px; max-width: 1300px; margin: 0 auto; }
+        .sec-title { font-family: var(--font-main); font-size: 3rem; text-align: center; margin-bottom: 60px; color: white; text-shadow: 0 0 20px var(--cyan); letter-spacing: 5px; }
+
+        /* 10 Pledges */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
+        .card {
+            background: var(--glass); border: 1px solid var(--glass-border); padding: 30px; border-radius: 12px;
+            position: relative; overflow: hidden; transition: 0.3s; display: flex; align-items: center;
+        }
+        .card:hover { transform: translateY(-5px); border-color: var(--cyan); box-shadow: 0 0 20px rgba(5,217,232,0.2); }
+        .num { position: absolute; right: 15px; font-family: var(--font-main); font-size: 4rem; opacity: 0.1; font-weight: 900; color: var(--pink); }
+
+        /* 16 Races */
+        .chess-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+        .piece {
+            height: 220px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+            border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;
+            position: relative; overflow: hidden; transition: 0.4s;
+        }
+        .piece:hover { transform: scale(1.05); background: rgba(255,255,255,0.08); z-index: 5; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .p-icon { position: absolute; bottom: -20px; right: -20px; font-size: 8rem; opacity: 0.05; color: white; transition: 0.5s; }
+        .piece:hover .p-icon { opacity: 0.2; transform: rotate(-10deg) scale(1.1); }
+        .p-rank { font-family: var(--font-main); font-size: 2rem; font-weight: 900; opacity: 0.3; }
+        .p-name { font-family: var(--font-main); font-weight: bold; font-size: 1.2rem; margin-bottom: 5px; color: white; }
+        .rank-1 { border-color: var(--gold); box-shadow: inset 0 0 20px rgba(255,215,0,0.1); } .rank-1 .p-rank { color: var(--gold); }
+        .rank-16:hover { animation: rainbow 3s infinite; border-color: white; }
 
         /* Characters */
-        .char-box { width:260px; height:380px; perspective:1000px; }
-        .char-in { width:100%; height:100%; transition:0.6s; transform-style:preserve-3d; position:relative; }
-        .char-box:hover .char-in { transform:rotateY(180deg); }
-        .cf, .cb { position:absolute; width:100%; height:100%; backface-visibility:hidden; border-radius:15px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(145deg,#1a1025,#050505); border:1px solid var(--border); box-shadow:0 10px 30px rgba(0,0,0,0.5); }
-        .cb { transform:rotateY(180deg); background:linear-gradient(135deg,var(--pink),#2a0e36); padding:20px; text-align:center; }
-        .c-ava { width:120px; height:120px; border-radius:50%; border:3px solid white; background-size:cover; margin-bottom:20px; box-shadow:0 0 20px var(--cyan); }
+        .char-grid { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
+        .char-card { width: 260px; height: 380px; perspective: 1000px; }
+        .char-inner { width: 100%; height: 100%; transition: 0.6s; transform-style: preserve-3d; position: relative; }
+        .char-card:hover .char-inner { transform: rotateY(180deg); }
+        .cf, .cb {
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 15px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: linear-gradient(145deg, #1a1025, #050505); border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .cb { transform: rotateY(180deg); background: linear-gradient(135deg, var(--pink), #2a0e36); padding: 25px; text-align: center; }
+        .c-ava { width: 130px; height: 130px; border-radius: 50%; border: 3px solid white; background-size: cover; margin-bottom: 20px; box-shadow: 0 0 20px var(--cyan); }
 
-        /* --- PROFILE & SOCIAL OVERLAY --- */
-        #profile-layer { position:fixed; inset:0; z-index:6000; background:rgba(0,0,0,0.9); display:flex; justify-content:center; align-items:center; opacity:0; pointer-events:none; transition:0.3s; }
-        #profile-layer.active { opacity:1; pointer-events:all; }
-        .p-box { width:900px; height:600px; background:#0f0f0f; border:1px solid var(--cyan); display:flex; border-radius:10px; overflow:hidden; box-shadow:0 0 60px rgba(5,217,232,0.15); }
-        .p-side { width:260px; background:#080808; border-right:1px solid #333; display:flex; flex-direction:column; }
-        .p-head { padding:20px; border-bottom:1px solid #333; font-family:'Orbitron'; color:var(--pink); display:flex; justify-content:space-between; }
-        .f-list { flex:1; overflow-y:auto; }
-        .f-item { padding:15px; border-bottom:1px solid #222; cursor:pointer; display:flex; align-items:center; gap:10px; transition:0.2s; color:#aaa; }
-        .f-item:hover, .f-item.active { background:#1a1a1a; border-left:3px solid var(--cyan); color:white; }
-        .f-ava { width:35px; height:35px; background:#333; border-radius:50%; }
-        .p-main { flex:1; display:flex; flex-direction:column; position:relative; background:radial-gradient(circle at 50% 50%, #1a1025 0%, #000 80%); }
+        /* ================= 6. PROFILE & SOCIAL ================= */
+        #profile-overlay { position: fixed; inset: 0; z-index: 6000; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: 0.3s; }
+        #profile-overlay.active { opacity: 1; pointer-events: all; }
+        .profile-box { width: 900px; height: 600px; background: #111; border: 1px solid var(--cyan); display: flex; border-radius: 10px; overflow: hidden; }
         
-        .chat-view { flex:1; display:flex; flex-direction:column; display:none; }
-        .chat-view.show { display:flex; }
-        .c-area { flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:15px; }
-        .msg { max-width:70%; padding:10px 15px; border-radius:10px; font-size:0.9rem; line-height:1.4; }
-        .msg.me { align-self:flex-end; background:var(--cyan); color:black; }
-        .msg.them { align-self:flex-start; background:#333; color:#ddd; border:1px solid #444; }
-        .c-input { height:60px; border-top:1px solid #333; padding:10px; display:flex; gap:10px; background:#0f0f0f; }
+        .p-side { width: 250px; background: #0a0a0a; border-right: 1px solid #333; display: flex; flex-direction: column; }
+        .f-head { padding: 20px; border-bottom: 1px solid #333; font-family: var(--font-main); color: var(--pink); display: flex; justify-content: space-between; }
+        .f-list { flex: 1; overflow-y: auto; }
+        .f-item { padding: 15px; border-bottom: 1px solid #222; cursor: none; display: flex; align-items: center; gap: 10px; transition: 0.2s; }
+        .f-item:hover { background: #1a1a1a; border-left: 3px solid var(--cyan); }
+        .f-ava { width: 30px; height: 30px; background: #333; border-radius: 50%; }
         
-        .profile-view { padding:40px; text-align:center; display:none; animation:float 3s infinite ease-in-out; }
-        .profile-view.show { display:block; }
-        .big-ava { width:120px; height:120px; border-radius:50%; background:#333; border:2px solid var(--gold); margin:0 auto 20px; }
-        .stat-row { display:flex; justify-content:center; gap:30px; margin:30px 0; font-family:'Orbitron'; }
-        .stat { background:#222; padding:15px; border-radius:8px; width:120px; border:1px solid #444; }
+        .p-content { flex: 1; display: flex; flex-direction: column; background: #111; padding: 20px; position: relative; }
+        .my-profile { text-align: center; padding-top: 50px; }
+        .big-ava { width: 100px; height: 100px; border-radius: 50%; background: #333; border: 2px solid var(--gold); margin: 0 auto 20px; }
+        .stat-row { display: flex; justify-content: center; gap: 30px; margin: 30px 0; font-family: var(--font-main); }
+        .stat { background: #222; padding: 15px; border-radius: 8px; width: 100px; }
+        
+        .chat-view { display: none; flex-direction: column; height: 100%; }
+        .chat-box { flex: 1; overflow-y: auto; padding-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { max-width: 70%; padding: 10px 15px; border-radius: 10px; font-size: 0.9rem; }
+        .msg.me { align-self: flex-end; background: var(--cyan); color: black; }
+        .msg.them { align-self: flex-start; background: #333; border: 1px solid #444; }
+        .chat-inp-area { height: 50px; display: flex; gap: 10px; margin-top: 10px; }
 
-        /* --- READER --- */
-        #reader { position:fixed; inset:0; background:#050505; z-index:5000; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:0.3s; }
-        #reader.active { opacity:1; pointer-events:all; }
-        .r-head { height:60px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; padding:0 30px; background:rgba(0,0,0,0.8); }
-        .r-body { flex:1; display:flex; overflow:hidden; position:relative; }
+        /* ================= 7. NOVEL READER ================= */
+        #reader { position: fixed; inset: 0; background: var(--hud-bg); z-index: 5000; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: 0.3s; }
+        #reader.active { opacity: 1; pointer-events: all; }
+        .reader-top { height: 60px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; background: rgba(0,0,0,0.8); }
+        .reader-body { flex: 1; display: flex; overflow: hidden; }
         
-        .r-side-l { width:280px; background:rgba(10,5,15,0.98); border-right:1px solid var(--border); display:flex; flex-direction:column; z-index:20; }
-        .tabs { display:flex; height:50px; border-bottom:1px solid var(--border); }
-        .tab { flex:1; background:transparent; border:none; color:#666; font-family:'Orbitron'; font-size:0.85rem; cursor:pointer; border-bottom:2px solid transparent; }
-        .tab.active { color:white; border-color:var(--cyan); background:rgba(255,255,255,0.05); }
-        .list-c { flex:1; overflow-y:auto; }
-        .l-item { padding:12px 20px; font-size:0.9rem; color:#888; border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer; transition:0.2s; }
-        .l-item:hover { color:white; background:rgba(5,217,232,0.1); padding-left:25px; border-left:3px solid var(--cyan); }
-        .del-bm { float:right; color:#555; font-size:0.8rem; } .del-bm:hover { color:var(--pink); }
+        .r-side-l { width: 280px; background: rgba(0,0,0,0.5); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; }
+        .tab-head { display: flex; height: 50px; border-bottom: 1px solid var(--glass-border); }
+        .tab-btn { flex: 1; background: transparent; border: none; color: #666; font-family: var(--font-main); font-size: 0.8rem; cursor: none; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: white; border-color: var(--cyan); background: rgba(255,255,255,0.05); }
+        .list-container { flex: 1; overflow-y: auto; }
+        .list-el { padding: 12px 20px; font-size: 0.9rem; color: #888; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: none; }
+        .list-el:hover { color: white; background: rgba(5,217,232,0.1); padding-left: 25px; }
 
-        .r-content { flex:1; display:flex; flex-direction:column; position:relative; z-index:10; }
-        .text-box { flex:1; overflow-y:auto; padding:50px 100px; font-family:'ZCOOL XiaoWei'; font-size:1.4rem; line-height:2.2; color:#ddd; }
-        .line { position:relative; padding:5px 0; } .line:hover { background:rgba(255,255,255,0.05); }
-        .bubble { position:absolute; right:-40px; top:50%; transform:translateY(-50%); color:var(--purple); opacity:0; transition:0.2s; font-size:1.2rem; cursor:pointer; z-index:100; padding:5px; }
-        .line:hover .bubble { opacity:1; right:10px; }
-        
-        .r-side-r { width:0; background:rgba(10,5,20,0.98); border-left:1px solid var(--border); transition:0.3s; display:flex; flex-direction:column; z-index:30; }
-        .r-side-r.open { width:360px; }
-        .cmt-list { flex:1; overflow-y:auto; padding:20px; }
-        .cmt { background:rgba(255,255,255,0.05); padding:15px; margin-bottom:15px; border-radius:6px; border:1px solid transparent; }
-        .cmt:hover { border-color:var(--cyan); }
-        
-        .disc-zone { margin-top:80px; padding:40px; border-top:2px solid var(--cyan); background:rgba(5,217,232,0.02); }
-        .d-card { background:rgba(0,0,0,0.6); border:1px solid var(--border); padding:20px; border-radius:8px; margin-bottom:20px; }
-        .acts { display:flex; gap:15px; margin-top:10px; font-size:0.8rem; color:#888; }
-        .act:hover { color:var(--pink); cursor:pointer; } .coin:hover { color:var(--gold); cursor:pointer; }
+        .r-content { flex: 1; display: flex; flex-direction: column; position: relative; z-index: 1; }
+        .text-view { flex: 1; overflow-y: auto; padding: 50px 100px; font-family: var(--font-novel); font-size: 1.35rem; line-height: 2.2; color: #ddd; }
+        .line-wrap { position: relative; padding: 5px 0; }
+        .line-wrap:hover { background: rgba(255,255,255,0.05); }
+        .bubble { position: absolute; right: -30px; top: 50%; transform: translateY(-50%); color: var(--purple); opacity: 0; cursor: none; pointer-events: auto; z-index: 10; padding: 5px; }
+        .line-wrap:hover .bubble { opacity: 1; right: 10px; }
 
-        #loader { position:absolute; inset:0; background:rgba(0,0,0,0.95); z-index:100; display:flex; justify-content:center; align-items:center; color:var(--cyan); font-family:'Orbitron'; }
+        .r-side-r { width: 0; background: rgba(10,5,20,0.98); border-left: 1px solid var(--glass-border); transition: width 0.3s; display: flex; flex-direction: column; z-index: 30; }
+        .r-side-r.open { width: 350px; }
+        .cmt-list { flex: 1; overflow-y: auto; padding: 20px; }
+        .cmt-item { background: rgba(255,255,255,0.05); padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 0.9rem; border: 1px solid transparent; }
+        .cmt-item:hover { border-color: var(--cyan); }
 
-        @media(max-width:768px){ .r-side-l{display:none;} .r-side-r.open{position:absolute;right:0;width:90%;height:100%;} .auth-box{width:90%;} }
+        .disc-area { margin-top: 80px; padding: 40px; border-top: 2px solid var(--cyan); background: rgba(5,217,232,0.02); }
+        .d-card { background: rgba(0,0,0,0.6); border: 1px solid var(--glass-border); padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+
+        /* Loader */
+        #loader { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: var(--font-main); color: var(--cyan); letter-spacing: 2px; }
     </style>
 </head>
 <body>
@@ -154,32 +219,33 @@
 
     <!-- AUTH -->
     <div id="auth-layer">
-        <div class="auth-box hover">
-            <h2 id="auth-head" style="font-family:'Orbitron'; color:white; margin-bottom:20px;">SYSTEM LOGIN</h2>
-            <div id="f-login">
-                <input id="l-email" class="inp" placeholder="EMAIL">
-                <div style="height:15px"></div>
-                <input id="l-pass" type="password" class="inp" placeholder="PASSWORD">
+        <div class="auth-box">
+            <h2 id="auth-head" class="auth-title">SYSTEM LOGIN</h2>
+            <!-- Login -->
+            <div id="view-login">
+                <input id="l-email" class="input" placeholder="EMAIL">
+                <div style="height:10px"></div>
+                <input id="l-pass" type="password" class="input" placeholder="PASSWORD">
                 <div style="height:20px"></div>
                 <button class="btn" style="width:100%" onclick="doLogin()">CONNECT</button>
                 <div style="display:flex; justify-content:space-between; margin-top:15px;">
-                    <span class="link" onclick="switchV('reg')">New Player?</span>
-                    <span class="link">Forgot?</span>
+                    <span class="link" onclick="switchView('reg1')">Register</span>
+                    <span class="link" onclick="switchView('reset1')">Forgot?</span>
                 </div>
             </div>
-            <div id="f-reg" class="hidden">
-                <input id="r-user" class="inp" placeholder="USERNAME">
-                <div style="height:10px"></div>
-                <input id="r-email" class="inp" placeholder="EMAIL">
-                <div style="height:10px"></div>
-                <input id="r-pass" type="password" class="inp" placeholder="PASSWORD">
+            <!-- Reg -->
+            <div id="view-reg1" class="hidden">
+                <input id="r-user" class="input" placeholder="USERNAME">
+                <input id="r-email" class="input" placeholder="EMAIL">
+                <input id="r-pass" type="password" class="input" placeholder="PASSWORD">
                 <div style="height:10px"></div>
                 <button class="btn" style="width:100%" onclick="getCode()">GET CODE</button>
-                <div id="code-box" class="hidden" style="margin-top:15px; border-top:1px solid #333; padding-top:15px;">
-                    <input id="r-code" class="inp" placeholder="123456">
-                    <button class="btn-pink" style="width:100%; margin-top:10px;" onclick="doReg()">CONFIRM</button>
-                </div>
-                <div class="link" onclick="switchV('login')">Back</div>
+                <div class="link" onclick="switchView('login')" style="text-align:center;">Back</div>
+            </div>
+            <div id="view-reg2" class="hidden">
+                <p style="color:#888;font-size:0.8rem;margin-bottom:10px">Code sent (Test: 123456)</p>
+                <input id="r-code" class="input" placeholder="CODE">
+                <button class="btn" style="width:100%" onclick="doReg()">CONFIRM</button>
             </div>
             <div id="msg" class="err"></div>
         </div>
@@ -188,7 +254,7 @@
     <!-- APP -->
     <div id="app">
         <div class="bg-layer"></div>
-        <canvas id="bg-canvas"></canvas>
+        <canvas id="canvas-bg"></canvas>
         
         <nav>
             <div class="brand">NGNL</div>
@@ -198,77 +264,77 @@
                 <a href="#world" class="nav-item">WORLD</a>
                 <a href="#chars" class="nav-item">PLAYERS</a>
             </div>
-            <div class="u-badge" onclick="openProfile()">
+            <div class="user-badge" onclick="openProfile()">
                 <span id="u-name">GUEST</span>
-                <span id="u-coin" style="color:var(--cyan)">🪙 0</span>
+                <span id="u-coins" style="color:var(--cyan)">🪙 0</span>
             </div>
         </nav>
 
-        <div class="hero" id="hero">
-            <h1 class="glitch" data-text="NO GAME NO LIFE" style="font-family:'Orbitron'; font-size:5rem; margin-bottom:20px; background:linear-gradient(to bottom,#fff,#ccc); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">NO GAME NO LIFE</h1>
-            <button class="btn-pink" onclick="openReader()">START GAME</button>
-        </div>
+        <header id="hero" class="hero">
+            <h1>NO GAME NO LIFE</h1>
+            <p style="color:#aaa; font-size:1.2rem; letter-spacing:2px; margin-bottom:40px;">The world is just a game. Let's play.</p>
+            <button class="btn-pink" onclick="openReader()">READ NOVEL</button>
+        </header>
 
         <section id="pledges">
-            <h2 class="section-title" style="text-align:center; font-family:'Orbitron'; font-size:3rem; margin-bottom:50px; text-shadow:0 0 20px var(--cyan);">THE PLEDGES</h2>
-            <div class="grid">
-                <div class="card hover"><div class="p-num">I</div>禁止杀伤、战争与掠夺</div>
-                <div class="card hover"><div class="p-num">II</div>所有纠纷通过游戏解决</div>
-                <div class="card hover"><div class="p-num">III</div>赌注必须对等</div>
-                <div class="card hover"><div class="p-num">VI</div>向盟约宣誓必须遵守</div>
-                <div class="card hover"><div class="p-num">IX</div>规则绝对不变</div>
-                <div class="card hover"><div class="p-num">X</div>大家一起和平地玩吧</div>
+            <h2 class="section-title">THE TEN PLEDGES</h2>
+            <div class="grid" id="pledge-list">
+                <!-- Generated by JS -->
             </div>
         </section>
 
         <section id="world">
-            <h2 class="section-title" style="text-align:center; font-family:'Orbitron'; font-size:3rem; margin-bottom:50px; text-shadow:0 0 20px var(--cyan);">IXSEED</h2>
-            <div class="chess-grid">
-                <div class="piece rank-god hover"><div class="piece-rank">I</div><div class="p-icon">♔</div><div class="piece-name">Old Deus</div><div class="piece-desc">神灵种 / King</div></div>
-                <div class="piece rank-high hover"><div class="piece-rank">VI</div><div class="p-icon">♗</div><div class="piece-name">Flügel</div><div class="piece-desc">天翼种 / Bishop</div></div>
-                <div class="piece rank-mid hover"><div class="piece-rank">XIV</div><div class="p-icon">♙</div><div class="piece-name">Werebeast</div><div class="piece-desc">兽人种 / General</div></div>
-                <div class="piece rank-imanity hover"><div class="piece-rank">XVI</div><div class="p-icon">♙</div><div class="piece-name">Imanity</div><div class="piece-desc">人类种 / Pawn</div></div>
+            <h2 class="section-title">IXSEED (16 RACES)</h2>
+            <div class="chess-grid" id="chess-list">
+                <!-- Generated by JS -->
             </div>
         </section>
-        
+
         <section id="chars">
-             <h2 class="section-title" style="text-align:center; font-family:'Orbitron'; font-size:3rem; margin-bottom:50px; text-shadow:0 0 20px var(--cyan);">PLAYERS</h2>
-             <div class="char-gallery" style="display:flex; gap:30px; justify-content:center; flex-wrap:wrap;">
-                 <div class="char-box hover"><div class="char-in"><div class="cf"><div class="c-ava" style="background-image:url('sora.png')"></div><div class="char-name">SORA</div><div class="char-race">Imanity</div></div><div class="cb"><h3>空</h3><p>空白的策略担当。</p></div></div></div>
-                 <div class="char-box hover"><div class="char-in"><div class="cf"><div class="c-ava" style="background-image:url('shiro.png')"></div><div class="char-name">SHIRO</div><div class="char-race">Imanity</div></div><div class="cb"><h3>白</h3><p>空白的计算担当。</p></div></div></div>
-                 <div class="char-box hover"><div class="char-in"><div class="cf"><div class="c-ava" style="background-image:url('jibril.png')"></div><div class="char-name">JIBRIL</div><div class="char-race">Flügel</div></div><div class="cb"><h3>吉普莉尔</h3><p>知识欲旺盛的天翼种。</p></div></div></div>
-             </div>
+            <h2 class="section-title">PLAYERS</h2>
+            <div class="char-gallery">
+                <!-- Chars -->
+                <div class="char-card hover"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image:url('sora.png')"></div><div class="char-name">SORA</div><div class="char-race">Imanity</div></div><div class="char-back"><h3>空</h3><p>十八岁。无业、处男、沟通障碍、游戏废人。</p></div></div></div>
+                <div class="char-card hover"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image:url('shiro.png')"></div><div class="char-name">SHIRO</div><div class="char-race">Imanity</div></div><div class="char-back"><h3>白</h3><p>十一岁。空的义妹。拥有超乎常人的计算能力。</p></div></div></div>
+                <div class="char-card hover"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image:url('jibril.png')"></div><div class="char-name">JIBRIL</div><div class="char-race">Flügel</div></div><div class="char-back"><h3>吉普莉尔</h3><p>位阶序列第六位。拥有极强的战斗力。</p></div></div></div>
+                <div class="char-card hover"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image:url('steph.png')"></div><div class="char-name">STEPH</div><div class="char-race">Imanity</div></div><div class="char-back"><h3>史蒂芬妮</h3><p>艾尔奇亚的前王族孙女。</p></div></div></div>
+                <div class="char-card hover"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image:url('izuna.png')"></div><div class="char-name">IZUNA</div><div class="char-race">Werebeast</div></div><div class="char-back"><h3>初濑伊纲</h3><p>八岁。东部联合的大使。</p></div></div></div>
+                <div class="char-card hover"><div class="char-inner"><div class="char-front"><div class="char-avatar" style="background-image:url('tet.png')"></div><div class="char-name">TET</div><div class="char-race">One True God</div></div><div class="char-back"><h3>特图</h3><p>游戏之神，唯一的全权神。</p></div></div></div>
+            </div>
         </section>
+
+        <footer><p>© NO GAME NO LIFE FAN SITE</p></footer>
     </div>
 
     <!-- PROFILE -->
-    <div id="profile-layer">
-        <div class="p-box">
+    <div id="profile-overlay">
+        <div class="profile-box">
             <div class="p-side">
-                <div class="p-head"><span>FRIENDS</span><span style="cursor:pointer" onclick="addFriend()">+</span></div>
+                <div class="f-head"><span>FRIENDS</span><span onclick="addFriend()" style="cursor:pointer;">+</span></div>
                 <div id="f-list" class="f-list"></div>
             </div>
-            <div class="p-main">
-                <button onclick="closeProfile()" style="position:absolute; top:10px; right:10px; background:none; border:none; color:#888; cursor:pointer;">X</button>
-                
-                <!-- My Profile -->
-                <div id="view-profile" class="profile-view show">
+            <div class="p-content">
+                <!-- Profile View -->
+                <div id="view-p" class="my-profile">
                     <div class="big-ava"></div>
-                    <h2 id="p-username" style="color:var(--pink); font-family:'Orbitron'">USER</h2>
+                    <h2 id="p-user" style="color:var(--pink)">USER</h2>
                     <div class="stat-row">
-                        <div class="stat"><div style="color:#888; font-size:0.8rem">RANK</div><div id="p-rank" style="font-size:1.5rem">16</div></div>
-                        <div class="stat"><div style="color:#888; font-size:0.8rem">EXP</div><div id="p-exp" style="font-size:1.5rem">0</div></div>
-                        <div class="stat"><div style="color:#888; font-size:0.8rem">COINS</div><div id="p-coin" style="font-size:1.5rem">0</div></div>
+                        <div class="stat"><div style="color:#888;font-size:0.8rem">RANK</div><div id="p-rank" style="font-size:1.5rem">16</div></div>
+                        <div class="stat"><div style="color:#888;font-size:0.8rem">EXP</div><div id="p-exp" style="font-size:1.5rem">0</div></div>
+                        <div class="stat"><div style="color:#888;font-size:0.8rem">COINS</div><div id="p-coin" style="font-size:1.5rem">0</div></div>
                     </div>
-                    <p id="p-bio" style="color:#aaa; font-size:0.9rem;">This player is lazy.</p>
+                    <p id="p-bio" style="color:#aaa;">This player is blank.</p>
+                    <button class="btn" style="margin-top:30px;" onclick="closeProfile()">CLOSE</button>
                 </div>
-
-                <!-- Chat -->
+                <!-- Chat View -->
                 <div id="view-chat" class="chat-view">
-                    <div style="padding:10px; border-bottom:1px solid #333; text-align:center; font-family:'Orbitron'; color:var(--cyan);" id="chat-title">CHAT</div>
-                    <div id="chat-box" class="c-area"></div>
-                    <div class="c-input">
-                        <input id="chat-msg" class="inp" style="text-align:left" placeholder="Message...">
+                    <div style="padding:10px; border-bottom:1px solid #333; display:flex; justify-content:space-between;">
+                        <span id="chat-title" style="color:var(--cyan)">CHAT</span>
+                        <span onclick="backProfile()" style="cursor:pointer; color:#888;">BACK</span>
+                    </div>
+                    <div id="chat-box" class="chat-box"></div>
+                    <div class="chat-inp-area">
+                        <input id="chat-msg" class="input" style="text-align:left" placeholder="Type...">
                         <button class="btn" onclick="sendMsg()">SEND</button>
                     </div>
                 </div>
@@ -278,216 +344,248 @@
 
     <!-- READER -->
     <div id="reader">
-        <div id="loader" class="hidden">LOADING DATA...</div>
-        <div class="r-head">
-            <span style="color:var(--cyan); font-family:'Orbitron'">ARCHIVE</span>
-            <button class="btn" style="padding:5px 15px; border:none;" onclick="closeReader()">EXIT</button>
+        <div id="loader" class="hidden">INITIALIZING...</div>
+        <div class="reader-head">
+            <span style="color:var(--cyan); font-family:var(--font-main);">DATABASE</span>
+            <button onclick="closeReader()" style="background:none; border:1px solid var(--pink); color:var(--pink); padding:5px 15px; font-family:var(--font-main);">EXIT</button>
         </div>
-        <div class="r-body">
+        <div class="reader-body">
             <div class="r-side-l">
-                <div class="tabs">
-                    <button class="tab active" onclick="tab('toc')">INDEX</button>
-                    <button class="tab" onclick="tab('bm')">BM</button>
+                <div class="tab-head">
+                    <button class="tab-btn active" onclick="tab('toc')">INDEX</button>
+                    <button class="tab-btn" onclick="tab('bm')">MEMORY</button>
                 </div>
-                <div id="view-toc" class="list-c"></div>
-                <div id="view-bm" class="list-c hidden"></div>
+                <div id="l-toc" class="list-container"></div>
+                <div id="l-bm" class="list-container hidden"></div>
             </div>
             <div class="r-content">
-                <div id="text-box" class="text-box">
+                <div id="text-view" class="text-view">
                     <div style="text-align:center; margin-top:100px;">
-                        <p style="color:#666;">NO DATA</p>
-                        <button class="btn" onclick="document.getElementById('file').click()">LOAD NOVEL</button>
+                        <button class="btn" onclick="document.getElementById('file').click()">LOAD NOVEL.TXT</button>
                     </div>
                 </div>
                 <div style="padding:10px; background:rgba(0,0,0,0.8); display:flex; justify-content:center; gap:20px;">
-                    <button class="btn" onclick="page(-1)">PREV</button>
-                    <span id="pg-num" style="color:#888; align-self:center;">0%</span>
-                    <button class="btn" onclick="page(1)">NEXT</button>
-                    <button class="btn-pink" onclick="saveBM()">SAVE</button>
+                    <button class="btn" onclick="turnPage(-1)">PREV</button>
+                    <span id="pg-info" style="align-self:center; color:#aaa; font-family:var(--font-main);">0%</span>
+                    <button class="btn" onclick="turnPage(1)">NEXT</button>
+                    <button class="btn-pink" style="margin-left:20px;" onclick="saveBM()">SAVE</button>
                 </div>
             </div>
             <div id="r-side-r" class="r-side-r">
                 <div style="padding:15px; border-bottom:1px solid #333; display:flex; justify-content:space-between;">
-                    <span style="color:var(--pink)">COMMENTS</span><span onclick="toggleR()" style="cursor:pointer">[X]</span>
+                    <span style="color:var(--pink); font-family:var(--font-main);">COMMENTS</span>
+                    <span onclick="toggleR()" style="cursor:pointer;">X</span>
                 </div>
-                <div id="c-list" class="cmt-list"></div>
+                <div id="cmt-list" class="cmt-list"></div>
                 <div style="padding:15px; background:rgba(0,0,0,0.5);">
-                    <textarea id="c-inp" class="inp" rows="2" style="text-align:left; resize:none;"></textarea>
+                    <textarea id="c-inp" class="input" rows="2" style="text-align:left; resize:none;"></textarea>
                     <button class="btn" style="width:100%; margin-top:5px;" onclick="postCmt()">POST</button>
                 </div>
             </div>
         </div>
     </div>
+
     <input type="file" id="file" accept=".txt" style="display:none" onchange="loadFile(this)">
 
     <script>
-        // ==========================================
-        // ⚠️ API URL
+        // ==================================================
+        // ⚠️ 必须替换：Google Apps Script URL
         const API = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec"; 
-        // ==========================================
+        // ==================================================
 
-        let user = {name:"Guest", rank:16, exp:0, coins:0};
-        let lines=[], curStart=0, curCmt=-1, chatTarget="";
+        let user = {name:"Guest", rank:16, coins:0, exp:0};
+        let lines=[], curStart=0, curCmtLine=-1, chatTarget="";
         const PG=150;
 
-        async function api(d) {
+        // --- API ---
+        async function req(data) {
+            console.log("TX:", data);
             try {
-                const r = await fetch(API, {method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(d)});
+                const r = await fetch(API, {
+                    method:'POST', redirect:'follow',
+                    headers:{'Content-Type':'text/plain;charset=utf-8'},
+                    body:JSON.stringify(data)
+                });
                 return await r.json();
-            } catch(e) { return {status:'error', message:'Net Error'}; }
+            } catch(e) { console.error(e); return {status:'error', message:'Net Error'}; }
         }
 
-        // Auth
-        function switchV(v) {
-            ['f-login','f-reg'].forEach(id=>document.getElementById(id).classList.add('hidden'));
-            document.getElementById('f-'+v).classList.remove('hidden');
+        // --- Auth ---
+        function switchView(v) {
+            ['view-login','view-reg1','view-reg2'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+            document.getElementById('view-'+v).classList.remove('hidden');
             document.getElementById('msg').innerText="";
+            document.getElementById('auth-head').innerText = v==='login'?"SYSTEM LOGIN":"REGISTER";
         }
         async function doLogin() {
             const e=document.getElementById('l-email').value, p=document.getElementById('l-pass').value;
-            const res = await api({action:'login', email:e, password:p});
+            const res = await req({action:'login', email:e, password:p});
             if(res.status==='success') {
                 user = {name:res.username, rank:res.level, exp:res.exp, coins:res.coins, bio:res.bio};
                 document.getElementById('auth-layer').style.display='none';
                 document.body.classList.add('unlocked');
-                updateHUD(); initAnim();
+                updateHUD();
+                initVisuals();
             } else document.getElementById('msg').innerText = res.message;
         }
         let tmpReg={};
         async function getCode() {
-            const u=document.getElementById('r-user').value, e=document.getElementById('r-email').value;
-            const res = await api({action:'req_code', email:e});
-            if(res.status==='success') {
-                tmpReg={u,e,p:document.getElementById('r-pass').value};
-                document.getElementById('code-box').classList.remove('hidden');
-                alert(res.message);
-            } else document.getElementById('msg').innerText=res.message;
+            const u=document.getElementById('r-user').value, e=document.getElementById('r-email').value, p=document.getElementById('r-pass').value;
+            const res = await req({action:'req_code', email:e});
+            if(res.status==='success') { tmpReg={u,e,p}; switchView('reg2'); alert(res.message); }
+            else document.getElementById('msg').innerText = res.message;
         }
         async function doReg() {
             const c=document.getElementById('r-code').value;
-            const res = await api({action:'register', username:tmpReg.u, email:tmpReg.e, password:tmpReg.p, code:c});
-            if(res.status==='success') { alert("Success!"); switchV('login'); } else document.getElementById('msg').innerText=res.message;
+            const res = await req({action:'register', username:tmpReg.u, email:tmpReg.e, password:tmpReg.p, code:c});
+            if(res.status==='success') { alert("Success"); switchView('login'); }
+            else document.getElementById('msg').innerText = res.message;
         }
         function updateHUD() {
             document.getElementById('u-name').innerText = user.name.toUpperCase();
-            document.getElementById('u-coin').innerText = `🪙 ${user.coins}`;
-            document.getElementById('p-username').innerText = user.name;
+            document.getElementById('u-coins').innerText = `🪙 ${user.coins}`;
+            document.getElementById('p-user').innerText = user.name;
             document.getElementById('p-rank').innerText = user.rank;
             document.getElementById('p-exp').innerText = user.exp;
             document.getElementById('p-coin').innerText = user.coins;
         }
 
-        // Profile
-        function openProfile() { document.getElementById('profile-layer').classList.add('active'); loadFriends(); }
-        function closeProfile() { document.getElementById('profile-layer').classList.remove('active'); }
-        function showProfile() { document.getElementById('view-chat').classList.remove('show'); document.getElementById('view-profile').classList.add('show'); }
-        async function loadFriends() {
-            const r = await api({action:'get_friends', username:user.name});
-            let h = `<div class="f-item active" onclick="showProfile()"><div class="f-ava"></div><span>MY PROFILE</span></div>`;
-            if(r.status==='success') r.data.forEach(f=>{
-                h+=`<div class="f-item" onclick="openChat('${f.name}')"><div class="f-ava"></div><span>${f.name}</span></div>`;
-            });
-            document.getElementById('f-list').innerHTML = h;
-        }
-        function addFriend() { const n=prompt("Username:"); if(n) api({action:'add_friend', username:user.name, target_user:n}).then(d=>alert(d.message||"Sent")); }
-        async function openChat(n) {
-            chatTarget = n;
-            document.getElementById('view-profile').classList.remove('show');
-            document.getElementById('view-chat').classList.add('show');
-            document.getElementById('chat-title').innerText = "CHAT: " + n;
-            loadMsgs();
-        }
-        async function loadMsgs() {
-            if(!chatTarget) return;
-            const r = await api({action:'get_messages', username:user.name, target_user:chatTarget});
-            document.getElementById('chat-box').innerHTML = r.data.map(m=>`<div class="msg ${m.sender===user.name?'me':'them'}">${m.content}</div>`).join('');
-        }
-        async function sendMsg() {
-            const t = document.getElementById('chat-msg').value;
-            await api({action:'send_msg', username:user.name, target_user:chatTarget, content:t});
-            document.getElementById('chat-msg').value=""; loadMsgs();
-        }
-
-        // Reader
-        function openReader() { document.getElementById('reader').classList.add('active'); loadBM(); }
+        // --- Reader ---
+        function openReader() { document.getElementById('reader').classList.add('active'); fetch('novel.txt').then(r=>{if(r.ok)return r.text();throw 1}).then(t=>parse(t)).catch(()=>{}); loadBM(); }
         function closeReader() { document.getElementById('reader').classList.remove('active'); }
-        function loadFile(i) {
-            const r = new FileReader();
-            r.onload = e => { lines = e.target.result.split('\n'); genTOC(); go(0); };
-            r.readAsText(i.files[0]);
-        }
-        function genTOC() {
-            let h=""; const reg=/(?:^第.+章)|(?:^Chapter)/i;
-            lines.forEach((l,i)=>{ if(l.length<50&&reg.test(l)) h+=`<div class="l-item hover" onclick="go(${i})">${l}</div>`; });
-            document.getElementById('view-toc').innerHTML=h;
+        function loadFile(i) { const r=new FileReader(); r.onload=e=>parse(e.target.result); r.readAsText(i.files[0]); }
+        
+        async function parse(txt) {
+            document.getElementById('loader').classList.remove('hidden');
+            lines = txt.split('\n');
+            let h=""; const reg=/(?:^第.+章)|(?:^Chapter)|(?:^序章)/i;
+            for(let i=0; i<lines.length; i+=2000) {
+                const end=Math.min(i+2000, lines.length);
+                for(let j=i; j<end; j++) if(lines[j].length<50 && reg.test(lines[j])) 
+                    h+=`<div class="list-el" onclick="go(${j})">${lines[j]}</div>`;
+                await new Promise(r=>setTimeout(r,0));
+            }
+            document.getElementById('l-toc').innerHTML=h;
+            go(0);
+            document.getElementById('loader').classList.add('hidden');
         }
         function go(i) { curStart=i; render(); }
-        function page(d) { const n=curStart+d*PG; if(n>=0 && n<lines.length){ curStart=n; render(); } }
+        function turnPage(d) { const n=curStart+d*PG; if(n>=0 && n<lines.length) { curStart=n; render(); } }
         function render() {
             const end = Math.min(curStart+PG, lines.length);
             const slice = lines.slice(curStart, end);
-            let h = slice.map((l,i) => l.trim() ? `<div class="line">${l}<div class="bubble" onclick="openCmt(${curStart+i})">💬</div></div>` : "<br>").join('');
-            if(end>=lines.length) h+=`<div class="disc-zone"><h3 style="color:var(--cyan)">DISCUSSION</h3><textarea id="d-inp" class="inp"></textarea><button class="btn" onclick="postDisc()">POST</button><div id="d-list" style="margin-top:20px"></div></div>`;
-            document.getElementById('text-box').innerHTML = h;
-            document.getElementById('text-box').scrollTop = 0;
-            document.getElementById('pg-num').innerText = Math.round((end/lines.length)*100)+"%";
-            if(end>=lines.length) loadDisc();
+            const div = document.getElementById('text-view');
+            div.innerHTML = slice.map((l,i)=> l.trim()?`<div class="line-wrap">${l}<div class="bubble" onclick="cmt(${curStart+i})">💬</div></div>`:"<br>").join('');
+            
+            if(end>=lines.length) {
+                div.innerHTML += `<div class="disc-area"><h3 style="color:var(--cyan);font-family:var(--font-main)">DISCUSSION</h3><textarea id="d-inp" class="input" style="text-align:left" rows="2"></textarea><button class="btn" onclick="postDisc()">POST</button><div id="d-list" style="margin-top:20px"></div></div>`;
+                loadDisc();
+            }
+            div.scrollTop=0;
+            document.getElementById('pg-info').innerText = Math.round((end/lines.length)*100)+"%";
         }
 
-        // Comments & Disc
+        // --- Social ---
         function toggleR() { document.getElementById('r-side-r').classList.toggle('open'); }
-        async function openCmt(i) {
-            curCmt=i; document.getElementById('r-side-r').classList.add('open');
-            const div = document.getElementById('c-list'); div.innerHTML = "Loading...";
-            const r = await api({action:'get_line_comments', line_index:i});
-            div.innerHTML = r.data.map(c=>`<div class="cmt"><div style="color:var(--cyan)">${c.user}</div><div>${c.content}</div></div>`).join('') || "No comments";
+        async function cmt(i) {
+            curCmtLine=i; document.getElementById('r-side-r').classList.add('open');
+            const div = document.getElementById('cmt-list'); div.innerHTML="Loading...";
+            const r = await req({action:'get_line_comments', line_index:i});
+            div.innerHTML = r.data.length ? r.data.map(c=>`<div class="cmt-item"><div style="color:var(--cyan)">${c.user}</div>${c.content}</div>`).join('') : "No comments";
         }
         async function postCmt() {
-            const t = document.getElementById('c-inp').value;
-            await api({action:'post_line_comment', line_index:curCmt, username:user.name, content:t});
-            document.getElementById('c-inp').value=""; openCmt(curCmt);
+            const t=document.getElementById('c-inp').value; if(!t)return;
+            await req({action:'post_line_comment', line_index:curCmtLine, username:user.name, content:t});
+            document.getElementById('c-inp').value=""; cmt(curCmtLine);
         }
         async function loadDisc() {
-            const r = await api({action:'get_discussion'});
-            document.getElementById('d-list').innerHTML = r.data.map(d=>`<div class="d-card"><div style="display:flex;justify-content:space-between;color:var(--cyan)"><span>${d.user}</span><span style="color:var(--gold)">🪙 ${d.coins}</span></div><div>${d.content}</div><div class="acts"><span class="act" onclick="act('like','${d.id}','disc')">♥ ${d.likes}</span><span class="coin" onclick="act('tip','${d.id}','disc')">TIP</span></div></div>`).join('');
+            const r = await req({action:'get_discussion'});
+            document.getElementById('d-list').innerHTML = r.data.map(d=>`<div class="d-card"><div style="display:flex;justify-content:space-between;color:var(--cyan)"><span>${d.user}</span><span style="color:var(--gold)">🪙 ${d.coins}</span></div><div style="margin:10px 0">${d.content}</div><div style="color:#888;font-size:0.8rem;cursor:pointer" onclick="interact('like','${d.id}','disc')">♥ ${d.likes} | <span onclick="interact('tip','${d.id}','disc')">TIP</span></div></div>`).join('');
         }
         async function postDisc() {
-            const t = document.getElementById('d-inp').value;
-            await api({action:'post_discussion', username:user.name, content:t});
+            const t=document.getElementById('d-inp').value; if(!t)return;
+            await req({action:'post_discussion', username:user.name, content:t});
             document.getElementById('d-inp').value=""; loadDisc();
         }
-        async function act(a, id, t) {
-            const r = await api({action:'interact', sub_action:a, type:t, id:id, username:user.name, target_id:id});
-            if(r.status==='success' && a==='tip') { user.coins=r.new_balance; updateHUD(); loadDisc(); }
+        async function interact(a,id,t) {
+            if(user.name==='Guest') return alert("Login");
+            if(a==='tip' && !confirm("Tip 1 Coin?")) return;
+            const r = await req({action:'interact', sub_action:a, type:t, id:id, username:user.name, target_id:id});
+            if(r.status==='success') {
+                if(a==='tip') { user.coins=r.new_balance; updateHUD(); }
+                if(t==='disc') loadDisc(); else cmt(curCmtLine);
+            } else alert(r.message);
         }
 
-        // BM
+        // --- Profile & Chat ---
+        function openProfile() { document.getElementById('profile-overlay').classList.add('active'); loadFriends(); }
+        function closeProfile() { document.getElementById('profile-overlay').classList.remove('active'); }
+        function backProfile() { document.getElementById('view-chat').style.display='none'; document.getElementById('view-p').style.display='block'; }
+        async function loadFriends() {
+            const r = await req({action:'get_friends', username:user.name});
+            let h = `<div class="f-item" onclick="backProfile()"><div class="f-ava"></div><span>MY PROFILE</span></div>`;
+            r.data.forEach(f=>{
+                h+=`<div class="f-item" onclick="openChat('${f.name}')"><div class="f-ava"></div><span>${f.name}</span> ${f.status==='Pending'?'(P)':''}</div>`;
+            });
+            document.getElementById('f-list').innerHTML = h;
+        }
+        async function addFriend() {
+            const n=prompt("Username:"); if(n) { const r=await req({action:'add_friend', username:user.name, target_user:n}); alert(r.message); }
+        }
+        function openChat(n) {
+            chatTarget=n; document.getElementById('view-p').style.display='none'; document.getElementById('view-chat').style.display='flex';
+            document.getElementById('chat-title').innerText = "CHAT: "+n; loadMsgs();
+        }
+        async function loadMsgs() {
+            if(!chatTarget) return;
+            const r = await req({action:'get_messages', username:user.name, target_user:chatTarget});
+            document.getElementById('chat-box').innerHTML = r.data.map(m=>`<div class="msg ${m.sender===user.name?'me':'them'}">${m.content}</div>`).join('');
+        }
+        async function sendMsg() {
+            const t=document.getElementById('chat-msg').value; if(!t)return;
+            await req({action:'send_message', username:user.name, target_user:chatTarget, content:t});
+            document.getElementById('chat-msg').value=""; loadMsgs();
+        }
+
+        // --- Bookmarks ---
         function tab(t) {
-            document.getElementById('view-toc').className = t==='toc'?'list-c':'hidden';
-            document.getElementById('view-bm').className = t==='bm'?'list-c':'hidden';
+            document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('l-toc').className = t==='toc'?'list-container':'hidden';
+            document.getElementById('l-bm').className = t==='bm'?'list-container':'hidden';
         }
         function saveBM() {
             let b = JSON.parse(localStorage.getItem('ngnl_bm')||'[]');
             b.unshift({t:new Date().toLocaleDateString(), i:curStart, txt:lines[curStart].substr(0,15)+"..."});
-            localStorage.setItem('ngnl_bm', JSON.stringify(b)); loadBM(); alert("Saved");
+            localStorage.setItem('ngnl_bm', JSON.stringify(b));
+            loadBM(); alert("Saved");
         }
         function loadBM() {
             let b = JSON.parse(localStorage.getItem('ngnl_bm')||'[]');
-            document.getElementById('view-bm').innerHTML = b.map((i,k)=>`<div class="l-item hover" onclick="go(${i.i})"><div style="display:flex;justify-content:space-between"><span>${i.txt}</span><span class="del-bm" onclick="delBM(${k},event)">X</span></div></div>`).join('');
+            document.getElementById('l-bm').innerHTML = b.map((v,k)=>`<div class="list-el" onclick="go(${v.i})"><div style="display:flex;justify-content:space-between"><span>${v.txt}</span><span onclick="delBM(${k},event)" style="color:var(--pink)">X</span></div></div>`).join('');
         }
-        function delBM(k,e) { e.stopPropagation(); let b=JSON.parse(localStorage.getItem('ngnl_bm')); b.splice(k,1); localStorage.setItem('ngnl_bm', JSON.stringify(b)); loadBM(); }
+        function delBM(k,e) { e.stopPropagation(); let b=JSON.parse(localStorage.getItem('ngnl_bm')); b.splice(k,1); localStorage.setItem('ngnl_bm',JSON.stringify(b)); loadBM(); }
 
-        // Visuals
-        function initAnim() {
-            const c=document.getElementById('bg-canvas'), x=c.getContext('2d');
-            let w=window.innerWidth, h=window.innerHeight; c.width=w; c.height=h;
-            const p=Array.from({length:50},()=>({x:Math.random()*w,y:Math.random()*h,s:Math.random()+0.5,t:['♔','♕','♖'][Math.floor(Math.random()*3)]}));
-            function loop(){x.clearRect(0,0,w,h);p.forEach(i=>{i.y+=i.s;if(i.y>h)i.y=-20;x.fillStyle='rgba(255,255,255,0.1)';x.font='20px Arial';x.fillText(i.t,i.x,i.y)});requestAnimationFrame(loop);}
+        // --- Visuals ---
+        function initVisuals() {
+            // Pledges
+            const p=["禁止杀伤","纠纷游戏决","赌注对等","内容不限","受挑战决定","遵守盟约","全权代理","作弊即败","绝对不变","和平玩吧"];
+            document.getElementById('pledge-list').innerHTML = p.map((t,i)=>`<div class="pledge-card hover"><div class="pledge-num">${i+1}</div>${t}</div>`).join('');
+            
+            // Races
+            const c=[{r:1,n:'Old Deus',i:'♔',s:'rank-god'},{r:2,n:'Phantasma',i:'♕',s:'rank-god'},{r:6,n:'Flügel',i:'♗',s:'rank-high'},{r:16,n:'Imanity',i:'♙',s:'rank-imanity'}];
+            document.getElementById('chess-list').innerHTML = c.map(x=>`<div class="piece ${x.s} hover"><div class="p-icon">${x.i}</div><div class="p-rank">${x.r}</div><div class="p-name">${x.n}</div></div>`).join('');
+            
+            // Canvas
+            const cvs=document.getElementById('canvas-bg'), ctx=cvs.getContext('2d');
+            let w=window.innerWidth, h=window.innerHeight; cvs.width=w; cvs.height=h;
+            const parts=Array.from({length:40},()=>({x:Math.random()*w,y:Math.random()*h,s:Math.random()+0.5}));
+            function loop(){ctx.clearRect(0,0,w,h);parts.forEach(i=>{i.y+=i.s;if(i.y>h)i.y=-20;ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fillRect(i.x,i.y,2,2)});requestAnimationFrame(loop);}
             loop();
         }
-        const cur=document.getElementById('cursor');
-        document.addEventListener('mousemove', e=>{cur.style.left=e.clientX+'px'; cur.style.top=e.clientY+'px';});
-        document.body.addEventListener('mouseover', e=>{if(e.target.closest('.hover')) cur.classList.add('hover'); else cur.classList.remove('hover');});
+        const cursor = document.getElementById('cursor');
+        document.addEventListener('mousemove', e=>{ cursor.style.left=e.clientX+'px'; cursor.style.top=e.clientY+'px'; });
+        document.body.addEventListener('mouseover', e=>{ if(e.target.closest('.hover')) cursor.classList.add('hover'); else cursor.classList.remove('hover'); });
     </script>
 </body>
 </html>
