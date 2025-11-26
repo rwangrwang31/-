@@ -3,350 +3,545 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NO GAME NO LIFE | DISBOARD ONLINE</title>
+    <title>NO GAME NO LIFE | DISBOARD SYSTEM</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     <style>
-        /* ================= STYLE CONFIG ================= */
+        /* ================= 1. 赛博奇幻风格定义 ================= */
         :root {
-            --pink: #ff2a6d; --cyan: #05d9e8; --purple: #bd00ff; --gold: #ffd700;
-            --dark: #09000f; --glass: rgba(20, 20, 35, 0.85); --border: rgba(255, 255, 255, 0.15);
+            --p-pink: #ff2a6d; --p-cyan: #05d9e8; --p-purple: #d905e8; --p-gold: #ffd700;
+            --bg-dark: #05010a; --bg-glass: rgba(20, 20, 35, 0.85);
+            --border: rgba(255,255,255,0.15);
+            /* 16种族色谱 */
+            --rank-1: #ffd700; --rank-2: #9b59b6; --rank-mid: #2ecc71; --rank-low: #e74c3c;
         }
-        * { margin:0; padding:0; box-sizing:border-box; cursor:none; outline:none; user-select:none; }
-        body { background:var(--dark); color:white; font-family:'Noto Sans SC'; height:100vh; overflow:hidden; }
-        body.unlocked { overflow-y:auto; overflow-x:hidden; }
+        * { margin: 0; padding: 0; box-sizing: border-box; cursor: none; outline: none; user-select: none; }
+        body { background-color: var(--bg-dark); color: white; font-family: 'Noto Sans SC'; height: 100vh; overflow: hidden; }
+        body.unlocked { overflow-y: auto; }
 
-        /* Cursor & Scroll */
-        #cursor { width:20px; height:20px; border:2px solid var(--cyan); border-radius:50%; position:fixed; z-index:999999; pointer-events:none; transform:translate(-50%,-50%); transition:0.1s; mix-blend-mode:difference; }
-        #cursor.hover { width:50px; height:50px; background:rgba(255,42,109,0.3); border-color:var(--pink); }
-        ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:#000; } ::-webkit-scrollbar-thumb { background:linear-gradient(var(--cyan),var(--purple)); border-radius:3px; }
-
-        /* Backgrounds */
-        .bg-layer { position:fixed; inset:0; z-index:-10; background:radial-gradient(circle at 50% 0%, rgba(189,0,255,0.15), transparent 70%), url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h40v40H0z' fill='none'/%3E%3Cpath d='M0 38h40v2H0z' fill='%2305d9e8' fill-opacity='0.05'/%3E%3Cpath d='M0 0h2v40H0z' fill='%2305d9e8' fill-opacity='0.05'/%3E%3C/svg%3E"); }
-        #bg-canvas { position:fixed; inset:0; z-index:-5; opacity:0.6; }
-
-        /* Login Overlay */
-        #auth-layer { position:fixed; inset:0; z-index:10000; background:rgba(5,1,10,0.95); display:flex; justify-content:center; align-items:center; backdrop-filter:blur(15px); }
-        .auth-box { width:400px; padding:40px; background:rgba(0,0,0,0.8); border:2px solid var(--pink); text-align:center; box-shadow:0 0 60px rgba(255,42,109,0.25); position:relative; }
-        .auth-box::before { content:"SYSTEM ACCESS"; position:absolute; top:-12px; left:50%; transform:translate(-50%); background:#000; padding:0 10px; color:var(--pink); font-family:'Orbitron'; font-size:0.8rem; border:1px solid var(--pink); }
-        .auth-inp { width:100%; padding:15px; background:rgba(255,255,255,0.05); border:1px solid #444; color:white; margin-bottom:15px; text-align:center; font-family:'Orbitron'; transition:0.3s; }
-        .auth-inp:focus { border-color:var(--cyan); background:rgba(5,217,232,0.05); }
-        .auth-btn { width:100%; padding:12px; background:var(--pink); color:white; font-family:'Orbitron'; font-weight:bold; border:none; cursor:pointer; transition:0.3s; clip-path:polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
-        .auth-btn:hover { background:white; color:var(--pink); box-shadow:0 0 20px var(--pink); }
-        .auth-btn:disabled { background:#555; color:#999; }
-        .hidden { display:none!important; }
-        .link { margin-top:15px; font-size:0.8rem; color:#888; text-decoration:underline; cursor:pointer; }
-
-        /* Main App */
-        #app-wrap { transition:1s; filter:blur(20px); opacity:0; pointer-events:none; width:100%; }
-        body.unlocked #app-wrap { filter:blur(0); opacity:1; pointer-events:all; }
+        /* --- 视觉特效 --- */
+        #cursor { width: 20px; height: 20px; border: 2px solid var(--p-cyan); border-radius: 50%; position: fixed; pointer-events: none; z-index: 999999; transform: translate(-50%, -50%); transition: width 0.2s, background 0.2s; mix-blend-mode: difference; }
+        #cursor.hover { width: 50px; height: 50px; background: rgba(255, 42, 109, 0.4); border-color: var(--p-pink); }
         
-        nav { position:fixed; top:0; width:100%; height:70px; padding:0 40px; display:flex; justify-content:space-between; align-items:center; z-index:1000; background:rgba(5,1,10,0.9); border-bottom:1px solid var(--border); }
-        .brand { font-family:'Orbitron'; font-weight:900; color:var(--cyan); font-size:1.5rem; text-shadow:0 0 10px var(--cyan); }
-        .nav-item { margin-left:20px; color:#aaa; text-decoration:none; font-family:'Orbitron'; font-size:0.9rem; transition:0.3s; }
-        .nav-item:hover { color:var(--pink); text-shadow:0 0 8px var(--pink); }
+        .bg-anim { position: fixed; inset: 0; z-index: -10; background: radial-gradient(circle at 50% 0%, #1a0b2e 0%, #000 80%); }
+        #canvas-bg { position: fixed; inset: 0; z-index: -5; opacity: 0.5; pointer-events: none; }
 
-        /* Hero & Glitch */
-        .hero { height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
-        .glitch { font-family:'Orbitron'; font-size:5rem; position:relative; color:white; animation:shake 4s infinite; }
-        .glitch::before, .glitch::after { content:attr(data-text); position:absolute; top:0; left:0; width:100%; opacity:0.8; }
-        .glitch::before { left:2px; text-shadow:-2px 0 #ff00c1; clip-path:inset(0 0 0 0); animation:glitch-a 3s infinite linear alternate-reverse; }
-        .glitch::after { left:-2px; text-shadow:-2px 0 #00fff9; clip-path:inset(0 0 0 0); animation:glitch-b 2s infinite linear alternate-reverse; }
-        @keyframes shake { 0%,100% {transform:translate(0,0)} 50% {transform:translate(1px,-1px)} }
-        @keyframes glitch-a { 0% {clip-path:inset(10% 0 80% 0)} 20% {clip-path:inset(80% 0 10% 0)} }
-        @keyframes glitch-b { 0% {clip-path:inset(30% 0 50% 0)} 20% {clip-path:inset(10% 0 60% 0)} }
+        @keyframes glitch { 0% { transform: skew(0deg); } 20% { transform: skew(-2deg); } 40% { transform: skew(2deg); } 100% { transform: skew(0deg); } }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+        @keyframes pulse-glow { 0% { box-shadow: 0 0 5px var(--p-cyan); } 50% { box-shadow: 0 0 20px var(--p-cyan); } 100% { box-shadow: 0 0 5px var(--p-cyan); } }
 
-        /* Content Cards */
-        section { padding:80px 20px; max-width:1200px; margin:0 auto; }
-        .title { font-family:'Orbitron'; font-size:3rem; text-align:center; margin-bottom:50px; text-shadow:0 0 20px var(--purple); }
-        .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px; }
-        .card { background:var(--glass); border:1px solid var(--border); padding:25px; border-radius:8px; transition:0.4s; position:relative; overflow:hidden; }
-        .card:hover { transform:translateY(-5px); border-color:var(--cyan); box-shadow:0 0 20px rgba(5,217,232,0.2); }
+        /* --- 通用组件 --- */
+        .btn-neo {
+            background: rgba(5, 217, 232, 0.05); border: 1px solid var(--p-cyan); color: var(--p-cyan);
+            padding: 10px 25px; font-family: 'Orbitron'; font-weight: bold; text-transform: uppercase;
+            transition: 0.3s; position: relative; overflow: hidden; letter-spacing: 1px;
+        }
+        .btn-neo:hover { background: var(--p-cyan); color: #000; box-shadow: 0 0 25px var(--p-cyan); }
+        .btn-neo:disabled { border-color: #555; color: #555; box-shadow: none; cursor: not-allowed; background: transparent; }
+
+        .inp-neo {
+            width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #444;
+            color: white; text-align: center; font-family: 'Orbitron'; font-size: 1rem; transition: 0.3s;
+        }
+        .inp-neo:focus { border-color: var(--p-pink); background: rgba(255, 42, 109, 0.05); }
+
+        .hidden { display: none !important; }
+
+        /* ================= 3. 登录层 ================= */
+        #auth-layer {
+            position: fixed; inset: 0; z-index: 20000; background: rgba(5, 1, 10, 0.95);
+            display: flex; justify-content: center; align-items: center; backdrop-filter: blur(15px);
+        }
+        .auth-card {
+            width: 420px; padding: 40px; background: rgba(0,0,0,0.8); border: 2px solid var(--p-pink);
+            box-shadow: 0 0 60px rgba(255, 42, 109, 0.2); text-align: center; position: relative;
+        }
+        .auth-card::before { content: "RESTRICTED ACCESS"; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #000; padding: 0 10px; color: var(--p-pink); font-family: 'Orbitron'; font-size: 0.8rem; }
+        .auth-title { font-family: 'Orbitron'; font-size: 2rem; margin-bottom: 25px; color: white; text-shadow: 0 0 10px var(--p-cyan); }
+        .auth-link { margin-top: 15px; font-size: 0.8rem; color: #888; text-decoration: underline; cursor: none; }
+        .auth-link:hover { color: var(--p-cyan); }
+        .err-msg { color: var(--p-pink); margin-top: 15px; font-family: 'Orbitron'; font-size: 0.8rem; min-height: 20px; }
+
+        /* ================= 4. 主界面 ================= */
+        #app-core { filter: blur(15px); opacity: 0.3; transition: 1s; pointer-events: none; width: 100%; }
+        body.unlocked #app-core { filter: blur(0); opacity: 1; pointer-events: all; }
+
+        nav {
+            position: fixed; top: 0; width: 100%; height: 70px; padding: 0 40px; z-index: 1000;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(5, 1, 10, 0.9); border-bottom: 1px solid var(--border);
+        }
+        .brand { font-family: 'Orbitron'; font-weight: 900; font-size: 1.5rem; color: white; text-shadow: 0 0 10px var(--p-pink); }
+        .nav-menu a { margin-left: 30px; color: #aaa; text-decoration: none; font-family: 'Orbitron'; font-size: 0.9rem; transition: 0.3s; }
+        .nav-menu a:hover { color: var(--p-cyan); text-shadow: 0 0 8px var(--p-cyan); }
+        .user-badge { border: 1px solid var(--p-gold); color: var(--p-gold); padding: 2px 8px; font-size: 0.8rem; margin-left: 20px; }
+
+        /* Hero */
+        .hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .hero h1 {
+            font-family: 'Orbitron'; font-size: 5rem; margin-bottom: 20px; line-height: 1;
+            background: linear-gradient(to bottom, #fff, #ccc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 20px var(--p-pink)); animation: glitch 3s infinite alternate-reverse;
+        }
+
+        /* Sections */
+        section { padding: 100px 20px; max-width: 1200px; margin: 0 auto; }
+        .sec-head { font-family: 'Orbitron'; font-size: 3rem; text-align: center; margin-bottom: 60px; color: white; text-shadow: 0 0 20px var(--p-cyan); }
+
+        /* 10 Pledges */
+        .pledge-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
+        .pledge-card {
+            background: var(--bg-glass); border: 1px solid var(--border); padding: 30px; border-radius: 12px;
+            position: relative; overflow: hidden; transition: 0.4s; display: flex; align-items: center; min-height: 120px;
+        }
+        .pledge-card:hover { transform: translateY(-5px); border-color: var(--p-pink); animation: pulse-glow 2s infinite; }
+        .p-idx { position: absolute; right: 15px; font-family: 'Orbitron'; font-size: 4rem; opacity: 0.1; font-weight: 900; color: var(--p-pink); }
+        .p-txt { position: relative; z-index: 1; font-size: 1.1rem; line-height: 1.6; color: #eee; }
+
+        /* 16 Races Chess Board */
+        .exceed-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+        .chess-card {
+            height: 220px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px;
+            padding: 20px; position: relative; overflow: hidden; transition: 0.4s; display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .chess-card:hover { background: rgba(255,255,255,0.08); transform: scale(1.03); z-index: 5; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+        .chess-icon { position: absolute; bottom: -20px; right: -20px; font-size: 8rem; opacity: 0.08; color: white; transition: 0.5s; }
+        .chess-card:hover .chess-icon { opacity: 0.2; transform: rotate(-10deg) scale(1.1); }
         
-        /* Reader Overlay */
-        #reader { position:fixed; inset:0; background:#000; z-index:5000; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:0.3s; }
-        #reader.active { opacity:1; pointer-events:all; }
-        .r-head { height:60px; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center; padding:0 30px; background:#111; }
-        .r-body { flex:1; display:flex; overflow:hidden; }
-        .side-l { width:260px; background:#0a0a0a; border-right:1px solid #333; display:flex; flex-direction:column; }
-        .toc-item { padding:12px 20px; color:#888; border-bottom:1px solid #222; font-size:0.85rem; transition:0.2s; }
-        .toc-item:hover { background:#222; color:white; border-left:3px solid var(--cyan); }
-        .text-area { flex:1; overflow-y:auto; padding:50px 100px; font-family:'ZCOOL XiaoWei'; font-size:1.3rem; line-height:2; color:#ddd; }
-        .line { padding:2px 0; position:relative; }
-        .line:hover { background:#111; }
-        .bubble { position:absolute; right:-30px; top:0; color:var(--purple); opacity:0; transition:0.2s; cursor:pointer; }
-        .line:hover .bubble { opacity:1; right:10px; }
+        .chess-rank { font-family: 'Orbitron'; font-size: 2rem; font-weight: 900; opacity: 0.4; }
+        .chess-name { font-family: 'Orbitron'; font-weight: bold; font-size: 1.2rem; margin-bottom: 5px; color: white; }
         
-        .side-r { width:0; background:#0a0a0a; border-left:1px solid #333; transition:0.3s; display:flex; flex-direction:column; z-index:50; }
-        .side-r.open { width:320px; }
-        .cmt-list { flex:1; overflow-y:auto; padding:15px; }
-        .cmt-box { background:#1a1a1a; padding:10px; margin-bottom:10px; border-radius:5px; font-size:0.9rem; border:1px solid transparent; }
-        .cmt-box:hover { border-color:var(--pink); }
+        .r-god { border-color: var(--rank-1); } .r-god .chess-rank { color: var(--rank-1); }
+        .r-high { border-color: var(--rank-2); } .r-high .chess-rank { color: var(--rank-2); }
+        .r-mid { border-color: var(--rank-mid); } .r-mid .chess-rank { color: var(--rank-mid); }
+        .r-imanity:hover { border-color: white; animation: pulse-glow 1s infinite; }
+
+        /* Characters */
+        .char-grid { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
+        .char-card { width: 260px; height: 380px; perspective: 1000px; }
+        .char-inner { width: 100%; height: 100%; transition: 0.6s; transform-style: preserve-3d; position: relative; }
+        .char-card:hover .char-inner { transform: rotateY(180deg); }
+        .c-front, .c-back {
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 15px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: linear-gradient(145deg, #1a1025, #050505); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .c-back { transform: rotateY(180deg); background: linear-gradient(135deg, var(--p-pink), #2a0e36); padding: 25px; text-align: center; }
+        .c-avatar { width: 130px; height: 130px; border-radius: 50%; border: 3px solid white; background-size: cover; margin-bottom: 20px; box-shadow: 0 0 20px var(--p-cyan); }
+
+        /* ================= 5. 阅读器 (Reader PRO) ================= */
+        #reader-overlay {
+            position: fixed; inset: 0; background: var(--hud-bg); z-index: 30000;
+            display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: 0.3s;
+        }
+        #reader-overlay.active { opacity: 1; pointer-events: all; }
+
+        .reader-nav { height: 60px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; background: rgba(0,0,0,0.8); }
+        .reader-body { flex: 1; display: flex; overflow: hidden; position: relative; }
+
+        /* Sidebars */
+        .side-l { width: 280px; background: rgba(10, 5, 15, 0.95); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 20; }
+        .side-r { width: 0; background: rgba(10,5,20,0.98); border-left: 1px solid var(--border); transition: 0.3s; display: flex; flex-direction: column; z-index: 30; }
+        .side-r.open { width: 360px; }
         
-        /* Mobile */
-        @media(max-width:768px) { .side-l { display:none; } .text-area { padding:20px; } .side-r.open { width:85%; position:absolute; right:0; height:100%; } .auth-box { width:90%; padding:20px; } }
+        /* Tabs */
+        .tab-row { display: flex; height: 50px; border-bottom: 1px solid var(--border); }
+        .tab-btn { flex: 1; background: transparent; border: none; color: #666; font-family: 'Orbitron'; border-bottom: 2px solid transparent; transition: 0.3s; }
+        .tab-btn.active { color: white; border-color: var(--p-cyan); background: rgba(255,255,255,0.05); }
+        
+        /* Lists */
+        .list-area { flex: 1; overflow-y: auto; }
+        .list-item { padding: 15px 20px; font-size: 0.9rem; color: #888; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; }
+        .list-item:hover { color: white; background: rgba(5, 217, 232, 0.05); padding-left: 25px; border-left: 3px solid var(--p-cyan); }
+        
+        /* Main Text */
+        .text-wrap { flex: 1; display: flex; flex-direction: column; position: relative; z-index: 10; }
+        .text-content { flex: 1; overflow-y: auto; padding: 60px 100px; font-family: 'ZCOOL XiaoWei'; font-size: 1.4rem; line-height: 2.2; color: #ddd; }
+        .line { padding: 5px 0; position: relative; }
+        .line:hover { background: rgba(255,255,255,0.05); }
+        .bubble { position: absolute; right: -40px; top: 50%; transform: translateY(-50%); color: var(--p-purple); opacity: 0; transition: 0.2s; font-size: 1.2rem; cursor: none; pointer-events: auto; z-index: 100; padding: 5px; }
+        .line:hover .bubble { opacity: 1; right: 10px; }
+
+        /* Discussion */
+        .discuss-area { margin-top: 80px; padding: 40px; border-top: 2px solid var(--p-cyan); background: rgba(5,217,232,0.02); }
+        .d-card { background: rgba(0,0,0,0.6); border: 1px solid var(--border); padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .action-row { display: flex; gap: 15px; margin-top: 10px; font-size: 0.8rem; color: #888; }
+        .act-btn { transition: 0.2s; display: flex; align-items: center; gap: 5px; pointer-events: auto; }
+        .act-btn:hover { color: var(--p-pink); text-shadow: 0 0 5px var(--p-pink); }
+        .coin-btn { color: var(--p-gold); } .coin-btn:hover { text-shadow: 0 0 5px var(--p-gold); }
+
+        /* Loader */
+        #loader { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: 'Orbitron'; color: var(--p-cyan); letter-spacing: 2px; }
+        .load-bar { width: 300px; height: 4px; background: #222; margin-top: 20px; }
+        .load-prog { height: 100%; width: 0%; background: var(--p-pink); transition: width 0.2s; }
+
+        @media (max-width: 768px) {
+            .nav-menu, .side-l { display: none; }
+            .side-r.open { position: absolute; right: 0; width: 90%; height: 100%; z-index: 60; }
+            .auth-card { width: 90%; padding: 20px; }
+            .pledge-container, .exceed-board { grid-template-columns: 1fr; }
+            .text-content { padding: 20px; font-size: 1.1rem; }
+        }
     </style>
 </head>
 <body>
 
     <div id="cursor"></div>
 
-    <!-- LOGIN -->
+    <!-- AUTH LAYER -->
     <div id="auth-layer">
-        <div class="auth-box">
-            <h2 id="auth-title" style="font-family:'Orbitron'; color:white; margin-bottom:20px;">SYSTEM LOGIN</h2>
+        <div class="auth-card hover">
+            <h2 id="auth-head" class="auth-title">SYSTEM LOGIN</h2>
             
-            <div id="v-login">
-                <input id="l-email" class="auth-inp" placeholder="EMAIL">
-                <input id="l-pass" type="password" class="auth-inp" placeholder="PASSWORD">
-                <button class="auth-btn" onclick="apiLogin()">CONNECT</button>
-                <div class="link" onclick="view('reg1')">New Player? Register</div>
-                <div class="link" onclick="view('reset1')">Forgot Password?</div>
+            <!-- Login -->
+            <div id="p-login">
+                <input id="i-email" class="inp-neo" placeholder="EMAIL">
+                <div style="height:10px"></div>
+                <input id="i-pass" type="password" class="inp-neo" placeholder="PASSWORD">
+                <div style="height:20px"></div>
+                <button class="btn-neo" style="width:100%" onclick="apiLogin()">CONNECT</button>
+                <div style="display:flex; justify-content:space-between; margin-top:15px;">
+                    <span class="auth-link" onclick="toggleView('reg1')">NEW PLAYER?</span>
+                    <span class="auth-link" onclick="toggleView('reset1')">FORGOT?</span>
+                </div>
             </div>
 
-            <div id="v-reg1" class="hidden">
-                <input id="r-user" class="auth-inp" placeholder="USERNAME">
-                <input id="r-email" class="auth-inp" placeholder="EMAIL">
-                <input id="r-pass" type="password" class="auth-inp" placeholder="PASSWORD">
-                <button class="auth-btn" onclick="apiCode()">GET CODE</button>
-                <div class="link" onclick="view('login')">BACK</div>
+            <!-- Reg 1 -->
+            <div id="p-reg1" class="hidden">
+                <input id="r-user" class="inp-neo" placeholder="USERNAME"><div style="height:10px"></div>
+                <input id="r-email" class="inp-neo" placeholder="EMAIL"><div style="height:10px"></div>
+                <input id="r-pass" type="password" class="inp-neo" placeholder="PASSWORD"><div style="height:20px"></div>
+                <button class="btn-neo" style="width:100%" onclick="apiGetCode('register')">GET CODE</button>
+                <div class="auth-link" onclick="toggleView('login')" style="display:block; text-align:center">BACK</div>
             </div>
 
-            <div id="v-reg2" class="hidden">
-                <p style="color:#888; font-size:0.8rem; margin-bottom:10px;">Code sent (Test: 123456)</p>
-                <input id="r-code" class="auth-inp" placeholder="6-DIGIT CODE">
-                <button class="auth-btn" onclick="apiReg()">CONFIRM</button>
+            <!-- Reg 2 -->
+            <div id="p-reg2" class="hidden">
+                <p style="color:#888; font-size:0.8rem; margin-bottom:10px;">Code sent to email (Test: 123456)</p>
+                <input id="r-code" class="inp-neo" placeholder="6-DIGIT CODE"><div style="height:20px"></div>
+                <button class="btn-neo" style="width:100%" onclick="apiRegConfirm()">CONFIRM</button>
             </div>
 
-            <div id="v-reset1" class="hidden">
-                <input id="f-email" class="auth-inp" placeholder="EMAIL">
-                <button class="auth-btn" onclick="apiResetCode()">SEND CODE</button>
-                <div class="link" onclick="view('login')">BACK</div>
+            <!-- Reset -->
+            <div id="p-reset1" class="hidden">
+                <input id="f-email" class="inp-neo" placeholder="EMAIL"><div style="height:20px"></div>
+                <button class="btn-neo" style="width:100%" onclick="apiGetCode('reset')">SEND CODE</button>
+                <div class="auth-link" onclick="toggleView('login')" style="display:block; text-align:center">BACK</div>
+            </div>
+            <div id="p-reset2" class="hidden">
+                <input id="f-code" class="inp-neo" placeholder="CODE"><div style="height:10px"></div>
+                <input id="f-newpass" type="password" class="inp-neo" placeholder="NEW PASSWORD"><div style="height:20px"></div>
+                <button class="btn-neo" style="width:100%" onclick="apiResetConfirm()">UPDATE</button>
             </div>
 
-            <div id="v-reset2" class="hidden">
-                <input id="f-code" class="auth-inp" placeholder="CODE">
-                <input id="f-pass" type="password" class="auth-inp" placeholder="NEW PASSWORD">
-                <button class="auth-btn" onclick="apiResetConf()">UPDATE</button>
-            </div>
-
-            <div id="msg" style="color:var(--pink); margin-top:10px; font-family:'Orbitron'; font-size:0.8rem;"></div>
+            <div id="auth-msg" class="err-msg"></div>
         </div>
     </div>
 
-    <!-- MAIN -->
-    <div id="app-wrap">
-        <div class="bg-layer"></div>
-        <canvas id="bg-canvas"></canvas>
+    <!-- APP CONTENT -->
+    <div id="app-core">
+        <div class="bg-anim"></div>
+        <canvas id="canvas-bg"></canvas>
         
         <nav>
-            <span class="brand">NGNL</span>
-            <div class="nav-links">
-                <a href="#hero" class="nav-item">HOME</a>
-                <a href="#pledges" class="nav-item">PLEDGES</a>
-                <a href="#world" class="nav-item">WORLD</a>
-                <span id="u-name" style="color:var(--gold); border:1px solid var(--gold); padding:2px 8px; margin-left:20px;">GUEST</span>
-                <span id="u-coins" style="color:var(--cyan); font-size:0.8rem; margin-left:5px;"></span>
+            <div class="brand">NGNL</div>
+            <div class="nav-menu">
+                <a href="#hero" class="hover">HOME</a>
+                <a href="#pledges" class="hover">PLEDGES</a>
+                <a href="#world" class="hover">WORLD</a>
+                <a href="#chars" class="hover">PLAYERS</a>
+                <span id="u-disp" style="color:var(--p-gold); border:1px solid var(--p-gold); padding:2px 8px; margin-left:20px;">GUEST</span>
+                <span id="u-money" style="color:var(--p-cyan); margin-left:10px; font-size:0.8rem;"></span>
             </div>
         </nav>
 
         <header id="hero" class="hero">
-            <h1 class="glitch" data-text="NO GAME NO LIFE">NO GAME NO LIFE</h1>
-            <p style="color:#aaa; letter-spacing:3px; margin-bottom:40px;">THE WORLD IS JUST A GAME</p>
-            <button class="auth-btn" style="width:auto; padding:10px 40px; background:transparent; border-color:var(--pink); color:var(--pink);" onclick="readerOpen()">READ NOVEL</button>
+            <h1>ASCHENTE</h1>
+            <p style="color:#ccc; font-size:1.2rem; margin-bottom:40px; letter-spacing:2px;">The world is just a game.</p>
+            <button class="btn-neo" onclick="readerOpen()">READ NOVEL</button>
         </header>
 
         <section id="pledges">
-            <h2 class="title">THE TEN PLEDGES</h2>
-            <div class="grid">
-                <div class="card">I. 禁止杀伤、战争与掠夺</div>
-                <div class="card">II. 所有纠纷通过游戏解决</div>
-                <div class="card">III. 赌注必须对等</div>
-                <div class="card">IV. 内容不限 (不违规III)</div>
-                <div class="card">V. 受挑战方决定内容</div>
-                <div class="card">VI. 盟约必须遵守</div>
-                <div class="card">VII. 集团纠纷指定代理人</div>
-                <div class="card">VIII. 作弊败露即败北</div>
-                <div class="card">IX. 规则绝对不变</div>
-                <div class="card">X. 大家一起和平地玩吧</div>
+            <h2 class="sec-head">THE PLEDGES</h2>
+            <div class="pledge-grid">
+                <div class="pledge-card hover"><div class="p-idx">I</div><div class="p-txt">禁止杀伤、战争与掠夺</div></div>
+                <div class="pledge-card hover"><div class="p-idx">II</div><div class="p-txt">纠纷通过游戏解决</div></div>
+                <div class="pledge-card hover"><div class="p-idx">III</div><div class="p-txt">赌注必须对等</div></div>
+                <div class="pledge-card hover"><div class="p-idx">VI</div><div class="p-txt">向盟约宣誓必须遵守</div></div>
+                <div class="pledge-card hover"><div class="p-idx">IX</div><div class="p-txt">以上规则绝对不变</div></div>
+                <div class="pledge-card hover"><div class="p-idx">X</div><div class="p-txt">大家一起和平地玩吧</div></div>
             </div>
         </section>
+
+        <section id="world">
+            <h2 class="sec-head">IXSEED</h2>
+            <div class="exceed-board">
+                <div class="chess-card r-god hover"><div class="piece-rank">I</div><div class="piece-icon">♔</div><div class="piece-name">Old Deus</div><div class="piece-desc">神灵种 / King</div></div>
+                <div class="chess-card r-high hover"><div class="piece-rank">VI</div><div class="piece-icon">♗</div><div class="piece-name">Flügel</div><div class="piece-desc">天翼种 / Bishop</div></div>
+                <div class="chess-card r-mid hover"><div class="piece-rank">XIV</div><div class="piece-icon">🨠</div><div class="piece-name">Werebeast</div><div class="piece-desc">兽人种 / General</div></div>
+                <div class="chess-card r-imanity hover"><div class="piece-rank">XVI</div><div class="piece-icon">♙</div><div class="piece-name">Imanity</div><div class="piece-desc">人类种 / Pawn</div></div>
+            </div>
+        </section>
+
+        <section id="chars" class="hero">
+            <h2 class="sec-head">PLAYERS</h2>
+            <div class="char-gallery">
+                <div class="char-card hover"><div class="char-inner"><div class="c-front"><div class="c-avatar" style="background-image:url('sora.png')"></div><div class="char-name">SORA</div></div><div class="c-back"><h3>空</h3><p>策略担当</p></div></div></div>
+                <div class="char-card hover"><div class="char-inner"><div class="c-front"><div class="c-avatar" style="background-image:url('shiro.png')"></div><div class="char-name">SHIRO</div></div><div class="c-back"><h3>白</h3><p>计算担当</p></div></div></div>
+            </div>
+        </section>
+
+        <footer><p>© NO GAME NO LIFE FAN SITE</p></footer>
     </div>
 
     <!-- READER -->
-    <div id="reader">
-        <div class="r-head">
-            <span style="color:var(--cyan); font-family:'Orbitron'">ARCHIVE</span>
-            <button onclick="readerClose()" style="background:none; border:1px solid var(--pink); color:var(--pink); padding:5px 15px; font-family:'Orbitron'; cursor:pointer;">EXIT</button>
+    <div id="reader-overlay">
+        <div id="loader" class="hidden"><div>INITIALIZING...</div><div class="load-bar"><div class="load-prog" id="progress-bar"></div></div></div>
+        
+        <div class="reader-nav">
+            <span style="font-family:'Orbitron'; color:var(--p-cyan);">ARCHIVE</span>
+            <button class="btn-neo" style="padding:5px 15px; border-color:var(--p-pink); color:var(--p-pink);" onclick="readerClose()">EXIT</button>
         </div>
-        <div class="r-body">
+
+        <div class="reader-body">
             <div class="side-l">
-                <div style="padding:15px; color:#666; text-align:center; font-family:'Orbitron';">INDEX</div>
-                <div id="toc" class="toc-list"></div>
+                <div class="tab-row">
+                    <button class="tab-btn active hover" onclick="tabSwitch('toc')">INDEX</button>
+                    <button class="tab-btn hover" onclick="tabSwitch('bm')">MEMORY</button>
+                </div>
+                <div id="view-toc" class="list-area"></div>
+                <div id="view-bm" class="list-area hidden"></div>
             </div>
-            <div class="text-area">
-                <div id="content" style="min-height:500px;">
+
+            <div class="text-wrap">
+                <div class="text-content" id="txt-box">
                     <div style="text-align:center; margin-top:100px;">
                         <p style="color:#666;">NO DATA LOADED</p>
-                        <button class="auth-btn" style="width:auto; margin-top:20px;" onclick="document.getElementById('f-in').click()">LOAD FILE</button>
+                        <button class="btn-neo" style="margin-top:20px;" onclick="document.getElementById('file-up').click()">LOAD FILE</button>
                     </div>
                 </div>
-                <div style="padding:20px; display:flex; justify-content:center; gap:20px;">
-                    <button class="auth-btn" style="width:auto;" onclick="turn(-1)">PREV</button>
-                    <span id="pg" style="color:#888; align-self:center;">0%</span>
-                    <button class="auth-btn" style="width:auto;" onclick="turn(1)">NEXT</button>
-                </div>
-                <!-- DISC -->
-                <div style="margin-top:50px; border-top:2px solid var(--cyan); padding-top:30px;">
-                    <h3 style="color:var(--cyan); font-family:'Orbitron'">DISCUSSION</h3>
-                    <textarea id="d-inp" style="width:100%; background:#111; border:1px solid #333; color:white; padding:10px; margin-top:10px;" rows="2"></textarea>
-                    <button class="auth-btn" style="width:100%; margin-top:10px;" onclick="postDisc()">POST</button>
-                    <div id="d-list" style="margin-top:20px;"></div>
+                <div style="padding:10px; background:rgba(0,0,0,0.8); display:flex; justify-content:center; gap:20px;">
+                    <button class="btn-neo" onclick="turnPage(-1)">PREV</button>
+                    <span id="pg-info" style="align-self:center; font-family:'Orbitron'; color:#aaa;">0 / 0</span>
+                    <button class="btn-neo" onclick="turnPage(1)">NEXT</button>
+                    <button class="btn-neo" style="border-color:var(--p-gold); color:var(--p-gold);" onclick="bmSave()">SAVE</button>
                 </div>
             </div>
+
             <div id="side-r" class="side-r">
-                <div style="padding:15px; border-bottom:1px solid #333; display:flex; justify-content:space-between;">
-                    <span style="color:var(--pink)">COMMENTS</span><span onclick="toggleR()" style="cursor:pointer">X</span>
+                <div style="padding:15px; border-bottom:1px solid #444; display:flex; justify-content:space-between;">
+                    <span style="color:var(--p-pink);">COMMENTS</span>
+                    <span onclick="toggleR()" class="hover">[X]</span>
                 </div>
-                <div id="c-list" class="cmt-list"></div>
-                <div style="padding:15px; background:#111;">
-                    <textarea id="c-inp" style="width:100%; background:#222; border:none; color:white; padding:10px;" rows="2"></textarea>
-                    <button class="auth-btn" style="margin-top:5px;" onclick="postCmt()">POST</button>
+                <div id="cmt-list" class="list-area" style="padding:15px;"></div>
+                <div style="padding:15px; background:rgba(0,0,0,0.5);">
+                    <textarea id="c-inp" class="inp-neo" rows="2" style="text-align:left; resize:none;" placeholder="Type..."></textarea>
+                    <button class="btn-neo" style="width:100%; margin-top:5px;" onclick="postC()">POST</button>
                 </div>
             </div>
         </div>
     </div>
-    <input type="file" id="f-in" style="display:none" onchange="fileIn(this)">
+
+    <input type="file" id="file-up" accept=".txt" style="display:none" onchange="fileLoad(this)">
 
     <script>
-        // ==============================================
-        // ⚠️ 填入你的 API
-        const API = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec"; 
-        // ==============================================
+        // =================================================
+        // ⚠️ 必须填写你的 Google Apps Script URL
+        const API_URL = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec"; 
+        // =================================================
 
-        let user={name:"Guest", rank:16, coins:0}, lines=[], cur=0, curCmt=-1;
-        const PGS=150;
+        let user = { name: "Guest", rank: 16, coins: 0 };
+        let lines = [], curStart = 0, curCmtLine = -1, tmpReg = {}, tmpReset = "";
+        const PG_SIZE = 150;
 
-        async function req(d) {
+        // --- API ---
+        async function req(data) {
             try {
-                const r = await fetch(API, { method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(d) });
+                const r = await fetch(API_URL, {
+                    method: 'POST', redirect: 'follow',
+                    headers: {'Content-Type':'text/plain;charset=utf-8'},
+                    body: JSON.stringify(data)
+                });
                 return await r.json();
-            } catch(e) { return {status:'error', message:'Net Err'}; }
+            } catch(e) { console.error(e); return {status:'error', message:'Network Error'}; }
         }
 
-        // Auth
-        function view(v) {
-            ['v-login','v-reg1','v-reg2','v-reset1','v-reset2'].forEach(id=>document.getElementById(id).classList.add('hidden'));
-            document.getElementById('v-'+v).classList.remove('hidden');
-            document.getElementById('msg').innerText="";
+        // --- Auth ---
+        function toggleView(v) {
+            ['p-login','p-reg1','p-reg2','p-reset1','p-reset2'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+            document.getElementById('p-'+v).classList.remove('hidden');
+            document.getElementById('auth-head').innerText = (v==='login')?"SYSTEM LOGIN":(v.includes('reg')?"REGISTER":"RESET");
+            document.getElementById('auth-msg').innerText="";
         }
+        
         async function apiLogin() {
-            const e=document.getElementById('l-email').value, p=document.getElementById('l-pass').value;
-            if(!e||!p) return;
+            const e=document.getElementById('i-email').value, p=document.getElementById('i-pass').value;
+            if(!e||!p) return msg("Input missing");
+            msg("Verifying...");
             const r = await req({action:'login', email:e, password:p});
             if(r.status==='success') {
                 user = {name:r.username, rank:r.level, coins:r.coins};
                 document.getElementById('auth-layer').style.display='none';
                 document.body.classList.add('unlocked');
-                document.getElementById('u-name').innerText = user.name.toUpperCase();
-                document.getElementById('u-coins').innerText = `🪙 ${user.coins}`;
-                vis();
-            } else document.getElementById('msg').innerText=r.message;
-        }
-        let tr={};
-        async function apiCode() {
-            const u=document.getElementById('r-user').value, e=document.getElementById('r-email').value, p=document.getElementById('r-pass').value;
-            if(!u||!e)return;
-            const r = await req({action:'req_code', email:e});
-            if(r.status==='success') { tr={u,e,p}; view('reg2'); } else document.getElementById('msg').innerText=r.message;
-        }
-        async function apiReg() {
-            const c=document.getElementById('r-code').value;
-            const r = await req({action:'register', username:tr.u, email:tr.e, password:tr.p, code:c});
-            if(r.status==='success') { alert("Success"); view('login'); } else document.getElementById('msg').innerText=r.message;
-        }
-        // Reset
-        let trResetEmail = "";
-        async function apiResetCode() {
-            const e = document.getElementById('f-email').value;
-            if(!e) return;
-            const r = await req({action:'req_reset', email:e});
-            if(r.status==='success') { trResetEmail=e; view('reset2'); } else document.getElementById('msg').innerText=r.message;
-        }
-        async function apiResetConf() {
-            const c = document.getElementById('f-code').value, p = document.getElementById('f-pass').value;
-            const r = await req({action:'confirm_reset', email:trResetEmail, code:c, password:p});
-            if(r.status==='success') { alert("Updated"); view('login'); } else document.getElementById('msg').innerText=r.message;
+                document.getElementById('u-disp').innerText = user.name.toUpperCase();
+                document.getElementById('u-money').innerText = `🪙 ${user.coins}`;
+                initFX();
+            } else msg(r.message);
         }
 
-        // Reader
-        function readerOpen() { document.getElementById('reader').classList.add('active'); fetch('novel.txt').then(r=>{if(r.ok)return r.text();throw 1}).then(t=>loadTxt(t)).catch(()=>{}); }
-        function readerClose() { document.getElementById('reader').classList.remove('active'); }
-        function fileIn(i) { const r=new FileReader(); r.onload=e=>loadTxt(e.target.result); r.readAsText(i.files[0]); }
+        async function apiGetCode(type) {
+            const email = type==='register' ? document.getElementById('r-email').value : document.getElementById('f-email').value;
+            if(!email) return msg("Email required");
+            msg("Sending...");
+            const action = type==='register' ? 'req_reg_code' : 'req_reset_code';
+            const r = await req({action:action, email:email});
+            if(r.status==='success') {
+                if(type==='register') {
+                    tmpReg = {u:document.getElementById('r-user').value, e:email, p:document.getElementById('r-pass').value};
+                    toggleView('reg2');
+                } else {
+                    tmpReset = email; toggleView('reset2');
+                }
+                alert(r.message);
+            } else msg(r.message);
+        }
+
+        async function apiRegConfirm() {
+            const c = document.getElementById('r-code').value;
+            const r = await req({action:'confirm_register', username:tmpReg.u, email:tmpReg.e, password:tmpReg.p, code:c});
+            if(r.status==='success') { alert("Success!"); toggleView('login'); } else msg(r.message);
+        }
         
-        async function loadTxt(t) {
-            lines = t.split('\n');
-            let h="";
+        async function apiResetConfirm() {
+            const c = document.getElementById('f-code').value, p = document.getElementById('f-newpass').value;
+            const r = await req({action:'confirm_reset', email:tmpReset, code:c, password:p});
+            if(r.status==='success') { alert("Updated"); toggleView('login'); } else msg(r.message);
+        }
+        function msg(t) { document.getElementById('auth-msg').innerText = t; }
+
+        // --- Reader ---
+        function readerOpen() { document.getElementById('reader-overlay').classList.add('active'); fetch('novel.txt').then(r=>{if(r.ok)return r.text();throw 1}).then(t=>parseTxt(t)).catch(()=>{}); bmRender(); }
+        function readerClose() { document.getElementById('reader-overlay').classList.remove('active'); }
+        function fileLoad(i) { const r=new FileReader(); r.onload=e=>parseTxt(e.target.result); r.readAsText(i.files[0]); }
+
+        async function parseTxt(txt) {
+            document.getElementById('loader').classList.remove('hidden');
+            lines = txt.split('\n');
+            const toc = document.getElementById('view-toc');
+            toc.innerHTML = "";
+            let h = "";
+            const reg = /(?:^第.+章)|(?:^Chapter)|(?:^序章)|(?:^终章)/i;
             for(let i=0; i<lines.length; i+=2000) {
-                let end=Math.min(i+2000, lines.length);
-                for(let j=i; j<end; j++) if(lines[j].match(/(Chapter|第.+章|序章)/i) && lines[j].length<50) h+=`<div class="toc-item" onclick="go(${j})">${lines[j]}</div>`;
+                const end = Math.min(i+2000, lines.length);
+                for(let j=i; j<end; j++) {
+                    if(lines[j].length<50 && reg.test(lines[j])) h+=`<div class="list-item hover" onclick="jumpLine(${j})">${lines[j].trim()}</div>`;
+                }
+                document.getElementById('progress-bar').style.width = (end/lines.length*100)+"%";
                 await new Promise(r=>setTimeout(r,0));
             }
-            document.getElementById('toc').innerHTML = h;
-            go(0);
-        }
-        function go(i) { cur=i; render(); }
-        function turn(d) { let n=cur+d*PGS; if(n>=0 && n<lines.length) { cur=n; render(); } }
-        function render() {
-            let end=Math.min(cur+PGS, lines.length);
-            document.getElementById('content').innerHTML = lines.slice(cur, end).map((l,i)=>l.trim()?`<div class="line">${l}<div class="bubble" onclick="cmt(${cur+i})">💬</div></div>`:"<br>").join('');
-            document.getElementById('pg').innerText = Math.round((end/lines.length)*100)+"%";
-            if(end>=lines.length) loadDisc();
+            toc.innerHTML = h; jumpLine(0);
+            document.getElementById('loader').classList.add('hidden');
         }
 
-        // Social
+        function jumpLine(i) { curStart=i; render(); }
+        function turnPage(d) { const n=curStart+d*PG_SIZE; if(n>=0 && n<lines.length){curStart=n; render();} }
+        function render() {
+            const end = Math.min(curStart+PG_SIZE, lines.length);
+            const slice = lines.slice(curStart, end);
+            const div = document.getElementById('txt-box');
+            div.innerHTML = slice.map((l,i) => {
+                if(!l.trim()) return "<br>";
+                return `<div class="line">${l}<div class="bubble" onclick="openCmt(${curStart+i})">💬</div></div>`;
+            }).join('');
+
+            if(end>=lines.length) {
+                div.innerHTML += `<div class="discuss-area"><h3 style="color:var(--p-cyan); font-family:'Orbitron'">DISCUSSION</h3><textarea id="d-inp" class="inp-neo" style="text-align:left" placeholder="Share..."></textarea><button class="btn-neo" onclick="postDisc()">POST (+10 EXP)</button><div id="d-list" style="margin-top:20px"></div></div>`;
+                loadDisc();
+            }
+            div.scrollTop = 0;
+            document.getElementById('pg-info').innerText = Math.round((end/lines.length)*100)+"%";
+        }
+
+        // --- Social ---
         function toggleR() { document.getElementById('side-r').classList.toggle('open'); }
-        async function cmt(i) {
-            curCmt=i; document.getElementById('side-r').classList.add('open');
-            const div=document.getElementById('c-list'); div.innerHTML="Loading...";
-            const r=await req({action:'get_line_comments', line_index:i});
-            div.innerHTML = r.data.map(c=>`<div class="cmt-box"><div style="color:var(--cyan)">${c.user} <span style="float:right;cursor:pointer" onclick="act('like','${c.id}','comment')">♥ ${c.likes}</span></div>${c.content}</div>`).join('') || "No comments";
+        async function openCmt(idx) {
+            curCmtLine = idx;
+            document.getElementById('side-r').classList.add('open');
+            const div = document.getElementById('cmt-list');
+            div.innerHTML = "Loading...";
+            const r = await req({action:'get_line_comments', line_index:idx});
+            div.innerHTML = r.data.length ? "" : "No comments";
+            r.data.forEach(c => div.innerHTML += card(c,'cmt'));
         }
-        async function postCmt() {
-            const t=document.getElementById('c-inp').value;
-            if(!t)return;
-            await req({action:'post_line_comment', line_index:curCmt, username:user.name, content:t});
-            document.getElementById('c-inp').value=""; cmt(curCmt);
+        async function postC() {
+            const t=document.getElementById('c-inp').value; if(!t)return;
+            await req({action:'post_line_comment', line_index:curCmtLine, username:user.name, content:t});
+            document.getElementById('c-inp').value=""; openCmt(curCmtLine);
         }
-        async function loadDisc() {
-            const r=await req({action:'get_discussion'});
-            document.getElementById('d-list').innerHTML = r.data.map(d=>`<div class="cmt-box"><div style="color:var(--cyan)">${d.user} <span style="color:var(--gold)">🪙 ${d.coins}</span></div>${d.content}<div style="margin-top:5px;color:#888;cursor:pointer;display:flex;gap:15px"><span onclick="act('like','${d.id}','disc')">♥ ${d.likes}</span><span style="color:var(--gold)" onclick="act('tip','${d.id}','disc')">TIP</span></div></div>`).join('');
-        }
+        function loadDisc() { req({action:'get_discuss'}).then(d=>{ document.getElementById('d-list').innerHTML = d.data.map(i=>card(i,'disc')).join(''); }); }
         async function postDisc() {
             const t=document.getElementById('d-inp').value;
-            await req({action:'post_discussion', username:user.name, content:t});
-            document.getElementById('d-inp').value=""; loadDisc();
+            await req({action:'post_discuss', username:user.name, content:t});
+            loadDisc();
+        }
+
+        function card(d, type) {
+            return `<div class="${type==='cmt'?'cmt-box':'d-card'}">
+                <div style="font-size:0.8rem; color:var(--p-cyan); display:flex; justify-content:space-between">
+                    <span>${d.user}</span> ${type==='disc'?`<span style="color:var(--p-gold)">🪙 ${d.coins}</span>`:''}
+                </div>
+                <div style="color:#ddd; margin-top:5px;">${d.content}</div>
+                <div class="action-row">
+                    <span class="act-btn" onclick="act('like','${d.id}','${type}')">♥ ${d.likes}</span>
+                    ${type==='disc'?`<span class="act-btn coin-btn" onclick="act('tip','${d.id}','disc')">TIP COIN</span>`:''}
+                    <span style="margin-left:auto">${d.time||''}</span>
+                </div>
+            </div>`;
         }
         async function act(a,id,t) {
-            if(user.name==='Guest') return alert("Login");
-            if(a==='tip' && !confirm('1 Coin?')) return;
-            const r=await req({action:'interact', sub_action:a, type:t, id:id, username:user.name, target_id:id});
+            if(user.name==='Guest') return alert("Login required");
+            if(a==='tip' && !confirm("Tip 1 Coin?")) return;
+            const r = await req({action:'interact', sub_action:a, type:t, id:id, username:user.name, target_id:id});
             if(r.status==='success') {
-                if(a==='tip') { user.coins=r.new_balance; document.getElementById('u-coins').innerText=`🪙 ${user.coins}`; }
-                if(t==='comment') cmt(curCmt); else loadDisc();
+                if(a==='tip') { user.coins = r.new_balance; document.getElementById('u-money').innerText = `🪙 ${user.coins}`; }
+                if(t==='cmt') openCmt(curCmtLine); else loadDisc();
             } else alert(r.message);
         }
 
-        // Visuals
-        function vis() {
-            const c=document.getElementById('bg-canvas'), x=c.getContext('2d');
-            let w=window.innerWidth, h=window.innerHeight; c.width=w; c.height=h;
-            const p=Array.from({length:40},()=>({x:Math.random()*w,y:Math.random()*h,s:Math.random()+0.5,t:['♔','♕'][Math.floor(Math.random()*2)]}));
-            function l(){x.clearRect(0,0,w,h);p.forEach(i=>{i.y+=i.s;if(i.y>h)i.y=-20;x.fillStyle='rgba(255,255,255,0.1)';x.font='20px Arial';x.fillText(i.t,i.x,i.y)});requestAnimationFrame(l)}
-            l();
+        // --- Bookmarks ---
+        function tabSwitch(t) {
+            document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('view-toc').className = t==='toc'?'list-area':'hidden';
+            document.getElementById('view-bm').className = t==='bm'?'list-area':'hidden';
         }
-        const cur=document.getElementById('cursor');
-        document.addEventListener('mousemove',e=>{cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px'});
-        document.body.addEventListener('mouseover',e=>{if(e.target.closest('.hover, .btn, .auth-btn, .link, .toc-item, .bubble, .cmt-box span')) cur.classList.add('hover'); else cur.classList.remove('hover')});
+        function bmSave() {
+            let bms = JSON.parse(localStorage.getItem('ngnl_bm')||'[]');
+            bms.unshift({t:new Date().toLocaleDateString(), i:curStart, txt:lines[curStart].substr(0,15)+"..."});
+            localStorage.setItem('ngnl_bm', JSON.stringify(bms));
+            bmRender(); alert("Saved");
+        }
+        function bmRender() {
+            const bms = JSON.parse(localStorage.getItem('ngnl_bm')||'[]');
+            document.getElementById('view-bm').innerHTML = bms.map((b,k)=>
+                `<div class="list-item hover" onclick="jumpLine(${b.i})">
+                    <div style="display:flex; justify-content:space-between">
+                        <span>${b.txt}</span> <span onclick="bmDel(${k},event)" style="color:var(--p-pink)">X</span>
+                    </div>
+                </div>`).join('');
+        }
+        function bmDel(k,e) { e.stopPropagation(); let bms=JSON.parse(localStorage.getItem('ngnl_bm')); bms.splice(k,1); localStorage.setItem('ngnl_bm',JSON.stringify(bms)); bmRender(); }
+
+        // --- FX ---
+        function initFX() {
+            const c=document.getElementById('canvas-bg'), x=c.getContext('2d');
+            let w=window.innerWidth, h=window.innerHeight; c.width=w; c.height=h;
+            const p=Array.from({length:40},()=>({x:Math.random()*w,y:Math.random()*h,s:Math.random()+0.5,t:['♔','♕','♖'][Math.floor(Math.random()*3)]}));
+            function loop(){x.clearRect(0,0,w,h);p.forEach(i=>{i.y+=i.s;if(i.y>h)i.y=-20;x.fillStyle='rgba(255,255,255,0.1)';x.font='20px Arial';x.fillText(i.t,i.x,i.y)});requestAnimationFrame(loop);}
+            loop();
+        }
+        const cursor = document.getElementById('cursor');
+        document.addEventListener('mousemove', e=>{ cursor.style.left=e.clientX+'px'; cursor.style.top=e.clientY+'px'; });
+        document.body.addEventListener('mouseover', e=>{ if(e.target.closest('.hover')) cursor.classList.add('hover'); else cursor.classList.remove('hover'); });
     </script>
 </body>
 </html>
