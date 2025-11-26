@@ -3,406 +3,508 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NO GAME NO LIFE | SYSTEM ONLINE</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+    <title>NO GAME NO LIFE | DISBOARD SYSTEM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     <style>
-        /* ================= GLOBAL VARS ================= */
+        /* --- 0. CORE & ANIMATIONS --- */
         :root {
             --pink: #ff2a6d; --cyan: #05d9e8; --purple: #bd00ff; --gold: #ffd700;
-            --dark: #05010d; --glass: rgba(20,20,40,0.85); --border: rgba(255,255,255,0.15);
-            --rank-god: #ffd700; --rank-high: #9b59b6; --rank-mid: #2ecc71; --rank-low: #e74c3c;
+            --dark: #05010d; --glass: rgba(20, 20, 40, 0.85); --border: rgba(255, 255, 255, 0.15);
+            --rank-god: #ffd700; --rank-mid: #2ecc71; --rank-low: #e74c3c;
         }
         * { margin:0; padding:0; box-sizing:border-box; cursor:none; outline:none; user-select:none; }
-        body { background:var(--dark); color:white; font-family:'Noto Sans SC'; height:100vh; overflow:hidden; }
+        body { background-color:var(--dark); color:white; font-family:'Noto Sans SC'; height:100vh; overflow:hidden; }
         body.unlocked { overflow-y:auto; overflow-x:hidden; }
-
-        /* ================= UI COMPONENTS ================= */
-        /* Custom Cursor */
-        #cursor { width:20px; height:20px; border:2px solid var(--cyan); border-radius:50%; position:fixed; pointer-events:none; z-index:999999; transform:translate(-50%,-50%); transition:0.15s; mix-blend-mode:difference; }
-        #cursor.hover { width:50px; height:50px; background:rgba(255,42,109,0.2); border-color:var(--pink); }
         
-        /* Scrollbar */
-        ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:#000; } ::-webkit-scrollbar-thumb { background:linear-gradient(var(--cyan),var(--purple)); border-radius:3px; }
+        @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+        @keyframes glow { 0%{box-shadow:0 0 5px var(--cyan);} 50%{box-shadow:0 0 20px var(--purple);} 100%{box-shadow:0 0 5px var(--cyan);} }
+        
+        /* --- 1. UI COMPONENTS --- */
+        #cursor { width:20px; height:20px; border:2px solid var(--cyan); border-radius:50%; position:fixed; pointer-events:none; z-index:999999; transform:translate(-50%,-50%); transition:0.1s; mix-blend-mode:difference; }
+        #cursor.hover { width:60px; height:60px; background:rgba(255,42,109,0.2); border-color:var(--pink); }
+        
+        .btn { background:rgba(5,217,232,0.05); border:1px solid var(--cyan); color:var(--cyan); padding:10px 25px; font-family:'Orbitron'; font-weight:bold; transition:0.3s; position:relative; overflow:hidden; text-transform:uppercase; }
+        .btn:hover { background:var(--cyan); color:black; box-shadow:0 0 30px var(--cyan); }
+        .btn-pink { border-color:var(--pink); color:var(--pink); } .btn-pink:hover { background:var(--pink); color:white; box-shadow:0 0 30px var(--pink); }
+        
+        .input { width:100%; padding:12px; background:rgba(255,255,255,0.05); border:1px solid #444; color:white; font-family:'Orbitron'; text-align:center; transition:0.3s; }
+        .input:focus { border-color:var(--cyan); box-shadow:0 0 15px rgba(5,217,232,0.3); }
 
-        /* Buttons */
-        .btn { background:rgba(5,217,232,0.05); border:1px solid var(--cyan); color:var(--cyan); padding:10px 25px; font-family:'Orbitron'; font-weight:bold; transition:0.3s; text-transform:uppercase; position:relative; overflow:hidden; }
-        .btn:hover { background:var(--cyan); color:#000; box-shadow:0 0 20px var(--cyan); }
-        .btn-pink { border-color:var(--pink); color:var(--pink); } .btn-pink:hover { background:var(--pink); color:white; box-shadow:0 0 25px var(--pink); }
-        .btn:disabled { border-color:#555; color:#555; cursor:not-allowed; box-shadow:none; }
+        /* --- 2. LAYOUT --- */
+        #app { transition:1s; filter:blur(15px); opacity:0.3; pointer-events:none; }
+        body.unlocked #app { filter:blur(0); opacity:1; pointer-events:all; }
+        
+        .bg-layer { position:fixed; inset:0; z-index:-10; background:radial-gradient(circle at 50% 0%, rgba(189,0,255,0.15), transparent 60%), linear-gradient(0deg, #000, transparent), url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h40v40H0z' fill='none'/%3E%3Cpath d='M0 38h40v2H0z' fill='%2305d9e8' fill-opacity='0.03'/%3E%3C/svg%3E"); }
+        #canvas-bg { position:fixed; inset:0; z-index:-5; opacity:0.5; }
 
-        .input-box { width:100%; padding:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.2); color:white; font-family:'Orbitron'; text-align:center; transition:0.3s; margin-bottom:10px; }
-        .input-box:focus { border-color:var(--pink); box-shadow:0 0 10px rgba(255,42,109,0.3); }
-
-        /* Common Classes */
+        /* --- 3. AUTH --- */
+        #auth-layer { position:fixed; inset:0; z-index:10000; background:rgba(5,2,10,0.96); display:flex; justify-content:center; align-items:center; backdrop-filter:blur(20px); }
+        .auth-box { width:400px; padding:40px; background:rgba(0,0,0,0.8); border:2px solid var(--pink); box-shadow:0 0 60px rgba(255,42,109,0.3); text-align:center; }
         .hidden { display:none !important; }
-        .fade-in { animation:fadeIn 0.5s ease forwards; }
-        @keyframes fadeIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        .link { margin-top:15px; color:#888; font-size:0.8rem; text-decoration:underline; cursor:pointer; } .link:hover { color:var(--cyan); }
+        .err { color:var(--pink); margin-top:10px; font-family:'Orbitron'; font-size:0.8rem; min-height:20px; }
 
-        /* ================= LAYOUT LAYERS ================= */
-        #bg-layer { position:fixed; inset:0; z-index:-10; background:radial-gradient(circle at 50% 0%, rgba(189,0,255,0.1), transparent 70%), url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h40v40H0z' fill='none'/%3E%3Cpath d='M0 38h40v2H0z' fill='%2305d9e8' fill-opacity='0.03'/%3E%3Cpath d='M0 0h2v40H0z' fill='%2305d9e8' fill-opacity='0.03'/%3E%3C/svg%3E"); }
-        #site-wrapper { position:relative; z-index:1; width:100%; transition:1s; filter:blur(15px); opacity:0.4; pointer-events:none; }
-        body.unlocked #site-wrapper { filter:blur(0); opacity:1; pointer-events:all; }
+        /* --- 4. MAIN SECTIONS --- */
+        nav { position:fixed; top:0; width:100%; height:70px; padding:0 40px; display:flex; justify-content:space-between; align-items:center; background:rgba(5,1,10,0.9); border-bottom:1px solid rgba(255,255,255,0.1); z-index:1000; }
+        .brand { font-family:'Orbitron'; font-weight:900; font-size:1.5rem; color:white; text-shadow:0 0 10px var(--cyan); }
+        .nav-item { margin-left:30px; color:#aaa; text-decoration:none; font-family:'Orbitron'; font-size:0.9rem; transition:0.3s; }
+        .nav-item:hover { color:var(--cyan); text-shadow:0 0 10px var(--cyan); }
+        .u-badge { cursor:pointer; border:1px solid var(--gold); padding:5px 10px; color:var(--gold); border-radius:4px; font-family:'Orbitron'; font-size:0.8rem; display:flex; align-items:center; gap:10px; }
+        .u-badge:hover { background:rgba(255,215,0,0.1); }
 
-        /* ================= MODULES ================= */
-        
-        /* 1. Login Overlay */
-        #auth-overlay { position:fixed; inset:0; z-index:20000; background:rgba(5,1,10,0.95); backdrop-filter:blur(15px); display:flex; justify-content:center; align-items:center; }
-        .auth-box { width:420px; padding:40px; border:2px solid var(--pink); box-shadow:0 0 60px rgba(255,42,109,0.2); text-align:center; background:rgba(0,0,0,0.8); position:relative; }
-        .auth-title { font-family:'Orbitron'; font-size:2rem; margin-bottom:30px; text-shadow:0 0 10px var(--cyan); }
-        
-        /* 2. Navigation */
-        nav { position:fixed; top:0; width:100%; height:70px; z-index:1000; display:flex; justify-content:space-between; align-items:center; padding:0 40px; background:rgba(5,1,10,0.9); border-bottom:1px solid var(--border); }
-        .brand { font-family:'Orbitron'; font-weight:900; font-size:1.5rem; color:var(--pink); }
-        .nav-item { margin-left:30px; font-family:'Orbitron'; color:#aaa; transition:0.3s; cursor:none; }
-        .nav-item:hover { color:var(--cyan); text-shadow:0 0 8px var(--cyan); }
-
-        /* 3. Sections */
-        section { padding:100px 5%; max-width:1400px; margin:0 auto; }
-        .sec-title { font-family:'Orbitron'; font-size:3rem; text-align:center; margin-bottom:60px; text-shadow:0 0 20px var(--cyan); }
-        
-        /* Hero */
+        section { padding:100px 20px; max-width:1300px; margin:0 auto; }
         .hero { height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
-        .hero h1 { font-family:'Orbitron'; font-size:5rem; margin-bottom:20px; background:linear-gradient(to bottom,#fff,#ccc); -webkit-background-clip:text; -webkit-text-fill-color:transparent; filter:drop-shadow(0 0 15px var(--pink)); animation:glitch 3s infinite alternate; }
-        @keyframes glitch { 0%{text-shadow:2px 0 var(--pink)} 100%{text-shadow:-2px 0 var(--cyan)} }
+        h1 { font-family:'Orbitron'; font-size:5rem; text-shadow:0 0 20px var(--pink); margin-bottom:20px; }
 
-        /* Pledges */
-        .pledge-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:25px; }
-        .pledge-card { background:var(--glass); border:1px solid var(--border); padding:30px; border-radius:12px; position:relative; overflow:hidden; transition:0.3s; }
-        .pledge-card:hover { transform:translateY(-5px); border-color:var(--pink); box-shadow:0 0 20px rgba(255,42,109,0.2); }
-        .pledge-num { position:absolute; right:15px; font-family:'Orbitron'; font-size:4rem; opacity:0.1; font-weight:900; color:var(--pink); }
+        /* Pledges & World (Simplified CSS Grid) */
+        .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:25px; }
+        .card { background:var(--glass); border:1px solid var(--border); padding:25px; border-radius:10px; transition:0.3s; position:relative; overflow:hidden; }
+        .card:hover { transform:translateY(-5px); border-color:var(--cyan); box-shadow:0 0 20px rgba(5,217,232,0.2); }
 
-        /* World Chess */
-        .exceed-board { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:20px; }
-        .piece-card { height:220px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:20px; position:relative; overflow:hidden; transition:0.4s; display:flex; flex-direction:column; justify-content:space-between; }
-        .piece-card:hover { background:rgba(255,255,255,0.08); transform:scale(1.05); z-index:10; box-shadow:0 10px 30px #000; }
-        .piece-icon { position:absolute; bottom:-20px; right:-20px; font-size:8rem; opacity:0.05; transition:0.5s; }
-        .piece-card:hover .piece-icon { opacity:0.2; transform:rotate(-10deg) scale(1.1); }
-        .rank-god { border-color:var(--gold); box-shadow:inset 0 0 20px rgba(255,215,0,0.1); } 
-        .rank-imanity:hover { border-color:white; animation:rainbow 2s infinite; }
-        @keyframes rainbow { 0%{box-shadow:0 0 10px var(--pink);} 50%{box-shadow:0 0 10px var(--cyan);} 100%{box-shadow:0 0 10px var(--purple);} }
+        /* Chess Board */
+        .chess-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:20px; }
+        .piece { height:200px; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:20px; border-radius:8px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden; }
+        .piece:hover { transform:scale(1.05); background:rgba(255,255,255,0.08); z-index:5; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
+        .p-icon { position:absolute; bottom:-20px; right:-20px; font-size:7rem; opacity:0.08; transition:0.5s; }
+        .piece:hover .p-icon { opacity:0.2; transform:rotate(-10deg) scale(1.2); }
+        .rank-1 { border-color:var(--gold); } .rank-16 { animation:glow 3s infinite; border-color:white; }
 
-        /* Characters */
-        .char-grid { display:flex; justify-content:center; gap:30px; flex-wrap:wrap; }
-        .char-card { width:260px; height:380px; perspective:1000px; }
-        .char-inner { width:100%; height:100%; transition:0.6s; transform-style:preserve-3d; position:relative; }
-        .char-card:hover .char-inner { transform:rotateY(180deg); }
-        .char-front, .char-back { position:absolute; width:100%; height:100%; backface-visibility:hidden; border-radius:15px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(145deg, #1a1025, #050505); border:1px solid var(--border); box-shadow:0 10px 30px rgba(0,0,0,0.5); }
-        .char-back { transform:rotateY(180deg); background:linear-gradient(135deg, var(--pink), #2a0e36); padding:20px; text-align:center; }
-        .char-av { width:130px; height:130px; border-radius:50%; border:3px solid white; margin-bottom:20px; background-size:cover; }
+        /* --- 5. PROFILE & FRIENDS OVERLAY (Bilibili/LINE Style) --- */
+        #profile-overlay { position:fixed; inset:0; z-index:6000; background:rgba(0,0,0,0.9); display:flex; justify-content:center; align-items:center; opacity:0; pointer-events:none; transition:0.3s; }
+        #profile-overlay.active { opacity:1; pointer-events:all; }
+        .profile-box { width:900px; height:600px; background:#111; border:1px solid var(--cyan); display:flex; border-radius:10px; overflow:hidden; box-shadow:0 0 50px rgba(5,217,232,0.2); }
+        
+        /* Left: Friend List */
+        .p-sidebar { width:250px; background:#0a0a0a; border-right:1px solid #333; display:flex; flex-direction:column; }
+        .f-header { padding:20px; border-bottom:1px solid #333; font-family:'Orbitron'; color:var(--pink); display:flex; justify-content:space-between; }
+        .f-list { flex:1; overflow-y:auto; }
+        .f-item { padding:15px; border-bottom:1px solid #222; cursor:pointer; display:flex; align-items:center; gap:10px; transition:0.2s; }
+        .f-item:hover, .f-item.active { background:#1a1a1a; border-left:3px solid var(--cyan); }
+        .f-avatar { width:30px; height:30px; background:#333; border-radius:50%; }
+        
+        /* Right: Chat / Profile */
+        .p-main { flex:1; display:flex; flex-direction:column; background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><circle cx="1" cy="1" r="1" fill="rgba(255,255,255,0.05)"/></svg>'); }
+        .chat-area { flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:15px; }
+        .msg { max-width:70%; padding:10px 15px; border-radius:10px; font-size:0.9rem; line-height:1.4; }
+        .msg.me { align-self:flex-end; background:var(--cyan); color:black; }
+        .msg.them { align-self:flex-start; background:#333; color:#ddd; border:1px solid #444; }
+        .chat-input { height:60px; border-top:1px solid #333; padding:10px; display:flex; gap:10px; background:#0f0f0f; }
+        
+        /* Profile View */
+        .my-profile { padding:40px; text-align:center; display:none; }
+        .my-profile.show { display:block; }
+        .big-avatar { width:100px; height:100px; border-radius:50%; background:#333; border:2px solid var(--gold); margin:0 auto 20px; }
+        .stat-row { display:flex; justify-content:center; gap:30px; margin:20px 0; font-family:'Orbitron'; }
+        .stat-box { background:#222; padding:15px; border-radius:8px; width:100px; }
 
-        /* ================= 5. 覆盖层 (Profile & Friend & Reader) ================= */
-        .overlay-full { position:fixed; inset:0; background:var(--hud-bg); z-index:5000; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:0.3s; }
-        .overlay-full.active { opacity:1; pointer-events:all; }
-        .ov-head { height:60px; padding:0 30px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.8); }
-        .ov-body { flex:1; display:flex; overflow:hidden; }
-
-        /* Profile Style */
-        .profile-container { padding:40px; width:100%; max-width:1000px; margin:0 auto; display:flex; gap:40px; }
-        .p-card { background:rgba(255,255,255,0.05); padding:30px; border-radius:10px; border:1px solid var(--cyan); width:300px; text-align:center; }
-        .p-av { width:150px; height:150px; border-radius:50%; border:4px solid var(--pink); margin:0 auto 20px; background-size:cover; background-color:#333; }
-        .p-stats { text-align:left; margin-top:20px; color:#aaa; font-size:0.9rem; }
-        .p-main { flex:1; }
-        .p-bio { background:rgba(0,0,0,0.5); padding:20px; border-radius:8px; border:1px solid var(--border); min-height:100px; margin-bottom:20px; }
-
-        /* Friend/Chat Style */
-        .chat-list { width:250px; background:rgba(0,0,0,0.3); border-right:1px solid var(--border); display:flex; flex-direction:column; }
-        .friend-item { padding:15px; border-bottom:1px solid var(--border); cursor:none; transition:0.2s; display:flex; align-items:center; gap:10px; }
-        .friend-item:hover { background:rgba(5,217,232,0.1); }
-        .chat-area { flex:1; display:flex; flex-direction:column; background:rgba(0,0,0,0.5); }
-        .chat-msgs { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:10px; }
-        .msg { max-width:70%; padding:10px 15px; border-radius:10px; background:#222; align-self:flex-start; font-size:0.9rem; }
-        .msg.me { background:var(--pink); align-self:flex-end; color:black; }
-
-        /* Reader Style */
-        .reader-text { flex:1; overflow-y:auto; padding:50px 100px; font-family:'ZCOOL XiaoWei'; font-size:1.35rem; line-height:2.1; color:#ddd; }
-        .story-line { position:relative; padding:2px 0; } .story-line:hover { background:rgba(255,255,255,0.05); }
-        .bubble { position:absolute; right:-40px; top:50%; transform:translateY(-50%); color:var(--purple); opacity:0; transition:0.2s; pointer-events:auto; z-index:100; }
-        .story-line:hover .bubble { opacity:1; right:10px; }
-        .side-r { width:0; background:rgba(10,5,20,0.98); border-left:1px solid var(--border); transition:0.3s; display:flex; flex-direction:column; z-index:50; }
+        /* --- 6. READER (Anti-Lag) --- */
+        #reader { position:fixed; inset:0; background:var(--hud-bg); z-index:5000; display:flex; opacity:0; pointer-events:none; transition:0.3s; }
+        #reader.active { opacity:1; pointer-events:all; }
+        .side-l { width:280px; background:rgba(0,0,0,0.5); border-right:1px solid var(--border); display:flex; flex-direction:column; }
+        .text-area { flex:1; overflow-y:auto; padding:50px 100px; font-family:'ZCOOL XiaoWei'; font-size:1.35rem; color:#ddd; line-height:2; }
+        .side-r { width:0; background:#0a0a0a; border-left:1px solid var(--border); transition:0.3s; display:flex; flex-direction:column; }
         .side-r.open { width:350px; }
         
-        @media(max-width:768px) { .nav-links, .side-l { display:none; } .profile-container { flex-direction:column; } .side-r.open { position:absolute; right:0; width:100%; height:100%; } }
+        .line-wrap { position:relative; padding:5px 0; }
+        .line-wrap:hover { background:rgba(255,255,255,0.05); }
+        .bubble { position:absolute; right:-30px; top:0; color:var(--purple); opacity:0; cursor:pointer; transition:0.2s; pointer-events:auto; z-index:10; }
+        .line-wrap:hover .bubble { opacity:1; right:10px; }
+
+        /* Loading */
+        #loader { position:absolute; inset:0; background:#000; z-index:100; display:flex; justify-content:center; align-items:center; color:var(--cyan); font-family:'Orbitron'; }
     </style>
 </head>
 <body>
 
     <div id="cursor"></div>
 
-    <!-- AUTH OVERLAY -->
-    <div id="auth-overlay">
+    <!-- AUTH -->
+    <div id="auth-layer">
         <div class="auth-box">
-            <h2 id="auth-title" class="auth-title">SYSTEM LOGIN</h2>
+            <h2 id="auth-title" style="font-family:'Orbitron'; color:white; margin-bottom:20px;">SYSTEM LOGIN</h2>
+            
             <!-- Login -->
-            <div id="p-login">
-                <input id="i-email" class="input-box" placeholder="EMAIL">
-                <input id="i-pass" type="password" class="input-box" placeholder="PASSWORD">
-                <button class="btn" style="width:100%" onclick="apiLogin()">CONNECT</button>
-                <div style="margin-top:15px; font-size:0.8rem; display:flex; justify-content:space-between;">
-                    <span class="nav-item" onclick="toggleView('reg1')">Register</span>
-                </div>
+            <div id="f-login">
+                <input id="l-email" class="input" placeholder="EMAIL">
+                <div style="height:15px"></div>
+                <input id="l-pass" type="password" class="input" placeholder="PASSWORD">
+                <div style="height:20px"></div>
+                <button class="btn" style="width:100%" onclick="doLogin()">CONNECT</button>
+                <div class="link" onclick="switchV('reg')">New Player? Register</div>
             </div>
+
             <!-- Reg -->
-            <div id="p-reg1" class="hidden">
-                <input id="r-user" class="input-box" placeholder="USERNAME">
-                <input id="r-email" class="input-box" placeholder="EMAIL">
-                <input id="r-pass" type="password" class="input-box" placeholder="PASSWORD">
-                <button class="btn" style="width:100%" onclick="apiCode()">GET CODE</button>
-                <div class="nav-item" onclick="toggleView('login')" style="text-align:center; margin-top:10px;">BACK</div>
+            <div id="f-reg" class="hidden">
+                <input id="r-user" class="input" placeholder="USERNAME">
+                <div style="height:10px"></div>
+                <input id="r-email" class="input" placeholder="EMAIL">
+                <div style="height:10px"></div>
+                <input id="r-pass" type="password" class="input" placeholder="PASSWORD">
+                <div style="height:10px"></div>
+                <button class="btn" onclick="getCode()">GET CODE</button>
+                <div id="code-area" class="hidden" style="margin-top:15px; border-top:1px solid #333; padding-top:15px;">
+                    <input id="r-code" class="input" placeholder="123456">
+                    <button class="btn-pink" style="width:100%; margin-top:10px;" onclick="doReg()">CONFIRM</button>
+                </div>
+                <div class="link" onclick="switchV('login')">Back</div>
             </div>
-            <div id="p-reg2" class="hidden">
-                <input id="r-code" class="input-box" placeholder="CODE">
-                <button class="btn" style="width:100%" onclick="apiReg()">CONFIRM</button>
-            </div>
-            <div id="auth-msg" style="color:var(--pink); margin-top:10px;"></div>
+            
+            <div id="msg" class="err"></div>
         </div>
     </div>
 
-    <!-- MAIN SITE -->
-    <div id="site-wrapper">
-        <div id="bg-layer"></div>
+    <!-- APP -->
+    <div id="app">
+        <div class="bg-layer"></div>
+        <canvas id="canvas-bg"></canvas>
+        
         <nav>
             <div class="brand">NGNL</div>
             <div class="nav-links">
-                <span class="nav-item" onclick="location.href='#hero'">HOME</span>
-                <span class="nav-item" onclick="openProfile()">PROFILE</span>
-                <span class="nav-item" onclick="openFriends()">FRIENDS</span>
-                <span id="u-display" style="color:var(--gold); border:1px solid var(--gold); padding:2px 8px; margin-left:20px;">GUEST</span>
+                <a href="#hero" class="nav-item">HOME</a>
+                <a href="#pledges" class="nav-item">PLEDGES</a>
+                <a href="#world" class="nav-item">WORLD</a>
+                <a href="#chars" class="nav-item">PLAYERS</a>
+            </div>
+            <div class="u-badge" onclick="openProfile()">
+                <span id="u-name">GUEST</span>
+                <span id="u-coin" style="color:var(--cyan)">🪙 0</span>
             </div>
         </nav>
 
-        <header id="hero" class="hero anim-entry">
+        <div id="hero" class="hero">
             <h1>NO GAME NO LIFE</h1>
-            <p style="color:#ccc; margin-bottom:40px;">The world is just a game.</p>
+            <p style="color:#aaa; font-size:1.2rem; letter-spacing:2px; margin-bottom:40px;">Everything is decided by games.</p>
             <button class="btn-pink" onclick="openReader()">READ NOVEL</button>
-        </header>
+        </div>
 
-        <section id="pledges" class="pledges anim-entry">
-            <h2 class="sec-title">THE PLEDGES</h2>
-            <div class="pledge-grid">
-                <!-- Repeat for 10 pledges -->
-                <div class="pledge-card"><div class="pledge-num">I</div><div class="pledge-text">禁止杀伤、战争与掠夺</div></div>
-                <div class="pledge-card"><div class="pledge-num">II</div><div class="pledge-text">所有纠纷通过游戏解决</div></div>
-                <div class="pledge-card"><div class="pledge-num">III</div><div class="pledge-text">赌注必须对等</div></div>
-                <div class="pledge-card"><div class="pledge-num">VI</div><div class="pledge-text">向盟约宣誓必须遵守</div></div>
-                <div class="pledge-card"><div class="pledge-num">IX</div><div class="pledge-text">规则绝对不变</div></div>
-                <div class="pledge-card"><div class="pledge-num">X</div><div class="pledge-text">大家一起和平地玩吧</div></div>
+        <section id="pledges">
+            <h2 class="section-title">THE TEN PLEDGES</h2>
+            <div class="grid" id="pledge-grid">
+                <!-- JS Generated -->
             </div>
         </section>
 
-        <section id="world" class="anim-entry">
-            <h2 class="sec-title">IXSEED (16 RACES)</h2>
-            <div class="exceed-grid">
-                <div class="piece-card rank-god"><div class="piece-rank">I</div><div class="piece-icon">♔</div><div class="piece-name">Old Deus</div><div class="piece-desc">神灵种 / King</div></div>
-                <div class="piece-card"><div class="piece-rank">VI</div><div class="piece-icon">♗</div><div class="piece-name">Flügel</div><div class="piece-desc">天翼种 / Bishop</div></div>
-                <div class="piece-card rank-imanity"><div class="piece-rank">XVI</div><div class="piece-icon">♙</div><div class="piece-name">Imanity</div><div class="piece-desc">人类种 / Pawn</div></div>
+        <section id="world">
+            <h2 class="section-title">IXSEED (16 RACES)</h2>
+            <div class="chess-grid" id="chess-grid">
+                <!-- JS Generated -->
             </div>
         </section>
 
-        <section id="characters" class="anim-entry">
-            <h2 class="sec-title">PLAYERS</h2>
-            <div class="char-gallery">
-                <div class="char-card"><div class="char-inner"><div class="char-front"><div class="char-av" style="background-image:url('sora.png')"></div><div class="char-name">SORA</div></div><div class="char-back"><h3>空</h3><p>Imanity / Pawn</p></div></div></div>
-                <div class="char-card"><div class="char-inner"><div class="char-front"><div class="char-av" style="background-image:url('shiro.png')"></div><div class="char-name">SHIRO</div></div><div class="char-back"><h3>白</h3><p>Imanity / Pawn</p></div></div></div>
-                <div class="char-card"><div class="char-inner"><div class="char-front"><div class="char-av" style="background-image:url('jibril.png')"></div><div class="char-name">JIBRIL</div></div><div class="char-back"><h3>吉普莉尔</h3><p>Flügel / Bishop</p></div></div></div>
+        <section id="chars">
+            <h2 class="section-title">PLAYERS</h2>
+            <div class="char-gallery" style="display:flex; gap:20px; justify-content:center;">
+                <!-- Placeholder for chars -->
+                <div class="card">Sora</div><div class="card">Shiro</div><div class="card">Jibril</div>
             </div>
         </section>
     </div>
 
-    <!-- OVERLAY: PROFILE -->
-    <div id="profile-overlay" class="overlay-full">
-        <div class="ov-head"><span style="color:var(--gold)">PLAYER PROFILE</span><button class="btn" onclick="closeOverlay('profile')">CLOSE</button></div>
-        <div class="ov-body" style="overflow-y:auto;">
-            <div class="profile-container">
-                <div class="p-card">
-                    <div id="p-avatar" class="p-av"></div>
-                    <h2 id="p-username" style="color:var(--cyan)">User</h2>
-                    <div class="p-stats">
-                        <p>Rank: <span id="p-rank">16</span></p>
-                        <p>Exp: <span id="p-exp">0</span></p>
-                        <p>Coins: <span id="p-coins" style="color:var(--gold)">0</span></p>
-                        <p>UID: <span id="p-uid">---</span></p>
+    <!-- PROFILE & CHAT -->
+    <div id="profile-overlay">
+        <div class="profile-box">
+            <div class="p-sidebar">
+                <div class="f-header">
+                    <span>FRIENDS</span>
+                    <span style="cursor:pointer" onclick="promptAddFriend()">+</span>
+                </div>
+                <div class="f-list" id="friend-list">
+                    <div class="f-item active" onclick="showProfileView()">
+                        <div class="f-avatar"></div> <span>MY PROFILE</span>
+                    </div>
+                    <!-- Friend items here -->
+                </div>
+            </div>
+            <div class="p-main">
+                <!-- My Profile View -->
+                <div id="view-profile" class="my-profile show">
+                    <div class="big-avatar"></div>
+                    <h2 id="p-username" style="color:var(--pink)">GUEST</h2>
+                    <div class="stat-row">
+                        <div class="stat-box"><div style="color:#888; font-size:0.8rem">RANK</div><div id="p-rank" style="font-size:1.5rem">16</div></div>
+                        <div class="stat-box"><div style="color:#888; font-size:0.8rem">EXP</div><div id="p-exp" style="font-size:1.5rem">0</div></div>
+                        <div class="stat-box"><div style="color:#888; font-size:0.8rem">COINS</div><div id="p-coin" style="font-size:1.5rem">0</div></div>
+                    </div>
+                    <p id="p-bio" style="color:#aaa;">This player is lazy.</p>
+                    <button class="btn" style="margin-top:30px;" onclick="closeProfile()">CLOSE</button>
+                </div>
+                <!-- Chat View -->
+                <div id="view-chat" class="my-profile" style="display:none; height:100%; padding:0;">
+                    <div class="chat-area" id="chat-box"></div>
+                    <div class="chat-input">
+                        <input id="chat-msg" class="input" style="text-align:left;" placeholder="Message...">
+                        <button class="btn" onclick="sendMsg()">SEND</button>
                     </div>
                 </div>
-                <div class="p-main">
-                    <h3>BIO</h3>
-                    <div id="p-bio" class="p-bio"></div>
-                    <button class="btn" onclick="editProfile()">EDIT PROFILE</button>
-                </div>
             </div>
         </div>
     </div>
 
-    <!-- OVERLAY: FRIENDS & CHAT -->
-    <div id="chat-overlay" class="overlay-full">
-        <div class="ov-head"><span style="color:var(--pink)">FRIEND LINK</span><button class="btn" onclick="closeOverlay('chat')">CLOSE</button></div>
-        <div class="ov-body">
-            <div class="chat-list">
-                <div style="padding:15px; border-bottom:1px solid #333;">
-                    <input id="add-friend-inp" class="input-box" placeholder="Add Username" style="font-size:0.8rem; margin:0;">
-                    <button class="btn" style="width:100%; margin-top:5px; font-size:0.7rem;" onclick="addFriend()">ADD</button>
-                </div>
-                <div id="friend-list-container"></div>
-            </div>
-            <div class="chat-area">
-                <div id="chat-box" class="chat-msgs"></div>
-                <div style="padding:15px; background:#111; display:flex; gap:10px;">
-                    <input id="msg-inp" class="input-box" style="margin:0; text-align:left;" placeholder="Message...">
-                    <button class="btn" onclick="sendMsg()">SEND</button>
-                </div>
-            </div>
+    <!-- READER -->
+    <div id="reader">
+        <div id="loader" class="hidden">LOADING DATA...</div>
+        <div class="reader-head">
+            <span style="color:var(--cyan); font-family:'Orbitron'">ARCHIVE</span>
+            <button class="btn" style="padding:5px 15px; border:none;" onclick="closeReader()">EXIT</button>
         </div>
-    </div>
-
-    <!-- OVERLAY: READER -->
-    <div id="reader-overlay" class="overlay-full">
-        <div class="ov-head"><span style="color:var(--cyan)">DATABASE</span><button class="btn" onclick="closeReader()">EXIT</button></div>
-        <div class="ov-body">
-            <div class="sidebar-left" style="width:250px; background:rgba(0,0,0,0.5); border-right:1px solid var(--border);">
-                <div style="padding:10px; text-align:center; border-bottom:1px solid #333;">INDEX</div>
-                <div id="toc-list" style="flex:1; overflow-y:auto;"></div>
+        <div class="reader-body">
+            <div class="side-l">
+                <div class="tabs">
+                    <button class="tab active" onclick="tab('toc')">INDEX</button>
+                    <button class="tab" onclick="tab('bm')">BM</button>
+                </div>
+                <div id="toc-list" class="sidebar-content"></div>
             </div>
-            <div class="text-area-container" style="flex:1; display:flex; flex-direction:column;">
-                <div id="reader-content" class="reader-text"></div>
-                <div style="padding:10px; background:#111; display:flex; justify-content:center; gap:20px;">
+            <div class="text-area">
+                <div id="text-content"></div>
+                <div style="text-align:center; padding:20px;">
                     <button class="btn" onclick="turnPage(-1)">PREV</button>
+                    <span id="pg-info" style="margin:0 20px; color:#888;">0%</span>
                     <button class="btn" onclick="turnPage(1)">NEXT</button>
+                    <button class="btn-pink" style="margin-left:20px;" onclick="addBM()">SAVE</button>
+                </div>
+                <!-- Discussion Area -->
+                <div id="disc-zone" class="discuss-area" style="margin-top:50px; display:none;">
+                    <h3 style="color:var(--cyan)">DISCUSSION</h3>
+                    <textarea id="d-input" class="input" rows="2" style="text-align:left; margin-top:10px;"></textarea>
+                    <button class="btn" onclick="postDisc()">POST</button>
+                    <div id="d-list" style="margin-top:20px;"></div>
                 </div>
             </div>
             <div id="side-r" class="side-r">
-                <div style="padding:10px; display:flex; justify-content:space-between;"><span style="color:var(--pink)">COMMENTS</span><span onclick="toggleR()" style="cursor:pointer">X</span></div>
-                <div id="cmt-list" style="flex:1; overflow:auto; padding:10px;"></div>
-                <div style="padding:10px;"><input id="c-inp" class="input-box" placeholder="Comment..."><button class="btn" style="width:100%" onclick="postCmt()">POST</button></div>
+                <div style="padding:15px; border-bottom:1px solid #333; display:flex; justify-content:space-between;">
+                    <span style="color:var(--pink)">COMMENTS</span>
+                    <span onclick="toggleR()">[X]</span>
+                </div>
+                <div id="c-list" style="flex:1; overflow:auto; padding:15px;"></div>
+                <div style="padding:15px;">
+                    <textarea id="c-input" class="input" rows="2" style="text-align:left;"></textarea>
+                    <button class="btn" style="width:100%" onclick="postCmt()">POST</button>
+                </div>
             </div>
         </div>
     </div>
+
     <input type="file" id="file" accept=".txt" style="display:none" onchange="loadFile(this)">
 
     <script>
-        // ==========================================
-        // ⚠️ 你的 Google Script URL
-        const API = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec"; 
-        // ==========================================
+        // ==================================================
+        // ⚠️ REPLACE WITH YOUR URL
+        const API = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec";
+        // ==================================================
 
-        let user = {};
-        let lines=[], curLine=0, curCmtLine=-1, activeFriend="";
+        // State
+        let user = {name:"Guest", rank:16, exp:0, coins:0};
+        let lines=[], curStart=0, curCmt=-1, chatTarget="";
+        const PG=150;
 
-        // --- API ---
-        async function req(d) {
-            try { return await (await fetch(API, { method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(d) })).json(); }
-            catch(e) { console.error(e); return {status:'error', message:'Net Error'}; }
+        // --- API Core ---
+        async function api(d) {
+            console.log("TX:", d);
+            try {
+                const r = await fetch(API, {
+                    method:'POST', redirect:'follow',
+                    headers:{'Content-Type':'text/plain;charset=utf-8'},
+                    body:JSON.stringify(d)
+                });
+                const j = await r.json();
+                console.log("RX:", j);
+                return j;
+            } catch(e) { return {status:'error', message:'Net Error'}; }
         }
 
         // --- Auth ---
-        function toggleView(v) {
-            ['p-login','p-reg1','p-reg2'].forEach(id=>document.getElementById(id).classList.add('hidden'));
-            document.getElementById('p-'+v).classList.remove('hidden');
+        function switchV(v) {
+            document.getElementById('f-login').classList.add('hidden');
+            document.getElementById('f-reg').classList.add('hidden');
+            document.getElementById('f-'+v).classList.remove('hidden');
+            document.getElementById('msg').innerText="";
         }
-        async function apiLogin() {
-            const e=document.getElementById('i-email').value, p=document.getElementById('i-pass').value;
-            const r = await req({action:'login', email:e, password:p});
-            if(r.status==='success') {
-                user = r.data;
-                document.getElementById('auth-overlay').style.display='none';
+        async function doLogin() {
+            const e=document.getElementById('l-email').value, p=document.getElementById('l-pass').value;
+            const res = await api({action:'login', email:e, password:p});
+            if(res.status==='success') {
+                user = {name:res.username, rank:res.level, exp:res.exp, coins:res.coins, bio:res.bio, avatar:res.avatar};
+                document.getElementById('auth-layer').style.display='none';
                 document.body.classList.add('unlocked');
-                document.getElementById('u-display').innerText = user.username.toUpperCase();
-            } else alert(r.message);
+                updateHUD();
+                initVisuals();
+            } else document.getElementById('msg').innerText = res.message;
         }
-        let tmpR={};
-        async function apiCode() {
-            const u=document.getElementById('r-user').value, e=document.getElementById('r-email').value, p=document.getElementById('r-pass').value;
-            const r = await req({action:'req_code', email:e});
-            if(r.status==='success') { tmpR={u,e,p}; toggleView('reg2'); alert(r.message); } else alert(r.message);
+        let tmpReg={};
+        async function getCode() {
+            const u=document.getElementById('r-user').value, e=document.getElementById('r-email').value;
+            const res = await api({action:'req_code', email:e});
+            if(res.status==='success') {
+                tmpReg={u,e,p:document.getElementById('r-pass').value};
+                document.getElementById('code-area').classList.remove('hidden');
+                alert(res.message);
+            } else document.getElementById('msg').innerText=res.message;
         }
-        async function apiReg() {
+        async function doReg() {
             const c=document.getElementById('r-code').value;
-            const r = await req({action:'register', username:tmpR.u, email:tmpR.e, password:tmpR.p, code:c});
-            if(r.status==='success') { alert("Success"); toggleView('login'); } else alert(r.message);
+            const res = await api({action:'register', username:tmpReg.u, email:tmpReg.e, password:tmpReg.p, code:c});
+            if(res.status==='success') { alert("Success"); switchV('login'); }
+            else document.getElementById('msg').innerText=res.message;
         }
 
-        // --- Profile ---
-        function openProfile() {
-            document.getElementById('profile-overlay').classList.add('active');
-            document.getElementById('p-username').innerText = user.username;
+        // --- Main UI ---
+        function updateHUD() {
+            document.getElementById('u-name').innerText = user.name.toUpperCase();
+            document.getElementById('u-coin').innerText = `🪙 ${user.coins}`;
+            // Update Profile View
+            document.getElementById('p-username').innerText = user.name;
             document.getElementById('p-rank').innerText = user.rank;
             document.getElementById('p-exp').innerText = user.exp;
-            document.getElementById('p-coins').innerText = user.coins;
-            document.getElementById('p-uid').innerText = user.uid;
-            document.getElementById('p-bio').innerText = user.bio;
-            document.getElementById('p-avatar').style.backgroundImage = user.avatar ? `url(${user.avatar})` : `url(sora.png)`;
-        }
-        async function editProfile() {
-            const b = prompt("New Bio:", user.bio);
-            if(b!==null) {
-                await req({action:'update_profile', username:user.username, bio:b});
-                user.bio = b; openProfile();
-            }
-        }
-
-        // --- Friends & Chat ---
-        function openFriends() {
-            document.getElementById('chat-overlay').classList.add('active');
-            loadFriends();
-        }
-        async function loadFriends() {
-            const r = await req({action:'get_friends', username:user.username});
-            const div = document.getElementById('friend-list-container');
-            div.innerHTML = r.data.map(f => `<div class="friend-item" onclick="openChat('${f}')">${f}</div>`).join('');
-        }
-        async function addFriend() {
-            const t = document.getElementById('add-friend-inp').value;
-            if(t) { await req({action:'add_friend', username:user.username, target_user:t}); loadFriends(); }
-        }
-        async function openChat(f) {
-            activeFriend = f;
-            const r = await req({action:'get_msgs', username:user.username, target_user:f});
-            const box = document.getElementById('chat-box');
-            box.innerHTML = r.data.map(m => `<div class="msg ${m.sender===user.username?'me':''}">${m.content}</div>`).join('');
-        }
-        async function sendMsg() {
-            const t = document.getElementById('msg-inp').value;
-            if(t && activeFriend) {
-                await req({action:'send_msg', username:user.username, target_user:activeFriend, content:t});
-                document.getElementById('msg-inp').value=""; openChat(activeFriend);
-            }
+            document.getElementById('p-coin').innerText = user.coins;
         }
 
         // --- Reader ---
-        function openReader() { document.getElementById('reader-overlay').classList.add('active'); if(lines.length===0) document.getElementById('file').click(); }
-        function closeReader() { document.getElementById('reader-overlay').classList.remove('active'); }
-        function loadFile(i) {
-            const r = new FileReader();
-            r.onload=e=>{ lines=e.target.result.split('\n'); renderPage(0); genToc(); };
-            r.readAsText(i.files[0]);
+        function openReader() {
+            document.getElementById('reader').classList.add('active');
+            fetch('novel.txt').then(r=>{if(r.ok)return r.text();throw 1}).then(t=>parse(t)).catch(()=>document.getElementById('file').click());
         }
-        function genToc() {
-            const d = document.getElementById('toc-list'); d.innerHTML="";
-            lines.forEach((l,i)=>{ if(l.match(/第.+章/)) d.innerHTML+=`<div style="padding:10px;border-bottom:1px solid #333;cursor:pointer" onclick="renderPage(${i})">${l}</div>` });
+        function closeReader() { document.getElementById('reader').classList.remove('active'); }
+        function loadFile(i) { const r=new FileReader(); r.onload=e=>parse(e.target.result); r.readAsText(i.files[0]); }
+        
+        async function parse(txt) {
+            document.getElementById('loader').classList.remove('hidden');
+            lines = txt.split('\n');
+            // Generate TOC
+            let h=""; const r=/(?:^第.+章)|(?:^Chapter)/i;
+            for(let i=0; i<lines.length; i+=2000) {
+                const end=Math.min(i+2000, lines.length);
+                for(let j=i; j<end; j++) if(lines[j].length<50 && r.test(lines[j])) 
+                    h+=`<div style="padding:10px; color:#888; cursor:pointer; border-bottom:1px solid #222;" onclick="go(${j})">${lines[j]}</div>`;
+                await new Promise(res=>setTimeout(res,0));
+            }
+            document.getElementById('toc-list').innerHTML=h;
+            go(0);
+            document.getElementById('loader').classList.add('hidden');
         }
-        function renderPage(idx) {
-            curLine = idx;
-            const chunk = lines.slice(idx, idx+100);
-            document.getElementById('reader-content').innerHTML = chunk.map((l,i)=>`<div class="story-line">${l}<div class="bubble" onclick="openComm(${idx+i})">💬</div></div>`).join('');
-        }
-        function turnPage(d) { renderPage(curLine + d*100); }
 
-        // --- Comments ---
+        function go(i) { curStart=i; render(); }
+        function turnPage(d) { const n=curStart+d*PG; if(n>=0 && n<lines.length) { curStart=n; render(); } }
+        function render() {
+            const end = Math.min(curStart+PG, lines.length);
+            const slice = lines.slice(curStart, end);
+            document.getElementById('text-content').innerHTML = slice.map((l,i)=>
+                l.trim()?`<div class="line-wrap">${l}<div class="bubble" onclick="cmt(${curStart+i})">💬</div></div>`:"<br>"
+            ).join('');
+            document.getElementById('pg-info').innerText = Math.round((end/lines.length)*100)+"%";
+            
+            // Show discussion at end
+            document.getElementById('disc-zone').style.display = (end>=lines.length)?'block':'none';
+            if(end>=lines.length) loadDisc();
+        }
+
+        // --- Comments & Social ---
         function toggleR() { document.getElementById('side-r').classList.toggle('open'); }
-        async function openComm(i) {
-            curCmtLine=i; document.getElementById('side-r').classList.add('open');
-            const r = await req({action:'get_line_comments', line_index:i});
-            document.getElementById('cmt-list').innerHTML = r.data.map(c=>`<div style="margin-bottom:10px;border-bottom:1px solid #333"><span style="color:var(--cyan)">${c.user}</span>: ${c.content}</div>`).join('');
+        function cmt(i) {
+            curCmt = i;
+            document.getElementById('side-r').classList.add('open');
+            const div = document.getElementById('c-list');
+            div.innerHTML = "Loading...";
+            api({action:'get_line_comments', line_index:i}).then(d=>{
+                div.innerHTML = d.data.map(c=>`<div style="background:#222; padding:10px; margin-bottom:10px; border-radius:5px;"><div style="color:var(--cyan); font-size:0.8rem">${c.user}</div><div>${c.content}</div></div>`).join('') || "No comments";
+            });
         }
         async function postCmt() {
-            const t=document.getElementById('c-inp').value;
-            if(t) { await req({action:'post_line_comment', line_index:curCmtLine, username:user.username, content:t}); openComm(curCmtLine); }
+            const t = document.getElementById('c-input').value;
+            await api({action:'post_line_comment', line_index:curCmt, username:user.name, content:t});
+            document.getElementById('c-input').value=""; cmt(curCmt);
+        }
+        function loadDisc() {
+            api({action:'get_discussion'}).then(d=>{
+                document.getElementById('d-list').innerHTML = d.data.map(p=>
+                    `<div style="background:rgba(0,0,0,0.5); padding:15px; margin-bottom:15px; border:1px solid #333;">
+                        <div style="display:flex; justify-content:space-between; color:var(--cyan)"><span>${p.user}</span><span style="color:var(--gold)">🪙 ${p.coins}</span></div>
+                        <div style="margin:10px 0">${p.content}</div>
+                        <div style="font-size:0.8rem; cursor:pointer; color:#888;" onclick="act('tip','${p.id}','disc')">TIP COIN</div>
+                    </div>`
+                ).join('');
+            });
+        }
+        async function postDisc() {
+            const t = document.getElementById('d-input').value;
+            await api({action:'post_discussion', username:user.name, content:t});
+            loadDisc();
+        }
+        async function act(a, id, t) {
+            if(user.name==="Guest") return alert("Login first");
+            const r = await api({action:'interact', sub_action:a, type:t, id:id, username:user.name, target_id:id});
+            if(r.status==='success' && a==='tip') {
+                user.coins = r.new_balance; updateHUD(); loadDisc();
+            }
         }
 
-        function closeOverlay(id) { document.getElementById(id+'-overlay').classList.remove('active'); }
+        // --- Profile & Chat ---
+        function openProfile() { document.getElementById('profile-overlay').classList.add('active'); loadFriends(); }
+        function closeProfile() { document.getElementById('profile-overlay').classList.remove('active'); }
+        function showProfileView() {
+            document.getElementById('view-chat').style.display='none';
+            document.getElementById('view-profile').style.display='block';
+        }
+        function loadFriends() {
+            api({action:'get_friends', username:user.name}).then(d=>{
+                const list = document.getElementById('friend-list');
+                let h = `<div class="f-item active" onclick="showProfileView()"><div class="f-avatar"></div><span>MY PROFILE</span></div>`;
+                d.data.forEach(f=>{
+                    h+=`<div class="f-item" onclick="openChat('${f.name}')"><div class="f-avatar"></div><span>${f.name}</span></div>`;
+                });
+                list.innerHTML = h;
+            });
+        }
+        function promptAddFriend() {
+            const n = prompt("Enter username:");
+            if(n) api({action:'add_friend', username:user.name, target_user:n}).then(d=>alert(d.message||"Sent"));
+        }
+        function openChat(target) {
+            chatTarget = target;
+            document.getElementById('view-profile').style.display='none';
+            document.getElementById('view-chat').style.display='flex';
+            loadMsgs();
+        }
+        function loadMsgs() {
+            if(!chatTarget) return;
+            api({action:'get_messages', username:user.name, target_user:chatTarget}).then(d=>{
+                const box = document.getElementById('chat-box');
+                box.innerHTML = d.data.map(m=>`<div class="msg ${m.sender===user.name?'me':'them'}">${m.content}</div>`).join('');
+                box.scrollTop = box.scrollHeight;
+            });
+        }
+        async function sendMsg() {
+            const t = document.getElementById('chat-msg').value;
+            await api({action:'send_message', username:user.name, target_user:chatTarget, content:t});
+            document.getElementById('chat-msg').value=""; loadMsgs();
+        }
 
-        // Cursor
-        const cur = document.getElementById('cursor');
-        document.addEventListener('mousemove', e=>{cur.style.left=e.clientX+'px'; cur.style.top=e.clientY+'px'});
-        document.addEventListener('mouseover', e=>{if(e.target.closest('.hover, .btn')) cur.classList.add('hover'); else cur.classList.remove('hover')});
+        // --- Visuals & Data ---
+        function initVisuals() {
+            // Pledges
+            const p = ["禁止杀伤","纠纷游戏决","赌注对等","内容不限","受挑战决定","遵守盟约","全权代理","作弊即败","绝对不变","和平玩吧"];
+            document.getElementById('pledge-grid').innerHTML = p.map((t,i)=>`<div class="card hover"><div class="pledge-num" style="position:absolute;right:10px;opacity:0.1;font-size:3rem;font-weight:900;color:var(--pink)">${i+1}</div>${t}</div>`).join('');
+            
+            // Chess Board
+            const chess = [
+                {r:1,n:'Old Deus',c:'♔',cls:'rank-1'},{r:2,n:'Phantasma',c:'♕',cls:''},{r:6,n:'Flügel',c:'♗',cls:''},
+                {r:16,n:'Imanity',c:'♙',cls:'rank-16'} // Simplified for brevity
+            ];
+            document.getElementById('chess-grid').innerHTML = chess.map(c=>
+                `<div class="piece ${c.cls}"><div class="p-icon">${c.c}</div><div style="z-index:1"><div style="font-family:'Orbitron';font-weight:900;opacity:0.3;font-size:1.5rem">${c.r}</div><div style="font-family:'Orbitron';font-weight:bold;color:var(--cyan)">${c.n}</div></div></div>`
+            ).join('');
+
+            // Canvas
+            const cvs=document.getElementById('canvas-bg'), ctx=cvs.getContext('2d');
+            let w=window.innerWidth, h=window.innerHeight; cvs.width=w; cvs.height=h;
+            const parts=Array.from({length:40},()=>({x:Math.random()*w,y:Math.random()*h,s:Math.random()+0.5}));
+            function loop(){ctx.clearRect(0,0,w,h);parts.forEach(i=>{i.y+=i.s;if(i.y>h)i.y=-20;ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fillRect(i.x,i.y,2,2)});requestAnimationFrame(loop);}
+            loop();
+        }
+        const cursor = document.getElementById('cursor');
+        document.addEventListener('mousemove', e=>{ cursor.style.left=e.clientX+'px'; cursor.style.top=e.clientY+'px'; });
+        document.body.addEventListener('mouseover', e=>{ if(e.target.closest('.hover')) cursor.classList.add('hover'); else cursor.classList.remove('hover'); });
     </script>
 </body>
 </html>
