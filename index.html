@@ -3,503 +3,406 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NO GAME NO LIFE | DISBOARD SYSTEM</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+    <title>NO GAME NO LIFE | SYSTEM ONLINE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     <style>
-        /* ================= GLOBAL & VARS ================= */
+        /* ================= GLOBAL VARS ================= */
         :root {
-            --pink: #ff2a6d; --cyan: #05d9e8; --purple: #d905e8; --gold: #ffd700;
-            --dark: #05010d; --glass: rgba(20, 20, 35, 0.9); --border: rgba(255,255,255,0.15);
+            --pink: #ff2a6d; --cyan: #05d9e8; --purple: #bd00ff; --gold: #ffd700;
+            --dark: #05010d; --glass: rgba(20,20,40,0.85); --border: rgba(255,255,255,0.15);
+            --rank-god: #ffd700; --rank-high: #9b59b6; --rank-mid: #2ecc71; --rank-low: #e74c3c;
         }
         * { margin:0; padding:0; box-sizing:border-box; cursor:none; outline:none; user-select:none; }
-        body { background-color:var(--dark); color:white; font-family:'Noto Sans SC',sans-serif; height:100vh; overflow:hidden; }
+        body { background:var(--dark); color:white; font-family:'Noto Sans SC'; height:100vh; overflow:hidden; }
         body.unlocked { overflow-y:auto; overflow-x:hidden; }
 
-        /* ================= COMPONENTS ================= */
-        #cursor { width:20px; height:20px; border:2px solid var(--cyan); border-radius:50%; position:fixed; pointer-events:none; z-index:999999; transform:translate(-50%,-50%); transition:width 0.2s, background 0.2s; mix-blend-mode:difference; }
-        #cursor.hover { width:50px; height:50px; background:rgba(255,42,109,0.4); border-color:var(--pink); }
+        /* ================= UI COMPONENTS ================= */
+        /* Custom Cursor */
+        #cursor { width:20px; height:20px; border:2px solid var(--cyan); border-radius:50%; position:fixed; pointer-events:none; z-index:999999; transform:translate(-50%,-50%); transition:0.15s; mix-blend-mode:difference; }
+        #cursor.hover { width:50px; height:50px; background:rgba(255,42,109,0.2); border-color:var(--pink); }
         
-        ::-webkit-scrollbar { width:6px; }
-        ::-webkit-scrollbar-track { background:#000; }
-        ::-webkit-scrollbar-thumb { background:linear-gradient(var(--cyan), var(--purple)); border-radius:3px; }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:#000; } ::-webkit-scrollbar-thumb { background:linear-gradient(var(--cyan),var(--purple)); border-radius:3px; }
 
-        .btn { background:rgba(5,217,232,0.05); border:1px solid var(--cyan); color:var(--cyan); padding:10px 25px; font-family:'Orbitron'; font-weight:bold; cursor:none; transition:0.3s; text-transform:uppercase; letter-spacing:1px; position:relative; overflow:hidden; }
-        .btn:hover { background:var(--cyan); color:black; box-shadow:0 0 25px var(--cyan); }
-        .btn::after { content:''; position:absolute; top:0; left:-100%; width:100%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent); transition:0.5s; }
-        .btn:hover::after { left:100%; }
+        /* Buttons */
+        .btn { background:rgba(5,217,232,0.05); border:1px solid var(--cyan); color:var(--cyan); padding:10px 25px; font-family:'Orbitron'; font-weight:bold; transition:0.3s; text-transform:uppercase; position:relative; overflow:hidden; }
+        .btn:hover { background:var(--cyan); color:#000; box-shadow:0 0 20px var(--cyan); }
         .btn-pink { border-color:var(--pink); color:var(--pink); } .btn-pink:hover { background:var(--pink); color:white; box-shadow:0 0 25px var(--pink); }
+        .btn:disabled { border-color:#555; color:#555; cursor:not-allowed; box-shadow:none; }
+
+        .input-box { width:100%; padding:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.2); color:white; font-family:'Orbitron'; text-align:center; transition:0.3s; margin-bottom:10px; }
+        .input-box:focus { border-color:var(--pink); box-shadow:0 0 10px rgba(255,42,109,0.3); }
+
+        /* Common Classes */
+        .hidden { display:none !important; }
+        .fade-in { animation:fadeIn 0.5s ease forwards; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
 
         /* ================= LAYOUT LAYERS ================= */
-        #bg-layer { position:fixed; inset:0; z-index:-10; background:radial-gradient(circle at 50% 0%, #2a0e36 0%, #000 80%); }
-        #canvas-bg { position:fixed; inset:0; z-index:-5; opacity:0.6; }
-        
-        #app-content { transition:1s; filter:blur(15px); opacity:0; pointer-events:none; width:100%; }
-        body.unlocked #app-content { filter:blur(0); opacity:1; pointer-events:all; }
+        #bg-layer { position:fixed; inset:0; z-index:-10; background:radial-gradient(circle at 50% 0%, rgba(189,0,255,0.1), transparent 70%), url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h40v40H0z' fill='none'/%3E%3Cpath d='M0 38h40v2H0z' fill='%2305d9e8' fill-opacity='0.03'/%3E%3Cpath d='M0 0h2v40H0z' fill='%2305d9e8' fill-opacity='0.03'/%3E%3C/svg%3E"); }
+        #site-wrapper { position:relative; z-index:1; width:100%; transition:1s; filter:blur(15px); opacity:0.4; pointer-events:none; }
+        body.unlocked #site-wrapper { filter:blur(0); opacity:1; pointer-events:all; }
 
-        /* ================= AUTH OVERLAY (Fixed ID) ================= */
-        #auth-overlay { position:fixed; inset:0; z-index:20000; background:rgba(5,2,10,0.95); display:flex; justify-content:center; align-items:center; backdrop-filter:blur(10px); }
-        .auth-box { width:420px; padding:40px; background:rgba(0,0,0,0.8); border:2px solid var(--pink); box-shadow:0 0 50px rgba(255,42,109,0.3); text-align:center; position:relative; }
-        .auth-box::before { content:"SYSTEM ACCESS"; position:absolute; top:-10px; left:50%; transform:translate(-50%); background:#000; padding:0 10px; color:var(--pink); font-family:'Orbitron'; font-size:0.8rem; }
+        /* ================= MODULES ================= */
         
-        .inp { width:100%; padding:12px; margin-bottom:15px; background:rgba(255,255,255,0.05); border:1px solid #444; color:white; text-align:center; font-family:'Orbitron'; transition:0.3s; }
-        .inp:focus { border-color:var(--cyan); box-shadow:0 0 10px rgba(5,217,232,0.2); }
-        .link { font-size:0.8rem; color:#888; text-decoration:underline; cursor:none; margin-top:15px; display:inline-block; }
-        .link:hover { color:var(--cyan); }
-        .hidden { display:none !important; }
-        .err { color:var(--pink); font-size:0.8rem; margin-top:10px; font-family:'Orbitron'; min-height:20px; }
-
-        /* ================= MAIN UI ================= */
-        nav { position:fixed; top:0; width:100%; height:70px; padding:0 40px; display:flex; justify-content:space-between; align-items:center; z-index:1000; background:rgba(10,5,20,0.9); border-bottom:1px solid rgba(255,255,255,0.1); }
-        .brand { font-family:'Orbitron'; font-weight:900; font-size:1.5rem; color:white; text-shadow:0 0 10px var(--pink); }
-        .nav-item { margin-left:30px; color:#aaa; font-family:'Orbitron'; font-size:0.9rem; transition:0.3s; }
+        /* 1. Login Overlay */
+        #auth-overlay { position:fixed; inset:0; z-index:20000; background:rgba(5,1,10,0.95); backdrop-filter:blur(15px); display:flex; justify-content:center; align-items:center; }
+        .auth-box { width:420px; padding:40px; border:2px solid var(--pink); box-shadow:0 0 60px rgba(255,42,109,0.2); text-align:center; background:rgba(0,0,0,0.8); position:relative; }
+        .auth-title { font-family:'Orbitron'; font-size:2rem; margin-bottom:30px; text-shadow:0 0 10px var(--cyan); }
+        
+        /* 2. Navigation */
+        nav { position:fixed; top:0; width:100%; height:70px; z-index:1000; display:flex; justify-content:space-between; align-items:center; padding:0 40px; background:rgba(5,1,10,0.9); border-bottom:1px solid var(--border); }
+        .brand { font-family:'Orbitron'; font-weight:900; font-size:1.5rem; color:var(--pink); }
+        .nav-item { margin-left:30px; font-family:'Orbitron'; color:#aaa; transition:0.3s; cursor:none; }
         .nav-item:hover { color:var(--cyan); text-shadow:0 0 8px var(--cyan); }
 
+        /* 3. Sections */
+        section { padding:100px 5%; max-width:1400px; margin:0 auto; }
+        .sec-title { font-family:'Orbitron'; font-size:3rem; text-align:center; margin-bottom:60px; text-shadow:0 0 20px var(--cyan); }
+        
+        /* Hero */
         .hero { height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
-        .hero h1 { font-family:'Orbitron'; font-size:5rem; margin-bottom:20px; background:linear-gradient(to bottom, #fff, #ccc); -webkit-background-clip:text; -webkit-text-fill-color:transparent; filter:drop-shadow(0 0 15px var(--pink)); animation:glitch 3s infinite; }
-        @keyframes glitch { 0%{transform:skew(0deg);} 20%{transform:skew(-2deg);} 40%{transform:skew(2deg);} 100%{transform:skew(0deg);} }
-
-        section { padding:100px 20px; max-width:1200px; margin:0 auto; }
-        .sec-title { font-family:'Orbitron'; font-size:3rem; text-align:center; margin-bottom:60px; color:white; text-shadow:0 0 20px var(--cyan); letter-spacing:5px; }
+        .hero h1 { font-family:'Orbitron'; font-size:5rem; margin-bottom:20px; background:linear-gradient(to bottom,#fff,#ccc); -webkit-background-clip:text; -webkit-text-fill-color:transparent; filter:drop-shadow(0 0 15px var(--pink)); animation:glitch 3s infinite alternate; }
+        @keyframes glitch { 0%{text-shadow:2px 0 var(--pink)} 100%{text-shadow:-2px 0 var(--cyan)} }
 
         /* Pledges */
-        .grid-pledge { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:25px; }
-        .card-pledge { background:var(--glass); border:1px solid var(--glass-border); padding:30px; border-radius:10px; position:relative; transition:0.3s; display:flex; align-items:center; min-height:120px; }
-        .card-pledge:hover { transform:translateY(-5px); border-color:var(--pink); box-shadow:0 0 20px rgba(255,42,109,0.2); }
-        .num-pledge { position:absolute; right:15px; font-family:'Orbitron'; font-size:4rem; opacity:0.1; font-weight:900; color:var(--pink); }
+        .pledge-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:25px; }
+        .pledge-card { background:var(--glass); border:1px solid var(--border); padding:30px; border-radius:12px; position:relative; overflow:hidden; transition:0.3s; }
+        .pledge-card:hover { transform:translateY(-5px); border-color:var(--pink); box-shadow:0 0 20px rgba(255,42,109,0.2); }
+        .pledge-num { position:absolute; right:15px; font-family:'Orbitron'; font-size:4rem; opacity:0.1; font-weight:900; color:var(--pink); }
 
-        /* World (16 Races) */
-        .tabs { display:flex; justify-content:center; margin-bottom:30px; gap:10px; }
-        .tab-btn { padding:10px 30px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:#888; font-family:'Orbitron'; transition:0.3s; }
-        .tab-btn.active { background:var(--cyan); color:black; box-shadow:0 0 20px var(--cyan); }
-        
-        .grid-chess { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:20px; }
-        .card-chess { height:220px; background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:20px; position:relative; overflow:hidden; transition:0.4s; display:flex; flex-direction:column; justify-content:space-between; }
-        .card-chess:hover { background:rgba(255,255,255,0.08); transform:scale(1.05); z-index:10; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
-        .chess-icon { position:absolute; bottom:-20px; right:-20px; font-size:8rem; opacity:0.05; color:white; transition:0.5s; }
-        .card-chess:hover .chess-icon { opacity:0.2; transform:rotate(-10deg) scale(1.2); }
-        .chess-rank { font-family:'Orbitron'; font-size:2rem; font-weight:900; opacity:0.3; }
-        .chess-name { font-family:'Orbitron'; font-weight:bold; font-size:1.2rem; color:white; }
-        
-        .rank-1 { border-color:var(--gold); box-shadow:inset 0 0 20px rgba(255,215,0,0.1); } .rank-1 .chess-rank, .rank-1 .chess-name { color:var(--gold); }
-        .rank-16:hover { border-color:white; animation:rainbow 2s infinite; }
+        /* World Chess */
+        .exceed-board { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:20px; }
+        .piece-card { height:220px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:20px; position:relative; overflow:hidden; transition:0.4s; display:flex; flex-direction:column; justify-content:space-between; }
+        .piece-card:hover { background:rgba(255,255,255,0.08); transform:scale(1.05); z-index:10; box-shadow:0 10px 30px #000; }
+        .piece-icon { position:absolute; bottom:-20px; right:-20px; font-size:8rem; opacity:0.05; transition:0.5s; }
+        .piece-card:hover .piece-icon { opacity:0.2; transform:rotate(-10deg) scale(1.1); }
+        .rank-god { border-color:var(--gold); box-shadow:inset 0 0 20px rgba(255,215,0,0.1); } 
+        .rank-imanity:hover { border-color:white; animation:rainbow 2s infinite; }
         @keyframes rainbow { 0%{box-shadow:0 0 10px var(--pink);} 50%{box-shadow:0 0 10px var(--cyan);} 100%{box-shadow:0 0 10px var(--purple);} }
 
         /* Characters */
-        .grid-char { display:flex; justify-content:center; gap:30px; flex-wrap:wrap; }
-        .card-char { width:260px; height:380px; perspective:1000px; }
+        .char-grid { display:flex; justify-content:center; gap:30px; flex-wrap:wrap; }
+        .char-card { width:260px; height:380px; perspective:1000px; }
         .char-inner { width:100%; height:100%; transition:0.6s; transform-style:preserve-3d; position:relative; }
-        .card-char:hover .char-inner { transform:rotateY(180deg); }
-        .char-side { position:absolute; inset:0; backface-visibility:hidden; border-radius:15px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(145deg, #1a1025, #050505); border:1px solid var(--glass-border); box-shadow:0 10px 30px rgba(0,0,0,0.5); }
+        .char-card:hover .char-inner { transform:rotateY(180deg); }
+        .char-front, .char-back { position:absolute; width:100%; height:100%; backface-visibility:hidden; border-radius:15px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(145deg, #1a1025, #050505); border:1px solid var(--border); box-shadow:0 10px 30px rgba(0,0,0,0.5); }
         .char-back { transform:rotateY(180deg); background:linear-gradient(135deg, var(--pink), #2a0e36); padding:20px; text-align:center; }
-        .char-img { width:130px; height:130px; border-radius:50%; border:3px solid white; margin-bottom:20px; box-shadow:0 0 20px var(--cyan); background-size:cover; background-position:top; }
+        .char-av { width:130px; height:130px; border-radius:50%; border:3px solid white; margin-bottom:20px; background-size:cover; }
 
-        /* ================= READER OVERLAY ================= */
-        #reader { position:fixed; inset:0; background:#050505; z-index:30000; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:0.3s; }
-        #reader.active { opacity:1; pointer-events:all; }
-        
-        .reader-head { height:60px; border-bottom:1px solid var(--glass-border); display:flex; justify-content:space-between; align-items:center; padding:0 30px; background:rgba(0,0,0,0.8); }
-        .reader-body { flex:1; display:flex; overflow:hidden; position:relative; }
-        
-        /* Left Sidebar */
-        .side-l { width:260px; background:rgba(10,5,15,0.95); border-right:1px solid var(--glass-border); display:flex; flex-direction:column; z-index:20; }
-        .side-tabs { display:flex; height:50px; border-bottom:1px solid var(--glass-border); }
-        .side-tab { flex:1; background:transparent; border:none; color:#666; font-family:'Orbitron'; font-size:0.8rem; border-bottom:2px solid transparent; transition:0.3s; }
-        .side-tab.active { color:white; border-color:var(--cyan); background:rgba(255,255,255,0.05); }
-        .side-content { flex:1; overflow-y:auto; }
-        .list-item { padding:12px 20px; font-size:0.9rem; color:#888; border-bottom:1px solid rgba(255,255,255,0.03); transition:0.2s; display:flex; justify-content:space-between; }
-        .list-item:hover { color:white; background:rgba(5,217,232,0.05); padding-left:25px; border-left:3px solid var(--cyan); }
+        /* ================= 5. 覆盖层 (Profile & Friend & Reader) ================= */
+        .overlay-full { position:fixed; inset:0; background:var(--hud-bg); z-index:5000; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:0.3s; }
+        .overlay-full.active { opacity:1; pointer-events:all; }
+        .ov-head { height:60px; padding:0 30px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.8); }
+        .ov-body { flex:1; display:flex; overflow:hidden; }
 
-        /* Center Text */
-        .text-container { flex:1; display:flex; flex-direction:column; position:relative; z-index:10; }
-        .text-content { flex:1; overflow-y:auto; padding:50px 100px; font-family:'ZCOOL XiaoWei'; font-size:1.35rem; line-height:2.1; color:#ddd; }
-        .line { position:relative; padding:4px 0; }
-        .line:hover { background:rgba(255,255,255,0.05); }
-        .bubble { position:absolute; right:-40px; top:50%; transform:translateY(-50%); color:var(--purple); opacity:0; transition:0.2s; font-size:1.2rem; cursor:none; pointer-events:auto; z-index:100; padding:5px; }
-        .line:hover .bubble { opacity:1; right:10px; }
+        /* Profile Style */
+        .profile-container { padding:40px; width:100%; max-width:1000px; margin:0 auto; display:flex; gap:40px; }
+        .p-card { background:rgba(255,255,255,0.05); padding:30px; border-radius:10px; border:1px solid var(--cyan); width:300px; text-align:center; }
+        .p-av { width:150px; height:150px; border-radius:50%; border:4px solid var(--pink); margin:0 auto 20px; background-size:cover; background-color:#333; }
+        .p-stats { text-align:left; margin-top:20px; color:#aaa; font-size:0.9rem; }
+        .p-main { flex:1; }
+        .p-bio { background:rgba(0,0,0,0.5); padding:20px; border-radius:8px; border:1px solid var(--border); min-height:100px; margin-bottom:20px; }
 
-        /* Right Sidebar */
-        .side-r { width:0; background:rgba(10,5,20,0.98); border-left:1px solid var(--glass-border); transition:0.3s; display:flex; flex-direction:column; z-index:30; }
+        /* Friend/Chat Style */
+        .chat-list { width:250px; background:rgba(0,0,0,0.3); border-right:1px solid var(--border); display:flex; flex-direction:column; }
+        .friend-item { padding:15px; border-bottom:1px solid var(--border); cursor:none; transition:0.2s; display:flex; align-items:center; gap:10px; }
+        .friend-item:hover { background:rgba(5,217,232,0.1); }
+        .chat-area { flex:1; display:flex; flex-direction:column; background:rgba(0,0,0,0.5); }
+        .chat-msgs { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:10px; }
+        .msg { max-width:70%; padding:10px 15px; border-radius:10px; background:#222; align-self:flex-start; font-size:0.9rem; }
+        .msg.me { background:var(--pink); align-self:flex-end; color:black; }
+
+        /* Reader Style */
+        .reader-text { flex:1; overflow-y:auto; padding:50px 100px; font-family:'ZCOOL XiaoWei'; font-size:1.35rem; line-height:2.1; color:#ddd; }
+        .story-line { position:relative; padding:2px 0; } .story-line:hover { background:rgba(255,255,255,0.05); }
+        .bubble { position:absolute; right:-40px; top:50%; transform:translateY(-50%); color:var(--purple); opacity:0; transition:0.2s; pointer-events:auto; z-index:100; }
+        .story-line:hover .bubble { opacity:1; right:10px; }
+        .side-r { width:0; background:rgba(10,5,20,0.98); border-left:1px solid var(--border); transition:0.3s; display:flex; flex-direction:column; z-index:50; }
         .side-r.open { width:350px; }
-        .cmt-list { flex:1; overflow-y:auto; padding:20px; }
-        .cmt-card { background:rgba(255,255,255,0.05); padding:15px; margin-bottom:15px; border-radius:6px; }
         
-        /* Loading */
-        #loader { position:absolute; inset:0; background:rgba(0,0,0,0.9); z-index:100; display:flex; justify-content:center; align-items:center; flex-direction:column; font-family:'Orbitron'; color:var(--cyan); letter-spacing:2px; }
-        .load-bar { width:300px; height:4px; background:#222; margin-top:20px; }
-        .load-prog { height:100%; width:0%; background:var(--pink); transition:0.2s; }
-
-        @media(max-width:768px) {
-            .nav-links, .side-l { display:none; } .hero h1 { font-size:3rem; }
-            .grid-pledge, .grid-chess { grid-template-columns:1fr; }
-            .text-content { padding:20px; font-size:1.1rem; }
-            .side-r.open { position:absolute; right:0; width:90%; height:100%; z-index:60; }
-            .auth-box { width:90%; padding:20px; }
-        }
+        @media(max-width:768px) { .nav-links, .side-l { display:none; } .profile-container { flex-direction:column; } .side-r.open { position:absolute; right:0; width:100%; height:100%; } }
     </style>
 </head>
 <body>
 
     <div id="cursor"></div>
 
-    <!-- 1. AUTH SYSTEM -->
+    <!-- AUTH OVERLAY -->
     <div id="auth-overlay">
         <div class="auth-box">
-            <h2 id="auth-title" style="font-family:'Orbitron'; color:white; margin-bottom:20px;">SYSTEM LOGIN</h2>
-            
-            <!-- Login View -->
-            <div id="sec-login">
-                <input id="l-email" class="inp" placeholder="EMAIL">
-                <input id="l-pass" type="password" class="inp" placeholder="PASSWORD">
-                <button class="btn" style="width:100%" onclick="actLogin(this)">CONNECT</button>
+            <h2 id="auth-title" class="auth-title">SYSTEM LOGIN</h2>
+            <!-- Login -->
+            <div id="p-login">
+                <input id="i-email" class="input-box" placeholder="EMAIL">
+                <input id="i-pass" type="password" class="input-box" placeholder="PASSWORD">
+                <button class="btn" style="width:100%" onclick="apiLogin()">CONNECT</button>
                 <div style="margin-top:15px; font-size:0.8rem; display:flex; justify-content:space-between;">
-                    <span class="link" style="margin:0" onclick="alert('Contact Admin')">Forgot?</span>
-                    <span class="link" style="margin:0; color:var(--pink)" onclick="toggleView('reg1')">New Player</span>
+                    <span class="nav-item" onclick="toggleView('reg1')">Register</span>
                 </div>
             </div>
-
-            <!-- Register View 1 -->
-            <div id="sec-reg1" class="hidden">
-                <input id="r-user" class="inp" placeholder="USERNAME">
-                <input id="r-email" class="inp" placeholder="EMAIL">
-                <input id="r-pass" type="password" class="inp" placeholder="PASSWORD">
-                <button class="btn" style="width:100%" onclick="actGetCode(this)">GET CODE</button>
-                <span class="link" onclick="toggleView('login')">Back</span>
+            <!-- Reg -->
+            <div id="p-reg1" class="hidden">
+                <input id="r-user" class="input-box" placeholder="USERNAME">
+                <input id="r-email" class="input-box" placeholder="EMAIL">
+                <input id="r-pass" type="password" class="input-box" placeholder="PASSWORD">
+                <button class="btn" style="width:100%" onclick="apiCode()">GET CODE</button>
+                <div class="nav-item" onclick="toggleView('login')" style="text-align:center; margin-top:10px;">BACK</div>
             </div>
-
-            <!-- Register View 2 -->
-            <div id="sec-reg2" class="hidden">
-                <p style="color:#888; font-size:0.8rem; margin-bottom:10px;">Code sent to email (Test: 123456)</p>
-                <input id="r-code" class="inp" placeholder="6-DIGIT CODE">
-                <button class="btn" style="width:100%" onclick="actConfirm(this)">CONFIRM</button>
+            <div id="p-reg2" class="hidden">
+                <input id="r-code" class="input-box" placeholder="CODE">
+                <button class="btn" style="width:100%" onclick="apiReg()">CONFIRM</button>
             </div>
-
-            <div id="auth-msg" class="err"></div>
+            <div id="auth-msg" style="color:var(--pink); margin-top:10px;"></div>
         </div>
     </div>
 
-    <!-- 2. MAIN CONTENT -->
-    <div id="app-content">
+    <!-- MAIN SITE -->
+    <div id="site-wrapper">
         <div id="bg-layer"></div>
-        <canvas id="canvas-bg"></canvas>
-        
         <nav>
             <div class="brand">NGNL</div>
             <div class="nav-links">
-                <a class="nav-item hover">HOME</a>
-                <a class="nav-item hover">PLEDGES</a>
-                <a class="nav-item hover">WORLD</a>
-                <span id="u-name" style="color:var(--gold); margin-left:20px; border:1px solid var(--gold); padding:2px 8px;">GUEST</span>
-                <span id="u-coins" style="color:var(--cyan); font-size:0.8rem; margin-left:10px;"></span>
+                <span class="nav-item" onclick="location.href='#hero'">HOME</span>
+                <span class="nav-item" onclick="openProfile()">PROFILE</span>
+                <span class="nav-item" onclick="openFriends()">FRIENDS</span>
+                <span id="u-display" style="color:var(--gold); border:1px solid var(--gold); padding:2px 8px; margin-left:20px;">GUEST</span>
             </div>
         </nav>
 
-        <header class="hero">
+        <header id="hero" class="hero anim-entry">
             <h1>NO GAME NO LIFE</h1>
-            <p style="color:#ccc; margin-bottom:40px; letter-spacing:2px;">The world is just a game.</p>
-            <button class="btn btn-pink hover" onclick="openReader()">READ NOVEL</button>
+            <p style="color:#ccc; margin-bottom:40px;">The world is just a game.</p>
+            <button class="btn-pink" onclick="openReader()">READ NOVEL</button>
         </header>
 
-        <section>
+        <section id="pledges" class="pledges anim-entry">
             <h2 class="sec-title">THE PLEDGES</h2>
-            <div class="grid-pledge">
-                <div class="card-pledge hover"><div class="num-pledge">I</div><div class="text-pledge">禁止杀伤、战争与掠夺</div></div>
-                <div class="card-pledge hover"><div class="num-pledge">II</div><div class="text-pledge">所有纠纷通过游戏解决</div></div>
-                <div class="card-pledge hover"><div class="num-pledge">III</div><div class="text-pledge">赌注必须对等</div></div>
-                <div class="card-pledge hover"><div class="num-pledge">VI</div><div class="text-pledge">向盟约宣誓必须遵守</div></div>
-                <div class="card-pledge hover"><div class="num-pledge">IX</div><div class="text-pledge">以上规则绝对不变</div></div>
-                <div class="card-pledge hover"><div class="num-pledge">X</div><div class="text-pledge">大家一起和平地玩吧</div></div>
+            <div class="pledge-grid">
+                <!-- Repeat for 10 pledges -->
+                <div class="pledge-card"><div class="pledge-num">I</div><div class="pledge-text">禁止杀伤、战争与掠夺</div></div>
+                <div class="pledge-card"><div class="pledge-num">II</div><div class="pledge-text">所有纠纷通过游戏解决</div></div>
+                <div class="pledge-card"><div class="pledge-num">III</div><div class="pledge-text">赌注必须对等</div></div>
+                <div class="pledge-card"><div class="pledge-num">VI</div><div class="pledge-text">向盟约宣誓必须遵守</div></div>
+                <div class="pledge-card"><div class="pledge-num">IX</div><div class="pledge-text">规则绝对不变</div></div>
+                <div class="pledge-card"><div class="pledge-num">X</div><div class="pledge-text">大家一起和平地玩吧</div></div>
             </div>
         </section>
 
-        <section>
-            <h2 class="sec-title">IXSEED</h2>
-            <div class="world-tabs">
-                <button class="tab-btn active">16 RACES</button>
-            </div>
-            <div class="grid-chess">
-                <div class="card-chess rank-1 hover"><div class="chess-icon">♔</div><div class="chess-rank">I</div><div class="chess-name">Old Deus</div></div>
-                <div class="card-chess rank-high hover"><div class="chess-icon">♗</div><div class="chess-rank">VI</div><div class="chess-name">Flügel</div></div>
-                <div class="card-chess rank-mid hover"><div class="chess-icon">🨠</div><div class="chess-rank">XIV</div><div class="chess-name">Werebeast</div></div>
-                <div class="card-chess rank-imanity hover"><div class="chess-icon">♙</div><div class="chess-rank">XVI</div><div class="chess-name">Imanity</div></div>
+        <section id="world" class="anim-entry">
+            <h2 class="sec-title">IXSEED (16 RACES)</h2>
+            <div class="exceed-grid">
+                <div class="piece-card rank-god"><div class="piece-rank">I</div><div class="piece-icon">♔</div><div class="piece-name">Old Deus</div><div class="piece-desc">神灵种 / King</div></div>
+                <div class="piece-card"><div class="piece-rank">VI</div><div class="piece-icon">♗</div><div class="piece-name">Flügel</div><div class="piece-desc">天翼种 / Bishop</div></div>
+                <div class="piece-card rank-imanity"><div class="piece-rank">XVI</div><div class="piece-icon">♙</div><div class="piece-name">Imanity</div><div class="piece-desc">人类种 / Pawn</div></div>
             </div>
         </section>
 
-        <section>
+        <section id="characters" class="anim-entry">
             <h2 class="sec-title">PLAYERS</h2>
-            <div class="grid-char">
-                <div class="card-char hover"><div class="char-inner"><div class="char-front"><div class="char-img" style="background-image:url('sora.png')"></div><div class="char-name">SORA</div></div><div class="char-back"><p>空白 - 哥</p></div></div></div>
-                <div class="card-char hover"><div class="char-inner"><div class="char-front"><div class="char-img" style="background-image:url('shiro.png')"></div><div class="char-name">SHIRO</div></div><div class="char-back"><p>空白 - 妹</p></div></div></div>
-                <div class="card-char hover"><div class="char-inner"><div class="char-front"><div class="char-img" style="background-image:url('jibril.png')"></div><div class="char-name">JIBRIL</div></div><div class="char-back"><p>天翼种</p></div></div></div>
+            <div class="char-gallery">
+                <div class="char-card"><div class="char-inner"><div class="char-front"><div class="char-av" style="background-image:url('sora.png')"></div><div class="char-name">SORA</div></div><div class="char-back"><h3>空</h3><p>Imanity / Pawn</p></div></div></div>
+                <div class="char-card"><div class="char-inner"><div class="char-front"><div class="char-av" style="background-image:url('shiro.png')"></div><div class="char-name">SHIRO</div></div><div class="char-back"><h3>白</h3><p>Imanity / Pawn</p></div></div></div>
+                <div class="char-card"><div class="char-inner"><div class="char-front"><div class="char-av" style="background-image:url('jibril.png')"></div><div class="char-name">JIBRIL</div></div><div class="char-back"><h3>吉普莉尔</h3><p>Flügel / Bishop</p></div></div></div>
             </div>
         </section>
-        
-        <footer style="text-align:center; padding:40px; color:#555;">&copy; DISBOARD SYSTEM</footer>
     </div>
 
-    <!-- 3. READER OVERLAY -->
-    <div id="reader">
-        <div id="loader" class="hidden">
-            <div>INITIALIZING...</div>
-            <div class="load-bar"><div class="load-prog" id="bar"></div></div>
-        </div>
-
-        <div class="reader-head">
-            <span style="font-family:'Orbitron'; color:var(--cyan);">NOVEL DB</span>
-            <button class="btn btn-pink" style="padding:5px 15px;" onclick="closeReader()">EXIT</button>
-        </div>
-
-        <div class="reader-body">
-            <!-- Left: Index & Bookmarks -->
-            <div class="side-l">
-                <div class="side-tabs">
-                    <button class="side-tab active hover" onclick="tabSwitch('toc')">INDEX</button>
-                    <button class="side-tab hover" onclick="tabSwitch('bm')">MEMORY</button>
-                </div>
-                <div id="list-toc" class="side-content"></div>
-                <div id="list-bm" class="side-content hidden"></div>
-            </div>
-            
-            <!-- Center: Text -->
-            <div class="text-container">
-                <div id="text-out" class="text-content">
-                    <div style="text-align:center; margin-top:100px;">
-                        <p style="color:#666; margin-bottom:20px;">NO DATA</p>
-                        <button class="btn" onclick="document.getElementById('f-in').click()">LOAD FILE</button>
+    <!-- OVERLAY: PROFILE -->
+    <div id="profile-overlay" class="overlay-full">
+        <div class="ov-head"><span style="color:var(--gold)">PLAYER PROFILE</span><button class="btn" onclick="closeOverlay('profile')">CLOSE</button></div>
+        <div class="ov-body" style="overflow-y:auto;">
+            <div class="profile-container">
+                <div class="p-card">
+                    <div id="p-avatar" class="p-av"></div>
+                    <h2 id="p-username" style="color:var(--cyan)">User</h2>
+                    <div class="p-stats">
+                        <p>Rank: <span id="p-rank">16</span></p>
+                        <p>Exp: <span id="p-exp">0</span></p>
+                        <p>Coins: <span id="p-coins" style="color:var(--gold)">0</span></p>
+                        <p>UID: <span id="p-uid">---</span></p>
                     </div>
                 </div>
-                <div style="padding:15px; background:rgba(0,0,0,0.8); border-top:1px solid #333; display:flex; justify-content:center; gap:20px;">
-                    <button class="btn" onclick="turn(-1)">PREV</button>
-                    <span id="pg" style="align-self:center; font-family:'Orbitron'; color:#aaa;">0%</span>
-                    <button class="btn" onclick="turn(1)">NEXT</button>
-                    <div style="width:20px;"></div>
-                    <button class="btn" style="color:var(--gold); border-color:var(--gold);" onclick="saveBM()">SAVE</button>
-                </div>
-            </div>
-
-            <!-- Right: Comments -->
-            <div id="side-r" class="side-r">
-                <div style="padding:15px; border-bottom:1px solid #444; display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-family:'Orbitron'; color:var(--pink);">COMMENTS</span>
-                    <span onclick="toggleR()" class="hover" style="font-family:'Orbitron';">[X]</span>
-                </div>
-                <div id="cmt-list" class="cmt-list"></div>
-                <div style="padding:15px; background:rgba(0,0,0,0.5);">
-                    <textarea id="c-inp" class="inp" rows="2" style="text-align:left; resize:none;" placeholder="Type..."></textarea>
-                    <button class="btn" style="width:100%; margin-top:5px;" onclick="postCmt()">POST</button>
+                <div class="p-main">
+                    <h3>BIO</h3>
+                    <div id="p-bio" class="p-bio"></div>
+                    <button class="btn" onclick="editProfile()">EDIT PROFILE</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <input type="file" id="f-in" accept=".txt" style="display:none" onchange="fileReady(this)">
+    <!-- OVERLAY: FRIENDS & CHAT -->
+    <div id="chat-overlay" class="overlay-full">
+        <div class="ov-head"><span style="color:var(--pink)">FRIEND LINK</span><button class="btn" onclick="closeOverlay('chat')">CLOSE</button></div>
+        <div class="ov-body">
+            <div class="chat-list">
+                <div style="padding:15px; border-bottom:1px solid #333;">
+                    <input id="add-friend-inp" class="input-box" placeholder="Add Username" style="font-size:0.8rem; margin:0;">
+                    <button class="btn" style="width:100%; margin-top:5px; font-size:0.7rem;" onclick="addFriend()">ADD</button>
+                </div>
+                <div id="friend-list-container"></div>
+            </div>
+            <div class="chat-area">
+                <div id="chat-box" class="chat-msgs"></div>
+                <div style="padding:15px; background:#111; display:flex; gap:10px;">
+                    <input id="msg-inp" class="input-box" style="margin:0; text-align:left;" placeholder="Message...">
+                    <button class="btn" onclick="sendMsg()">SEND</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OVERLAY: READER -->
+    <div id="reader-overlay" class="overlay-full">
+        <div class="ov-head"><span style="color:var(--cyan)">DATABASE</span><button class="btn" onclick="closeReader()">EXIT</button></div>
+        <div class="ov-body">
+            <div class="sidebar-left" style="width:250px; background:rgba(0,0,0,0.5); border-right:1px solid var(--border);">
+                <div style="padding:10px; text-align:center; border-bottom:1px solid #333;">INDEX</div>
+                <div id="toc-list" style="flex:1; overflow-y:auto;"></div>
+            </div>
+            <div class="text-area-container" style="flex:1; display:flex; flex-direction:column;">
+                <div id="reader-content" class="reader-text"></div>
+                <div style="padding:10px; background:#111; display:flex; justify-content:center; gap:20px;">
+                    <button class="btn" onclick="turnPage(-1)">PREV</button>
+                    <button class="btn" onclick="turnPage(1)">NEXT</button>
+                </div>
+            </div>
+            <div id="side-r" class="side-r">
+                <div style="padding:10px; display:flex; justify-content:space-between;"><span style="color:var(--pink)">COMMENTS</span><span onclick="toggleR()" style="cursor:pointer">X</span></div>
+                <div id="cmt-list" style="flex:1; overflow:auto; padding:10px;"></div>
+                <div style="padding:10px;"><input id="c-inp" class="input-box" placeholder="Comment..."><button class="btn" style="width:100%" onclick="postCmt()">POST</button></div>
+            </div>
+        </div>
+    </div>
+    <input type="file" id="file" accept=".txt" style="display:none" onchange="loadFile(this)">
 
     <script>
-        // =================================================
-        // ⚠️ 你的 Google Script URL (必须填对!)
-        const API_URL = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec"; 
-        // =================================================
+        // ==========================================
+        // ⚠️ 你的 Google Script URL
+        const API = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec"; 
+        // ==========================================
 
-        let user = {name:"Guest", coins:0, rank:16};
-        let lines = [], curStart = 0, curLineIdx = -1;
-        let tmpReg = {};
-        const PAGE = 150;
+        let user = {};
+        let lines=[], curLine=0, curCmtLine=-1, activeFriend="";
 
         // --- API ---
-        async function api(data) {
-            try {
-                const r = await fetch(API_URL, {
-                    method:'POST', redirect:'follow',
-                    headers:{'Content-Type':'text/plain;charset=utf-8'},
-                    body:JSON.stringify(data)
-                });
-                return await r.json();
-            } catch(e) { console.error(e); return {status:'error', message:'Net Error'}; }
+        async function req(d) {
+            try { return await (await fetch(API, { method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(d) })).json(); }
+            catch(e) { console.error(e); return {status:'error', message:'Net Error'}; }
         }
 
         // --- Auth ---
         function toggleView(v) {
-            ['sec-login','sec-reg1','sec-reg2'].forEach(id=>document.getElementById(id).classList.add('hidden'));
-            document.getElementById('sec-'+v).classList.remove('hidden');
-            document.getElementById('auth-msg').innerText="";
-            document.getElementById('auth-title').innerText = v==='login'?"SYSTEM LOGIN":"REGISTER";
+            ['p-login','p-reg1','p-reg2'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+            document.getElementById('p-'+v).classList.remove('hidden');
         }
-
-        async function actLogin(btn) {
-            const e = document.getElementById('l-email').value, p = document.getElementById('l-pass').value;
-            if(!e||!p) return msg("Empty fields");
-            btn.disabled=true; btn.innerText="...";
-            const r = await api({action:'login', email:e, password:p});
+        async function apiLogin() {
+            const e=document.getElementById('i-email').value, p=document.getElementById('i-pass').value;
+            const r = await req({action:'login', email:e, password:p});
             if(r.status==='success') {
-                user = {name:r.username, coins:r.coins, rank:r.level};
+                user = r.data;
                 document.getElementById('auth-overlay').style.display='none';
                 document.body.classList.add('unlocked');
-                document.getElementById('u-name').innerText = user.name.toUpperCase();
-                document.getElementById('u-coins').innerText = `🪙 ${user.coins}`;
-                initFX();
-            } else { msg(r.message); btn.disabled=false; btn.innerText="CONNECT"; }
-        }
-
-        async function actGetCode(btn) {
-            const u=document.getElementById('r-user').value, e=document.getElementById('r-email').value, p=document.getElementById('r-pass').value;
-            if(!u||!e) return msg("Empty fields");
-            btn.disabled=true;
-            const r = await api({action:'req_code', email:e}); // Consistent with backend v25.0
-            if(r.status==='success') { tmpReg={u,e,p}; toggleView('reg2'); }
-            else { msg(r.message); btn.disabled=false; }
-        }
-
-        async function actConfirm(btn) {
-            const c=document.getElementById('r-code').value;
-            const r = await api({action:'register', username:tmpReg.u, email:tmpReg.e, password:tmpReg.p, code:c});
-            if(r.status==='success') { alert("Welcome!"); toggleView('login'); }
-            else msg(r.message);
-        }
-        function msg(t) { document.getElementById('auth-msg').innerText = t; }
-
-        // --- Reader ---
-        function openReader() { document.getElementById('reader').classList.add('active'); bmRender(); }
-        function closeReader() { document.getElementById('reader').classList.remove('active'); }
-        function fileReady(inp) {
-            const r = new FileReader();
-            r.onload = e => parse(e.target.result);
-            r.readAsText(inp.files[0]);
-        }
-        async function parse(txt) {
-            document.getElementById('loader').classList.remove('hidden');
-            lines = txt.split('\n');
-            const toc = document.getElementById('list-toc');
-            toc.innerHTML="";
-            let h="";
-            for(let i=0;i<lines.length;i+=2000) {
-                const end=Math.min(i+2000,lines.length);
-                for(let j=i;j<end;j++) {
-                    if(lines[j].match(/(Chapter|第.+章|序章|终章)/i) && lines[j].length<50)
-                        h+=`<div class="list-item hover" onclick="jump(${j})">${lines[j].trim()}</div>`;
-                }
-                document.getElementById('bar').style.width = Math.round((end/lines.length)*100)+"%";
-                await new Promise(r=>setTimeout(r,0));
-            }
-            toc.innerHTML=h;
-            jump(0);
-            document.getElementById('loader').classList.add('hidden');
-        }
-        function jump(i) { curStart=i; render(); }
-        function turn(d) { 
-            const n=curStart+d*PAGE; 
-            if(n>=0 && n<lines.length) { curStart=n; render(); } 
-        }
-        function render() {
-            const end=Math.min(curStart+PAGE, lines.length);
-            const sl=lines.slice(curStart, end);
-            let html = sl.map((l,i) => {
-                if(!l.trim()) return "<br>";
-                return `<div class="line">${l}<div class="bubble" onclick="openComm(${curStart+i})">💬</div></div>`;
-            }).join('');
-            
-            if(end>=lines.length) {
-                html += `<div style="margin-top:50px; border-top:2px solid var(--cyan); padding:30px; background:rgba(5,217,232,0.05);">
-                    <h3 style="color:var(--cyan); font-family:'Orbitron'">DISCUSSION</h3>
-                    <textarea id="d-inp" class="inp" style="text-align:left" placeholder="Share..."></textarea>
-                    <button class="btn" onclick="postDisc()">POST</button>
-                    <div id="d-list" style="margin-top:20px"></div>
-                </div>`;
-                loadDisc();
-            }
-            document.getElementById('text-out').innerHTML = html;
-            document.getElementById('text-out').scrollTop = 0;
-            document.getElementById('pg').innerText = Math.round((end/lines.length)*100)+"%";
-        }
-
-        // --- Social ---
-        function toggleR() { document.getElementById('side-r').classList.toggle('open'); }
-        async function openComm(idx) {
-            curLineIdx = idx;
-            document.getElementById('side-r').classList.add('open');
-            const div = document.getElementById('cmt-list');
-            div.innerHTML = "Loading...";
-            const r = await api({action:'get_line_comments', line_index:idx});
-            div.innerHTML = r.data.length ? "" : "No comments";
-            r.data.forEach(c => div.innerHTML += box(c,'cmt'));
-        }
-        async function postCmt() {
-            const t = document.getElementById('c-inp').value;
-            if(!t) return;
-            await api({action:'post_line_comment', line_index:curLineIdx, username:user.name, content:t});
-            document.getElementById('c-inp').value=""; openComm(curLineIdx);
-        }
-        async function loadDisc() {
-            const r = await api({action:'get_discussion'});
-            const div = document.getElementById('d-list');
-            if(div) div.innerHTML = r.data.map(d=>box(d,'disc')).join('');
-        }
-        async function postDisc() {
-            const t = document.getElementById('d-inp').value;
-            await api({action:'post_discussion', username:user.name, content:t});
-            document.getElementById('d-inp').value=""; loadDisc();
-        }
-        
-        function box(d, t) {
-            return `<div style="background:rgba(255,255,255,0.05); padding:10px; margin-bottom:10px; border-radius:5px;">
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--cyan)">
-                    <span>${d.user}</span> ${t==='disc'?`<span style="color:var(--gold)">🪙 ${d.coins}</span>`:''}
-                </div>
-                <div style="margin:5px 0; color:#ddd;">${d.content}</div>
-                <div style="display:flex; gap:10px; font-size:0.8rem; color:#888;">
-                    <span class="hover" onclick="act('like',${d.id},'${t}')">♥ ${d.likes}</span>
-                    ${t==='disc'?`<span class="hover" style="color:var(--gold)" onclick="act('tip',${d.id},'disc')">TIP</span>`:''}
-                </div>
-            </div>`;
-        }
-        async function act(a, id, t) {
-            if(user.name==='Guest') return alert("Login required");
-            if(a==='tip' && !confirm("Tip 1 coin?")) return;
-            const r = await api({action:'interact', sub_action:a, type:t, id:id, username:user.name, target_id:id}); // Corrected 'interact' action
-            if(r.status==='success') {
-                if(a==='tip') { user.coins=r.new_balance; document.getElementById('u-coins').innerText=`🪙 ${user.coins}`; }
-                if(t==='cmt') openComm(curLineIdx); else loadDisc();
+                document.getElementById('u-display').innerText = user.username.toUpperCase();
             } else alert(r.message);
         }
-
-        // --- Bookmarks ---
-        function tabSwitch(t) {
-            document.querySelectorAll('.side-tab').forEach(b=>b.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('list-toc').className = t==='toc'?'side-content':'hidden';
-            document.getElementById('list-bm').className = t==='bm'?'side-content':'hidden';
+        let tmpR={};
+        async function apiCode() {
+            const u=document.getElementById('r-user').value, e=document.getElementById('r-email').value, p=document.getElementById('r-pass').value;
+            const r = await req({action:'req_code', email:e});
+            if(r.status==='success') { tmpR={u,e,p}; toggleView('reg2'); alert(r.message); } else alert(r.message);
         }
-        function saveBM() {
-            let b = JSON.parse(localStorage.getItem('ngnl_bm')||'[]');
-            b.unshift({i:curStart, t:new Date().toLocaleDateString(), txt:lines[curStart].substr(0,20)+"..."});
-            localStorage.setItem('ngnl_bm', JSON.stringify(b));
-            bmRender(); alert("Saved");
-        }
-        function bmRender() {
-            const b = JSON.parse(localStorage.getItem('ngnl_bm')||'[]');
-            document.getElementById('list-bm').innerHTML = b.map((x,k)=>`
-                <div class="list-item hover" onclick="jump(${x.i})">
-                    <div><div style="font-size:0.7rem; color:var(--purple)">${x.t}</div><div>${x.txt}</div></div>
-                    <span style="color:var(--pink)" onclick="delBM(${k},event)">X</span>
-                </div>`).join('');
-        }
-        function delBM(k,e) {
-            e.stopPropagation();
-            let b = JSON.parse(localStorage.getItem('ngnl_bm'));
-            b.splice(k,1);
-            localStorage.setItem('ngnl_bm', JSON.stringify(b));
-            bmRender();
+        async function apiReg() {
+            const c=document.getElementById('r-code').value;
+            const r = await req({action:'register', username:tmpR.u, email:tmpR.e, password:tmpR.p, code:c});
+            if(r.status==='success') { alert("Success"); toggleView('login'); } else alert(r.message);
         }
 
-        // --- Visuals ---
-        function initFX() {
-            const c=document.getElementById('canvas-bg'), x=c.getContext('2d');
-            let w=window.innerWidth, h=window.innerHeight; c.width=w; c.height=h;
-            const p=Array.from({length:40},()=>({x:Math.random()*w,y:Math.random()*h,s:Math.random()+0.5,t:['♔','♕','♖'][Math.floor(Math.random()*3)]}));
-            function loop(){x.clearRect(0,0,w,h);p.forEach(i=>{i.y+=i.s;if(i.y>h)i.y=-20;x.fillStyle='rgba(255,255,255,0.1)';x.font='20px Arial';x.fillText(i.t,i.x,i.y)});requestAnimationFrame(loop);}
-            loop();
+        // --- Profile ---
+        function openProfile() {
+            document.getElementById('profile-overlay').classList.add('active');
+            document.getElementById('p-username').innerText = user.username;
+            document.getElementById('p-rank').innerText = user.rank;
+            document.getElementById('p-exp').innerText = user.exp;
+            document.getElementById('p-coins').innerText = user.coins;
+            document.getElementById('p-uid').innerText = user.uid;
+            document.getElementById('p-bio').innerText = user.bio;
+            document.getElementById('p-avatar').style.backgroundImage = user.avatar ? `url(${user.avatar})` : `url(sora.png)`;
         }
+        async function editProfile() {
+            const b = prompt("New Bio:", user.bio);
+            if(b!==null) {
+                await req({action:'update_profile', username:user.username, bio:b});
+                user.bio = b; openProfile();
+            }
+        }
+
+        // --- Friends & Chat ---
+        function openFriends() {
+            document.getElementById('chat-overlay').classList.add('active');
+            loadFriends();
+        }
+        async function loadFriends() {
+            const r = await req({action:'get_friends', username:user.username});
+            const div = document.getElementById('friend-list-container');
+            div.innerHTML = r.data.map(f => `<div class="friend-item" onclick="openChat('${f}')">${f}</div>`).join('');
+        }
+        async function addFriend() {
+            const t = document.getElementById('add-friend-inp').value;
+            if(t) { await req({action:'add_friend', username:user.username, target_user:t}); loadFriends(); }
+        }
+        async function openChat(f) {
+            activeFriend = f;
+            const r = await req({action:'get_msgs', username:user.username, target_user:f});
+            const box = document.getElementById('chat-box');
+            box.innerHTML = r.data.map(m => `<div class="msg ${m.sender===user.username?'me':''}">${m.content}</div>`).join('');
+        }
+        async function sendMsg() {
+            const t = document.getElementById('msg-inp').value;
+            if(t && activeFriend) {
+                await req({action:'send_msg', username:user.username, target_user:activeFriend, content:t});
+                document.getElementById('msg-inp').value=""; openChat(activeFriend);
+            }
+        }
+
+        // --- Reader ---
+        function openReader() { document.getElementById('reader-overlay').classList.add('active'); if(lines.length===0) document.getElementById('file').click(); }
+        function closeReader() { document.getElementById('reader-overlay').classList.remove('active'); }
+        function loadFile(i) {
+            const r = new FileReader();
+            r.onload=e=>{ lines=e.target.result.split('\n'); renderPage(0); genToc(); };
+            r.readAsText(i.files[0]);
+        }
+        function genToc() {
+            const d = document.getElementById('toc-list'); d.innerHTML="";
+            lines.forEach((l,i)=>{ if(l.match(/第.+章/)) d.innerHTML+=`<div style="padding:10px;border-bottom:1px solid #333;cursor:pointer" onclick="renderPage(${i})">${l}</div>` });
+        }
+        function renderPage(idx) {
+            curLine = idx;
+            const chunk = lines.slice(idx, idx+100);
+            document.getElementById('reader-content').innerHTML = chunk.map((l,i)=>`<div class="story-line">${l}<div class="bubble" onclick="openComm(${idx+i})">💬</div></div>`).join('');
+        }
+        function turnPage(d) { renderPage(curLine + d*100); }
+
+        // --- Comments ---
+        function toggleR() { document.getElementById('side-r').classList.toggle('open'); }
+        async function openComm(i) {
+            curCmtLine=i; document.getElementById('side-r').classList.add('open');
+            const r = await req({action:'get_line_comments', line_index:i});
+            document.getElementById('cmt-list').innerHTML = r.data.map(c=>`<div style="margin-bottom:10px;border-bottom:1px solid #333"><span style="color:var(--cyan)">${c.user}</span>: ${c.content}</div>`).join('');
+        }
+        async function postCmt() {
+            const t=document.getElementById('c-inp').value;
+            if(t) { await req({action:'post_line_comment', line_index:curCmtLine, username:user.username, content:t}); openComm(curCmtLine); }
+        }
+
+        function closeOverlay(id) { document.getElementById(id+'-overlay').classList.remove('active'); }
+
+        // Cursor
         const cur = document.getElementById('cursor');
-        document.addEventListener('mousemove', e=>{ cur.style.left=e.clientX+'px'; cur.style.top=e.clientY+'px'; });
-        document.body.addEventListener('mouseover', e=>{ if(e.target.closest('.hover')) cur.classList.add('hover'); else cur.classList.remove('hover'); });
+        document.addEventListener('mousemove', e=>{cur.style.left=e.clientX+'px'; cur.style.top=e.clientY+'px'});
+        document.addEventListener('mouseover', e=>{if(e.target.closest('.hover, .btn')) cur.classList.add('hover'); else cur.classList.remove('hover')});
     </script>
 </body>
 </html>
