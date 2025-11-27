@@ -128,30 +128,39 @@
         /* ================= 5. 角色卡片（扑克牌翻转） ================= */
         .char-gallery{display:flex;justify-content:center;gap:30px;flex-wrap:wrap;}
         .char-card{
-            width:240px;height:360px;perspective:1400px;position:relative;
-        }
-        .char-inner{
-            width:100%;height:100%;position:relative;transform-style:preserve-3d;
-            transition:transform .9s cubic-bezier(.19,1,.22,1),box-shadow .6s;
-        }
-        .char-card:hover .char-inner{
-            transform:rotateY(180deg) rotateZ(2deg) translateY(-6px);
-            box-shadow:0 30px 60px rgba(0,0,0,.8);
-        }
-        .char-face{
-            position:absolute;inset:0;border-radius:18px;overflow:hidden;
-            backface-visibility:hidden;border:1px solid var(--border);
-        }
-        .char-front{
-            background:radial-gradient(circle at 20% 0,var(--cyan),transparent 55%),radial-gradient(circle at 90% 110%,var(--pink),transparent 55%),#05030a;
-            display:flex;flex-direction:column;justify-content:flex-end;align-items:center;
-        }
-        .char-front img{
-            width:110%;height:auto;object-fit:cover;transform:translateY(-8px);
-            filter:drop-shadow(0 0 26px rgba(0,0,0,.8));
-            transition:transform .4s;
-        }
-        .char-card:hover .char-front img{transform:translateY(-14px) scale(1.02);}
+    width:240px;
+    height:360px;
+    perspective:1400px;
+    position:relative;
+}
+
+/* 让图片和下方文字在卡片内均匀分布 */
+.char-front{
+    background:radial-gradient(circle at 20% 0,var(--cyan),transparent 55%),
+               radial-gradient(circle at 90% 110%,var(--pink),transparent 55%),
+               #05030a;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 10px 0;
+}
+
+/* 关键：使用 contain，限制最大高度，取消负位移 */
+.char-front img{
+    width:100%;
+    height:auto;
+    max-height:260px;           /* 根据需要可以调，比如 250~280 */
+    object-fit:contain;
+    filter:drop-shadow(0 0 26px rgba(0,0,0,.8));
+    transition:transform .35s;
+}
+
+/* 悬停只做轻微缩放，不再向上移出卡片 */
+.char-card:hover .char-front img{
+    transform:scale(1.03);
+}
+
         .char-front-info{
             width:100%;padding:10px 15px 14px;background:linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.9));
             text-align:center;
@@ -205,6 +214,53 @@
         .exp-bar{width:100%;height:18px;background:#111;border-radius:9px;margin:8px 0;overflow:hidden;border:1px solid #444;padding:2px;}
         .exp-fill{height:100%;border-radius:7px;background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 0 10px var(--cyan);transition:width .8s ease-out;}
         .exp-text{font-family:'Orbitron';color:#ccc;text-align:right;font-size:.8rem;}
+        .rank-badge{
+            display:inline-block;
+            padding:4px 10px;
+            border-radius:999px;
+            font-family:'Orbitron';
+            font-size:.9rem;
+            letter-spacing:1px;
+            border:1px solid rgba(255,255,255,.3);
+            position:relative;
+            overflow:hidden;
+        }
+        .rank-tier-C{
+            box-shadow:0 0 8px rgba(5,217,232,.4);
+        }
+        .rank-tier-B{
+            box-shadow:0 0 12px rgba(217,5,232,.7);
+            animation:rankPulseB 2.5s infinite;
+        }
+        @keyframes rankPulseB{
+            0%,100%{transform:scale(1);box-shadow:0 0 10px rgba(217,5,232,.6);}
+            50%{transform:scale(1.05);box-shadow:0 0 22px rgba(5,217,232,.9);}
+        }
+        .rank-tier-A{
+            box-shadow:0 0 18px rgba(255,255,255,.9);
+        }
+        .rank-tier-A::before{
+            content:"";
+            position:absolute;
+            inset:-2px;
+            border-radius:inherit;
+            background:conic-gradient(from 0deg,var(--pink),var(--cyan),var(--purple),var(--pink));
+            animation:rankBorderSpin 3s linear infinite;
+            opacity:0.8;
+            z-index:-1;
+        }
+        .rank-tier-A::after{
+            content:"";
+            position:absolute;
+            inset:2px;
+            border-radius:inherit;
+            background:rgba(5,2,15,0.9);
+            z-index:-1;
+        }
+        @keyframes rankBorderSpin{
+            from{transform:rotate(0);}
+            to{transform:rotate(360deg);}
+        }
         .chat-view{display:flex;flex-direction:column;height:100%;}
         .chat-header{padding:10px 18px;border-bottom:1px solid #333;font-family:'Orbitron';font-size:1rem;color:var(--cyan);}
         .chat-box{flex:1;padding:16px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
@@ -570,8 +626,8 @@
                 </div>
                 <div class="stat-grid">
                     <div class="stat-box">
-                        <div style="font-size:.8rem;color:#aaa;">RANK</div>
-                        <div id="profile-rank" style="font-size:2rem;">16</div>
+                        <div style="font-size:.8rem;color:#aaa;">RACE / TITLE</div>
+                        <div id="profile-rank" class="rank-badge">Imanity · Novice Player</div>
                     </div>
                     <div class="stat-box">
                         <div style="font-size:.8rem;color:#aaa;">COINS</div>
@@ -715,7 +771,7 @@
 
 <script>
 /* ==========================================================
-   NGNL SYSTEM FRONTEND v4.2  (匹配后端 v4.2)
+   NGNL SYSTEM FRONTEND v4.2  (匹配后端：种族 / 称号 / expToNext)
    ========================================================== */
 
 const API_URL = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec";
@@ -739,6 +795,9 @@ const state = {
         name:"Guest",
         rank:16,
         exp:0,
+        expToNext:100,
+        race:"",
+        rankTitle:"",
         coins:0,
         bio:"",
         avatar:"",
@@ -765,15 +824,19 @@ const state = {
 /* 把后端 profile 对象同步到前端 state 的统一函数 */
 function applyProfileFromServer(p){
     if(!p) return;
-    state.user.name     = p.username;
-    state.user.rank     = p.rank || 16;
-    state.user.exp      = p.exp  || 0;
-    state.user.coins    = p.coins|| 0;
-    state.user.bio      = p.bio  || "";
-    state.user.avatar   = p.avatar || "";
-    state.user.frameKey = p.frameKey || "";
-    state.user.titleKey = p.titleKey || "";
-    state.user.sigKey   = p.sigKey   || "";
+    state.user.name       = p.username;
+    state.user.rank       = p.rank || 16;
+    // ✅ 使用后端返回的 rankRace (兼容旧的 p.race)
+    state.user.race       = p.rankRace || p.race || "";
+    state.user.rankTitle  = p.rankTitle || "";
+    state.user.exp        = p.exp  || 0;
+    state.user.expToNext  = p.expToNext || 100;
+    state.user.coins      = p.coins|| 0;
+    state.user.bio        = p.bio  || "";
+    state.user.avatar     = p.avatar || "";
+    state.user.frameKey   = p.frameKey || "";
+    state.user.titleKey   = p.titleKey || "";
+    state.user.sigKey     = p.sigKey   || "";
     sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
     ui.updateHUD();
     ui.updateProfileView();
@@ -854,20 +917,45 @@ const ui={
         const sigLabel   = SHOP_STYLES[state.user.sigKey]?.label   || "";
 
         document.getElementById('profile-name').innerText=state.user.name;
-        document.getElementById('profile-rank').innerText=state.user.rank;
         document.getElementById('profile-coins').innerText=`🪙 ${state.user.coins}`;
         document.getElementById('profile-bio').innerText=state.user.bio||"This player is lazy.";
         document.getElementById('profile-signature').innerText = sigLabel || "";
         document.getElementById('profile-title').innerText = titleLabel || "";
 
-        const expFill=document.getElementById('profile-exp-fill');
-        expFill.style.width=`${Math.min(100,state.user.exp)}%`;
-        document.getElementById('profile-exp-text').innerText=`${state.user.exp} / 100`;
+        // ====== RANK 显示：种族 + 称号 ======
+        const rankBox = document.getElementById('profile-rank');
+        const race    = state.user.race || "Imanity";
+        const rTitle  = state.user.rankTitle || ("Rank " + state.user.rank);
+        rankBox.textContent = `${race} · ${rTitle}`;
 
+        // 根据 rank 设置不同炫酷程度
+        rankBox.classList.remove('rank-tier-C','rank-tier-B','rank-tier-A');
+        if(state.user.rank <= 4){
+            rankBox.classList.add('rank-tier-A'); // 顶级：旧神/龙/天翼
+        }else if(state.user.rank <= 8){
+            rankBox.classList.add('rank-tier-B'); // 中层种
+        }else{
+            rankBox.classList.add('rank-tier-C'); // 新手、人类阶段
+        }
+
+        // ====== 经验条：使用 expToNext 动态需求 ======
+        const need   = state.user.expToNext || 100;
+        const expNow = state.user.exp || 0;
+        const expFill=document.getElementById('profile-exp-fill');
+
+        if(state.user.rank === 1){
+            expFill.style.width = "100%";
+            document.getElementById('profile-exp-text').innerText = "MAX (Old Deus)";
+        }else{
+            const percent = Math.max(0, Math.min(100, Math.round(expNow / need * 100)));
+            expFill.style.width = percent + "%";
+            document.getElementById('profile-exp-text').innerText = `${expNow} / ${need}`;
+        }
+
+        // 头像 / 框
         const avImg=document.getElementById('profile-avatar');
         avImg.src=state.user.avatar || "sora.png";
 
-        // 设置头像框外观
         const frameEl=document.getElementById('profile-avatar-frame');
         frameEl.classList.remove('frame-elkia','frame-flugel','frame-warbeast');
         const fk=state.user.frameKey;
@@ -875,7 +963,6 @@ const ui={
             frameEl.classList.add(SHOP_STYLES[fk].class);
         }
 
-        // 设置设置面板初始值
         document.getElementById('settings-bio').value=state.user.bio||"";
         document.getElementById('settings-avatar').value=state.user.avatar||"";
     },
@@ -924,6 +1011,27 @@ const ui={
                     titleKey:p.titleKey,
                     sigKey:p.sigKey
                 });
+
+                const race = p.rankRace || "Imanity";
+                const rTitle = p.rankTitle || ("Rank " + p.rank);
+                const need = p.expToNext || 0;
+                const expNow = p.exp || 0;
+
+                let badgeClass = "rank-badge ";
+                if(p.rank <= 4) badgeClass += "rank-tier-A";
+                else if(p.rank <= 8) badgeClass += "rank-tier-B";
+                else badgeClass += "rank-tier-C";
+
+                let expText, percent;
+                if(p.rank === 1){
+                    expText = "MAX (Old Deus)";
+                    percent = 100;
+                }else{
+                    const n = need || 1;
+                    percent = Math.max(0, Math.min(100, Math.round(expNow / n * 100)));
+                    expText = `${expNow} / ${n}`;
+                }
+
                 container.innerHTML=`
                     <div style="display:flex;align-items:center;gap:14px;">
                         ${style.avatarHTML}
@@ -934,8 +1042,21 @@ const ui={
                         </div>
                     </div>
                     <div class="stat-grid" style="margin-top:20px;grid-template-columns:1fr 1fr;gap:15px;">
-                        <div class="stat-box"><div>RANK</div><div style="font-size:1.5rem">${p.rank}</div></div>
-                        <div class="stat-box"><div>COINS</div><div style="font-size:1.5rem">🪙 ${p.coins}</div></div>
+                        <div class="stat-box">
+                            <div style="font-size:.8rem;color:#aaa;">RACE / TITLE</div>
+                            <div class="${badgeClass}">${race} · ${rTitle}</div>
+                        </div>
+                        <div class="stat-box">
+                            <div style="font-size:.8rem;color:#aaa;">COINS</div>
+                            <div style="font-size:1.5rem;">🪙 ${p.coins}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:18px;">
+                        <div class="exp-text">EXP</div>
+                        <div class="exp-bar">
+                            <div class="exp-fill" style="width:${percent}%;"></div>
+                        </div>
+                        <div class="exp-text">${expText}</div>
                     </div>`;
             }else{
                 container.innerHTML=`<p style="color:var(--pink);">${res.message}</p>`;
@@ -964,17 +1085,8 @@ const auth={
         ui.showAuthError("Connecting...");
         const res=await apiRequest({action:'login',email,password});
         if(res.status==='success'){
-            applyProfileFromServer({
-                username:res.username,
-                rank:res.rank,
-                exp:res.exp,
-                coins:res.coins,
-                bio:res.bio,
-                avatar:res.avatar,
-                frameKey:res.frameKey,
-                titleKey:res.titleKey,
-                sigKey:res.sigKey
-            });
+            // ✅ 直接用后端整包数据（包含 rankRace / rankTitle / expToNext）
+            applyProfileFromServer(res);
             state.isLoggedIn=true;
             ui.elements.authOverlay.classList.remove('active');
             ui.elements.body.classList.remove('auth-active');
@@ -1654,7 +1766,7 @@ document.addEventListener('DOMContentLoaded',async ()=>{
             ui.elements.body.classList.remove('auth-active');
             ui.updateHUD();
             ui.updateProfileView();
-            // 用后端数据刷新一次（拿到最新的 frame/title/signature）
+            // 用后端数据刷新一次（拿到最新的 race / title / frame 等）
             const res=await apiRequest({action:'get_profile'});
             if(res.status==='success') applyProfileFromServer(res.profile);
         }catch(e){
