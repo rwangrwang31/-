@@ -212,6 +212,22 @@
         .msg.me{align-self:flex-end;background:linear-gradient(45deg,var(--cyan),#00b8c5);color:black;border-bottom-right-radius:4px;}
         .msg.them{align-self:flex-start;background:#262626;border:1px solid #444;border-bottom-left-radius:4px;}
         .chat-input{padding:8px 16px;border-top:1px solid #333;display:flex;gap:8px;align-items:center;}
+        /* 聊天输入框下方的表情条 */
+.chat-emoji-bar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    font-size:1.1rem;
+    margin:4px 0;
+}
+.chat-emoji-bar span{
+    cursor:pointer;
+    padding:2px 6px;
+}
+.chat-emoji-bar span:hover{
+    transform:scale(1.1);
+}
+
 
         /* Settings view */
         .settings-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:18px;margin-top:10px;}
@@ -304,13 +320,49 @@
         .mention-link:hover{text-decoration:underline;}
         .cmt-user{display:flex;align-items:center;gap:6px;font-size:.85rem;}
         .mini-avatar{
-            width:22px;height:22px;border-radius:50%;background:#333;overflow:hidden;border:1px solid rgba(255,255,255,.2);
-        }
-        .mini-avatar img{width:100%;height:100%;object-fit:cover;}
-        .avatar-frame{
-            box-shadow:0 0 8px rgba(255,215,0,.6);
-        }
-        .cmt-meta{font-size:.7rem;color:#777;margin-top:2px;}
+    width:22px;height:22px;border-radius:50%;background:#333;
+    overflow:hidden;border:1px solid rgba(255,255,255,.2);
+}
+.mini-avatar img{width:100%;height:100%;object-fit:cover;}
+
+/* 基础头像框容器 */
+.avatar-frame{
+    border-radius:50%;
+    overflow:hidden;
+}
+
+/* Elkia 金色头像框 */
+.avatar-frame.frame-elkia{
+    border:2px solid var(--gold);
+    box-shadow:0 0 14px rgba(255,215,0,.9);
+}
+
+/* Flügel 紫色光环头像框 */
+.avatar-frame.frame-flugel{
+    border:2px solid #ff7bff;
+    box-shadow:0 0 14px rgba(255,123,255,.9);
+}
+
+/* Warbeast 霓虹头像框 */
+.avatar-frame.frame-warbeast{
+    border:2px solid var(--cyan);
+    box-shadow:0 0 14px rgba(5,217,232,.9);
+}
+
+/* 名称 + 称号 + 签名的统一样式 */
+.user-name{font-weight:bold;cursor:pointer;}
+.user-title{
+    margin-left:6px;
+    padding:2px 6px;
+    border-radius:10px;
+    font-size:.7rem;
+    background:linear-gradient(90deg,var(--pink),var(--purple));
+}
+.user-signature{
+    font-size:.75rem;
+    color:#aaa;
+}
+
         .cmt-content{margin-top:4px;white-space:pre-wrap;font-size:.85rem;}
         .cmt-actions{font-size:.78rem;color:#888;display:flex;gap:10px;margin-top:4px;}
         .cmt-actions span{cursor:pointer;}
@@ -662,828 +714,960 @@
 </div>
 
 <script>
-    // ==========================================================
-    // NGNL SYSTEM FRONTEND v40.0
-    // ==========================================================
+/* ==========================================================
+   NGNL SYSTEM FRONTEND v4.2  (匹配后端 v4.2)
+   ========================================================== */
 
-    const API_URL = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec";
 
-    const state = {
-        user:{name:"Guest",rank:16,exp:0,coins:0,bio:"",avatar:"",frameKey:"",signature:"",title:"",ownedItems:[]},
-        isLoggedIn:false,
-        activeChat:null,
-        novel:{
-            lines:[],
-            comments:{},
-            activeCommentLine:-1,
-            toc:[],
-            bookmarks:[],
-            linesPerPage:24,
-            pages:[],
-            currentPage:0,
-            totalPages:0,
-            initialized:false
+/* --- 商店物品样式映射：用于显示头像框 / 称号 / 签名文本 --- */
+const SHOP_STYLES = {
+    frame_elkia:   { class: "frame-elkia" },
+    frame_flugel:  { class: "frame-flugel" },
+    frame_warbeast:{ class: "frame-warbeast" },
+
+    title_blank:   { label: "『　』" },
+    title_king:    { label: "KING OF GAMES" },
+    title_hardcore:{ label: "HARDCORE GAMER" },
+
+    sig_ciallo:    { label: "Ciallo～(≧▽≦)～" },
+    sig_blank:     { label: "We are 『　』" }
+};
+
+const state = {
+    user:{
+        name:"Guest",
+        rank:16,
+        exp:0,
+        coins:0,
+        bio:"",
+        avatar:"",
+        frameKey:"",
+        titleKey:"",
+        sigKey:""
+    },
+    isLoggedIn:false,
+    activeChat:null,
+    novel:{
+        lines:[],
+        comments:{},
+        activeCommentLine:-1,
+        toc:[],
+        bookmarks:[],
+        linesPerPage:24,
+        pages:[],
+        currentPage:0,
+        totalPages:0,
+        initialized:false
+    }
+};
+
+/* 把后端 profile 对象同步到前端 state 的统一函数 */
+function applyProfileFromServer(p){
+    if(!p) return;
+    state.user.name     = p.username;
+    state.user.rank     = p.rank || 16;
+    state.user.exp      = p.exp  || 0;
+    state.user.coins    = p.coins|| 0;
+    state.user.bio      = p.bio  || "";
+    state.user.avatar   = p.avatar || "";
+    state.user.frameKey = p.frameKey || "";
+    state.user.titleKey = p.titleKey || "";
+    state.user.sigKey   = p.sigKey   || "";
+    sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
+    ui.updateHUD();
+    ui.updateProfileView();
+}
+
+async function apiRequest(payload){
+    if(!API_URL.startsWith('https')){
+        const errorTarget=document.getElementById('auth-msg');
+        if(errorTarget && !state.isLoggedIn){
+            errorTarget.innerText="API URL is not configured.";
         }
-    };
+        console.error("API URL is not configured.");
+        return {status:'error',message:'API URL not configured.'};
+    }
+    if(state.isLoggedIn){
+        payload.username=state.user.name;   // 发送当前用户名给后端
+    }
+    try{
+        const response=await fetch(API_URL,{
+            method:'POST',
+            mode:'cors',
+            cache:'no-cache',
+            headers:{'Content-Type':'text/plain;charset=utf-8'},
+            body:JSON.stringify(payload),
+            redirect:'follow'
+        });
+        return await response.json();
+    }catch(e){
+        console.error("API Error:",e);
+        return {status:'error',message:'Network or server error.'};
+    }
+}
 
-    async function apiRequest(payload){
-        if(!API_URL.startsWith('https')){
-            const errorTarget=document.getElementById('auth-msg');
-            if(errorTarget && !state.isLoggedIn){
-                errorTarget.innerText="API URL is not configured.";
+/* ================= UI & 用户样式渲染 =================== */
+
+const ui={
+    elements:{
+        authOverlay:document.getElementById('auth-overlay'),
+        body:document.getElementById('body'),
+        authMsg:document.getElementById('auth-msg'),
+        hudUsername:document.getElementById('hud-username'),
+        hudCoins:document.getElementById('hud-coins'),
+    },
+
+    showModal(id){
+        if(!state.isLoggedIn && !['auth-overlay','profile-viewer-overlay'].includes(id)){
+            alert("Please log in to access this feature.");
+            this.elements.body.classList.add('auth-active');
+            this.elements.authOverlay.classList.add('active');
+            return;
+        }
+        this.hideAllModals();
+        const m=document.getElementById(id);
+        if(m) m.classList.add('active');
+        if(id==='user-overlay') social.init();
+    },
+    hideAllModals(){
+        document.querySelectorAll('.modal-layer').forEach(m=>m.classList.remove('active'));
+    },
+
+    switchAuth(view){
+        ['login','register','confirm'].forEach(id=>document.getElementById('form-'+id).classList.add('hidden'));
+        document.getElementById('form-'+view).classList.remove('hidden');
+        document.getElementById('auth-head').innerText=view==='login'?'SYSTEM LOGIN':'PLAYER REGISTRATION';
+        this.elements.authMsg.innerText='';
+    },
+    showAuthError(msg){this.elements.authMsg.innerText=msg;},
+
+    updateHUD(){
+        this.elements.hudUsername.innerText=state.user.name.toUpperCase();
+        this.elements.hudCoins.innerText=`🪙 ${state.user.coins}`;
+        const shopCoins=document.getElementById('shop-coins');
+        if(shopCoins) shopCoins.innerText=state.user.coins;
+    },
+
+    updateProfileView(){
+        const titleLabel = SHOP_STYLES[state.user.titleKey]?.label || "";
+        const sigLabel   = SHOP_STYLES[state.user.sigKey]?.label   || "";
+
+        document.getElementById('profile-name').innerText=state.user.name;
+        document.getElementById('profile-rank').innerText=state.user.rank;
+        document.getElementById('profile-coins').innerText=`🪙 ${state.user.coins}`;
+        document.getElementById('profile-bio').innerText=state.user.bio||"This player is lazy.";
+        document.getElementById('profile-signature').innerText = sigLabel || "";
+        document.getElementById('profile-title').innerText = titleLabel || "";
+
+        const expFill=document.getElementById('profile-exp-fill');
+        expFill.style.width=`${Math.min(100,state.user.exp)}%`;
+        document.getElementById('profile-exp-text').innerText=`${state.user.exp} / 100`;
+
+        const avImg=document.getElementById('profile-avatar');
+        avImg.src=state.user.avatar || "sora.png";
+
+        // 设置头像框外观
+        const frameEl=document.getElementById('profile-avatar-frame');
+        frameEl.classList.remove('frame-elkia','frame-flugel','frame-warbeast');
+        const fk=state.user.frameKey;
+        if(fk && SHOP_STYLES[fk] && SHOP_STYLES[fk].class){
+            frameEl.classList.add(SHOP_STYLES[fk].class);
+        }
+
+        // 设置设置面板初始值
+        document.getElementById('settings-bio').value=state.user.bio||"";
+        document.getElementById('settings-avatar').value=state.user.avatar||"";
+    },
+
+    /* 任何地方显示头像框/称号/签名都用这个统一渲染 */
+    renderUserStyle(src){
+        const name = src.user || state.user.name;
+        const avatar = src.avatar || "";
+        const frameKey = src.frameKey || "";
+        const titleKey = src.titleKey || "";
+        const sigKey   = src.sigKey || "";
+
+        const frameClass = frameKey && SHOP_STYLES[frameKey]?.class ? SHOP_STYLES[frameKey].class : "";
+        const titleLabel = titleKey && SHOP_STYLES[titleKey]?.label ? SHOP_STYLES[titleKey].label : "";
+        const sigLabel   = sigKey && SHOP_STYLES[sigKey]?.label ? SHOP_STYLES[sigKey].label : "";
+
+        const avatarHTML = `
+            <div class="mini-avatar avatar-frame ${frameClass}">
+                ${avatar ? `<img src="${avatar}" alt="">` : ""}
+            </div>`;
+
+        const nameHTML = `
+            <span class="user-name" onclick="ui.showOtherUserProfile('${name}')">${name}</span>
+            ${titleLabel ? `<span class="user-title">${titleLabel}</span>` : ""}`;
+
+        const subHTML = sigLabel ? `<span class="user-signature">${sigLabel}</span>` : "";
+
+        return { avatarHTML, nameHTML, subHTML };
+    },
+
+    showOtherUserProfile(username){
+        if(username===state.user.name){
+            ui.showModal('user-overlay');
+            return;
+        }
+        const container=document.getElementById('profile-viewer-content');
+        container.innerHTML=`<p>Loading ${username}'s profile...</p>`;
+        document.getElementById('profile-viewer-overlay').classList.add('active');
+        apiRequest({action:'get_profile',target_user:username}).then(res=>{
+            if(res.status==='success'){
+                const p=res.profile;
+                const style = ui.renderUserStyle({
+                    user:p.username,
+                    avatar:p.avatar,
+                    frameKey:p.frameKey,
+                    titleKey:p.titleKey,
+                    sigKey:p.sigKey
+                });
+                container.innerHTML=`
+                    <div style="display:flex;align-items:center;gap:14px;">
+                        ${style.avatarHTML}
+                        <div>
+                            <div>${style.nameHTML}</div>
+                            <div style="margin-top:4px;">${style.subHTML || ""}</div>
+                            <div style="color:#aaa;font-size:.85rem;margin-top:6px;">${p.bio||""}</div>
+                        </div>
+                    </div>
+                    <div class="stat-grid" style="margin-top:20px;grid-template-columns:1fr 1fr;gap:15px;">
+                        <div class="stat-box"><div>RANK</div><div style="font-size:1.5rem">${p.rank}</div></div>
+                        <div class="stat-box"><div>COINS</div><div style="font-size:1.5rem">🪙 ${p.coins}</div></div>
+                    </div>`;
+            }else{
+                container.innerHTML=`<p style="color:var(--pink);">${res.message}</p>`;
             }
-            console.error("API URL is not configured.");
-            return {status:'error',message:'API URL not configured.'};
-        }
-        if(state.isLoggedIn){
-            payload.username=state.user.name;
-        }
-        try{
-            const response=await fetch(API_URL,{
-                method:'POST',
-                mode:'cors',
-                cache:'no-cache',
-                headers:{'Content-Type':'text/plain;charset=utf-8'},
-                body:JSON.stringify(payload),
-                redirect:'follow'
+        });
+    },
+
+    switchProfileTab(tab){
+        ['stats','chat','settings'].forEach(t=>{
+            document.getElementById('view-'+t).classList.add('hidden');
+            document.getElementById('tab-'+t).classList.remove('active');
+        });
+        document.getElementById('view-'+tab).classList.remove('hidden');
+        document.getElementById('tab-'+tab).classList.add('active');
+    }
+};
+
+/* ================== 认证 ================== */
+
+const auth={
+    tempRegData:{},
+    async login(){
+        const email=document.getElementById('login-email').value.trim();
+        const password=document.getElementById('login-pass').value;
+        if(!email||!password) return ui.showAuthError("Email and password are required.");
+        ui.showAuthError("Connecting...");
+        const res=await apiRequest({action:'login',email,password});
+        if(res.status==='success'){
+            applyProfileFromServer({
+                username:res.username,
+                rank:res.rank,
+                exp:res.exp,
+                coins:res.coins,
+                bio:res.bio,
+                avatar:res.avatar,
+                frameKey:res.frameKey,
+                titleKey:res.titleKey,
+                sigKey:res.sigKey
             });
-            return await response.json();
-        }catch(e){
-            console.error("API Error:",e);
-            return {status:'error',message:'Network or server error.'};
+            state.isLoggedIn=true;
+            ui.elements.authOverlay.classList.remove('active');
+            ui.elements.body.classList.remove('auth-active');
+            ui.showAuthError("");
+        }else ui.showAuthError(res.message);
+    },
+    async requestCode(){
+        const user=document.getElementById('reg-user').value.trim();
+        const email=document.getElementById('reg-email').value.trim();
+        const pass=document.getElementById('reg-pass').value;
+        if(!user||!email||!pass) return ui.showAuthError("All fields are required.");
+        const btn=document.getElementById('reg-code-btn');
+        btn.disabled=true;btn.innerText="REQUESTING...";
+        ui.showAuthError("Requesting code...");
+        const res=await apiRequest({action:'request_code',email});
+        btn.disabled=false;btn.innerText="GET CODE";
+        if(res.status==='success'){
+            this.tempRegData={user,email,pass};
+            ui.switchAuth('confirm');
+            alert(res.message);
+        }else ui.showAuthError(res.message);
+    },
+    async register(){
+        const code=document.getElementById('reg-code').value.trim();
+        if(!code) return ui.showAuthError("Verification code is required.");
+        ui.showAuthError("Registering...");
+        const payload={
+            action:'register',
+            username:this.tempRegData.user,
+            email:this.tempRegData.email,
+            password:this.tempRegData.pass,
+            code
+        };
+        const res=await apiRequest(payload);
+        if(res.status==='success'){
+            alert("Registration successful! Please log in.");
+            ui.switchAuth('login');
+        }else ui.showAuthError(res.message);
+    },
+    logout(){
+        if(confirm("Are you sure you want to log out?")){
+            sessionStorage.removeItem('ngnlUser');
+            window.location.reload();
         }
     }
+};
 
-    const ui={
-        elements:{
-            authOverlay:document.getElementById('auth-overlay'),
-            body:document.getElementById('body'),
-            authMsg:document.getElementById('auth-msg'),
-            hudUsername:document.getElementById('hud-username'),
-            hudCoins:document.getElementById('hud-coins'),
-        },
-        showModal(id){
-            if(!state.isLoggedIn && !['auth-overlay','profile-viewer-overlay'].includes(id)){
-                alert("Please log in to access this feature.");
-                this.elements.body.classList.add('auth-active');
-                this.elements.authOverlay.classList.add('active');
-                return;
-            }
-            this.hideAllModals();
-            const m=document.getElementById(id);
-            if(m) m.classList.add('active');
-            if(id==='user-overlay') social.init();
-        },
-        hideAllModals(){
-            document.querySelectorAll('.modal-layer').forEach(m=>m.classList.remove('active'));
-        },
-        switchAuth(view){
-            ['login','register','confirm'].forEach(id=>document.getElementById('form-'+id).classList.add('hidden'));
-            document.getElementById('form-'+view).classList.remove('hidden');
-            document.getElementById('auth-head').innerText=view==='login'?'SYSTEM LOGIN':'PLAYER REGISTRATION';
-            this.elements.authMsg.innerText='';
-        },
-        showAuthError(msg){this.elements.authMsg.innerText=msg;},
-        updateHUD(){
-            this.elements.hudUsername.innerText=state.user.name.toUpperCase();
-            this.elements.hudCoins.innerText=`🪙 ${state.user.coins}`;
-            document.getElementById('shop-coins').innerText=state.user.coins;
-        },
-        updateProfileView(){
-            document.getElementById('profile-name').innerText=state.user.name;
-            document.getElementById('profile-rank').innerText=state.user.rank;
-            document.getElementById('profile-coins').innerText=`🪙 ${state.user.coins}`;
-            document.getElementById('profile-bio').innerText=state.user.bio||"This player is lazy.";
-            document.getElementById('profile-signature').innerText=state.user.signature||"";
-            document.getElementById('profile-exp-fill').style.width=`${state.user.exp}%`;
-            document.getElementById('profile-exp-text').innerText=`${state.user.exp} / 100`;
-            document.getElementById('profile-title').innerText=state.user.title||"";
-            const avImg=document.getElementById('profile-avatar');
-            if(state.user.avatar) avImg.src=state.user.avatar; else avImg.src="sora.png";
-            const frameEl=document.getElementById('profile-avatar-frame');
-            frameEl.classList.toggle('avatar-frame',!!state.user.frameKey);
-            document.getElementById('settings-bio').value=state.user.bio||"";
-            document.getElementById('settings-avatar').value=state.user.avatar||"";
-            document.getElementById('settings-signature').value=state.user.signature||"";
-        },
-        showOtherUserProfile(username){
-            if(username===state.user.name){
-                ui.showModal('user-overlay');
-                return;
-            }
-            const container=document.getElementById('profile-viewer-content');
-            container.innerHTML=`<p>Loading ${username}'s profile...</p>`;
-            document.getElementById('profile-viewer-overlay').classList.add('active');
-            apiRequest({action:'get_profile',target_user:username}).then(res=>{
-                if(res.status==='success'){
-                    const p=res.profile;
-                    container.innerHTML=`
-                        <h2 style="color:var(--cyan);font-family:'Orbitron'">${p.username}</h2>
-                        <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
-                            <div class="mini-avatar avatar-frame" style="width:48px;height:48px;">${p.avatar?`<img src="${p.avatar}">`:""}</div>
-                            <div>
-                                <div style="color:var(--gold);font-size:.8rem;">${p.title||""}</div>
-                                <div style="color:#aaa;font-size:.85rem;margin-top:2px;">${p.bio||""}</div>
-                            </div>
-                        </div>
-                        <div class="stat-grid" style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:15px;">
-                            <div class="stat-box"><div>RANK</div><div style="font-size:1.5rem">${p.rank}</div></div>
-                            <div class="stat-box"><div>COINS</div><div style="font-size:1.5rem">🪙 ${p.coins}</div></div>
-                        </div>`;
-                }else{
-                    container.innerHTML=`<p style="color:var(--pink);">${res.message}</p>`;
-                }
-            });
-        },
-        switchProfileTab(tab){
-            ['stats','chat','settings'].forEach(t=>{
-                document.getElementById('view-'+t).classList.add('hidden');
-                document.getElementById('tab-'+t).classList.remove('active');
-            });
-            document.getElementById('view-'+tab).classList.remove('hidden');
-            document.getElementById('tab-'+tab).classList.add('active');
-        }
-    };
+/* ================== 社交 & 好友系统 ================== */
 
-    const auth={
-        tempRegData:{},
-        async login(){
-            const email=document.getElementById('login-email').value.trim();
-            const password=document.getElementById('login-pass').value;
-            if(!email||!password) return ui.showAuthError("Email and password are required.");
-            ui.showAuthError("Connecting...");
-            const res=await apiRequest({action:'login',email,password});
-            if(res.status==='success'){
-                state.user={
-                    name:res.username,rank:res.rank,exp:res.exp,coins:res.coins,
-                    bio:res.bio,avatar:res.avatar,frameKey:res.frameKey||"",
-                    signature:res.signature||"",title:res.title||"",ownedItems:JSON.parse(res.ownedItems||"[]")
-                };
-                state.isLoggedIn=true;
-                sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
-                ui.elements.authOverlay.classList.remove('active');
-                ui.elements.body.classList.remove('auth-active');
-                ui.updateHUD();
-                ui.updateProfileView();
-                ui.showAuthError("");
-            }else ui.showAuthError(res.message);
-        },
-        async requestCode(){
-            const user=document.getElementById('reg-user').value.trim();
-            const email=document.getElementById('reg-email').value.trim();
-            const pass=document.getElementById('reg-pass').value;
-            if(!user||!email||!pass) return ui.showAuthError("All fields are required.");
-            const btn=document.getElementById('reg-code-btn');
-            btn.disabled=true;btn.innerText="REQUESTING...";
-            ui.showAuthError("Requesting code...");
-            const res=await apiRequest({action:'request_code',email});
-            btn.disabled=false;btn.innerText="GET CODE";
-            if(res.status==='success'){
-                this.tempRegData={user,email,pass};
-                ui.switchAuth('confirm');
-                alert(res.message);
-            }else ui.showAuthError(res.message);
-        },
-        async register(){
-            const code=document.getElementById('reg-code').value.trim();
-            if(!code) return ui.showAuthError("Verification code is required.");
-            ui.showAuthError("Registering...");
-            const payload={
-                action:'register',
-                username:this.tempRegData.user,
-                email:this.tempRegData.email,
-                password:this.tempRegData.pass,
-                code
-            };
-            const res=await apiRequest(payload);
-            if(res.status==='success'){
-                alert("Registration successful! Please log in.");
-                ui.switchAuth('login');
-            }else ui.showAuthError(res.message);
-        },
-        logout(){
-            if(confirm("Are you sure you want to log out?")){
-                sessionStorage.removeItem('ngnlUser');
-                window.location.reload();
-            }
-        }
-    };
-
-    const social={
-        init(){
-            this.loadFriends();
-            ui.updateProfileView();
-            ui.switchProfileTab('stats');
-        },
-        async loadFriends(){
-            const list=document.getElementById('friend-list');
-            list.innerHTML=`<div class="f-item">Loading friends...</div>`;
-            const res=await apiRequest({action:'get_friends'});
-            let html=`<div class="f-item active" onclick="social.showMyStats(event)"><span class="f-name">MY PROFILE</span></div>`;
-            if(res.status==='success' && res.data){
-                res.data.forEach(f=>{
-                    html+=`<div class="f-item" data-name="${f.name}">
-                        <span class="f-name" onclick="social.startChat('${f.name}',event)">${f.name}</span>
-                        ${social.getFriendStatusUI(f)}
-                    </div>`;
-                });
-            }
-            list.innerHTML=html;
-        },
-        getFriendStatusUI(friend){
-            if(friend.status==='Accepted') return `<span class="f-status" style="color:var(--cyan)">FRIEND</span>`;
-            if(friend.status==='Sent') return `<span class="f-status">SENT</span>`;
-            if(friend.status==='Received'){
-                return `<div class="f-actions">
-                    <button class="btn" onclick="social.handleFriendRequest('${friend.name}','Accepted')">✓</button>
-                    <button class="btn" style="border-color:var(--pink);color:var(--pink)" onclick="social.handleFriendRequest('${friend.name}','Declined')">×</button>
+const social={
+    init(){
+        this.loadFriends();
+        ui.updateProfileView();
+        ui.switchProfileTab('stats');
+    },
+    async loadFriends(){
+        const list=document.getElementById('friend-list');
+        list.innerHTML=`<div class="f-item">Loading friends...</div>`;
+        const res=await apiRequest({action:'get_friends'});
+        let html=`<div class="f-item active" onclick="social.showMyStats(event)"><span class="f-name">MY PROFILE</span></div>`;
+        if(res.status==='success' && res.data){
+            res.data.forEach(f=>{
+                html+=`<div class="f-item" data-name="${f.name}">
+                    <span class="f-name" onclick="social.startChat('${f.name}',event)">${f.name}</span>
+                    ${social.getFriendStatusUI(f)}
                 </div>`;
-            }
-            return '';
-        },
-        async handleFriendRequest(target,status){
-            const res=await apiRequest({action:'update_friend_status',target_user:target,new_status:status});
+            });
+        }
+        list.innerHTML=html;
+    },
+    getFriendStatusUI(friend){
+        if(friend.status==='Accepted') return `<span class="f-status" style="color:var(--cyan)">FRIEND</span>`;
+        if(friend.status==='Sent') return `<span class="f-status">SENT</span>`;
+        if(friend.status==='Received'){
+            return `<div class="f-actions">
+                <button class="btn" onclick="social.handleFriendRequest('${friend.name}','Accepted')">✓</button>
+                <button class="btn" style="border-color:var(--pink);color:var(--pink)" onclick="social.handleFriendRequest('${friend.name}','Declined')">×</button>
+            </div>`;
+        }
+        return '';
+    },
+    async handleFriendRequest(target,status){
+        const res=await apiRequest({action:'update_friend_status',target_user:target,new_status:status});
+        alert(res.message);
+        if(res.status==='success') this.loadFriends();
+    },
+    showMyStats(e){
+        ui.switchProfileTab('stats');
+        document.querySelectorAll('#friend-list .f-item').forEach(el=>el.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+    },
+    async addFriend(){
+        const name=prompt("Enter the player's name to send a friend request:");
+        if(name && name.trim()){
+            const res=await apiRequest({action:'add_friend',target_user:name.trim()});
             alert(res.message);
             if(res.status==='success') this.loadFriends();
-        },
-        showMyStats(e){
-            ui.switchProfileTab('stats');
-            document.querySelectorAll('#friend-list .f-item').forEach(el=>el.classList.remove('active'));
-            e.currentTarget.classList.add('active');
-        },
-        async addFriend(){
-            const name=prompt("Enter the player's name to send a friend request:");
-            if(name && name.trim()){
-                const res=await apiRequest({action:'add_friend',target_user:name.trim()});
-                alert(res.message);
-                if(res.status==='success') this.loadFriends();
-            }
-        },
-        startChat(target,e){
-            state.activeChat=target;
-            ui.switchProfileTab('chat');
-            document.getElementById('chat-header').innerText=`Chat with ${target}`;
-            document.querySelectorAll('#friend-list .f-item').forEach(el=>el.classList.remove('active'));
-            e.currentTarget.closest('.f-item').classList.add('active');
-            this.loadMessages();
-        },
-        async loadMessages(){
-            if(!state.activeChat) return;
-            const box=document.getElementById('chat-box');
-            box.innerHTML="Loading messages...";
-            const res=await apiRequest({action:'get_messages',target_user:state.activeChat});
-            if(res.status==='success' && res.data){
-                box.innerHTML=res.data.map(m=>`<div class="msg ${m.sender===state.user.name?'me':'them'}">${m.content}</div>`).join('')||"No messages yet. Say hi!";
-                box.scrollTop=box.scrollHeight;
-            }
-        },
-        async sendMessage(){
-            const input=document.getElementById('msg-input');
-            const content=input.value.trim();
-            if(!content || !state.activeChat) return;
-            const box=document.getElementById('chat-box');
-            box.innerHTML+=`<div class="msg me">${content}</div>`;
+        }
+    },
+    startChat(target,e){
+        state.activeChat=target;
+        ui.switchProfileTab('chat');
+        document.getElementById('chat-header').innerText=`Chat with ${target}`;
+        document.querySelectorAll('#friend-list .f-item').forEach(el=>el.classList.remove('active'));
+        e.currentTarget.closest('.f-item').classList.add('active');
+        this.loadMessages();
+    },
+    async loadMessages(){
+        if(!state.activeChat) return;
+        const box=document.getElementById('chat-box');
+        box.innerHTML="Loading messages...";
+        const res=await apiRequest({action:'get_messages',target_user:state.activeChat});
+        if(res.status==='success' && res.data){
+            box.innerHTML=res.data.map(m=>`<div class="msg ${m.sender===state.user.name?'me':'them'}">${m.content}</div>`).join('')||"No messages yet. Say hi!";
             box.scrollTop=box.scrollHeight;
-            input.value="";
-            await apiRequest({action:'send_message',target_user:state.activeChat,content});
         }
-    };
+    },
+    async sendMessage(){
+        const input=document.getElementById('msg-input');
+        const content=input.value.trim();
+        if(!content || !state.activeChat) return;
+        const box=document.getElementById('chat-box');
+        box.innerHTML+=`<div class="msg me">${content}</div>`;
+        box.scrollTop=box.scrollHeight;
+        input.value="";
+        await apiRequest({action:'send_message',target_user:state.activeChat,content});
+    },
+    insertEmoji(e){
+        const input=document.getElementById('msg-input');
+        const start = input.selectionStart ?? input.value.length;
+        input.value = input.value.slice(0,start) + e + input.value.slice(start);
+        input.focus();
+        input.selectionStart = input.selectionEnd = start + e.length;
+    }
+};
 
-    const settings={
-        async saveProfile(){
-            const bio=document.getElementById('settings-bio').value.trim();
-            const signature=document.getElementById('settings-signature').value.trim();
-            const res=await apiRequest({action:'update_profile',bio,signature});
-            if(res.status==='success'){
-                state.user.bio=bio;
-                state.user.signature=signature;
-                sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
-                ui.updateProfileView();
-                alert("Profile updated.");
-            }else alert(res.message);
-        },
-        async saveAvatar(){
-            const avatar=document.getElementById('settings-avatar').value.trim();
-            const res=await apiRequest({action:'update_profile',avatar});
-            if(res.status==='success'){
-                state.user.avatar=avatar;
-                sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
-                ui.updateProfileView();
-                alert("Avatar updated.");
-            }else alert(res.message);
-        },
-        async changeName(){
-            const newName=document.getElementById('settings-newname').value.trim();
-            if(!newName) return alert("请输入新名字。");
-            if(!confirm("改名将消耗 100 🪙，确定吗？")) return;
-            const res=await apiRequest({action:'change_name',new_name:newName});
-            if(res.status==='success'){
-                state.user.name=res.new_name;
-                state.user.coins=res.new_balance;
-                sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
-                ui.updateHUD();
-                ui.updateProfileView();
-                alert("Name changed successfully.");
-            }else alert(res.message);
+/* ================== 用户设置 ================== */
+
+const settings={
+    async saveProfile(){
+        const bio=document.getElementById('settings-bio').value.trim();
+        const res=await apiRequest({action:'update_profile',bio});
+        if(res.status==='success'){
+            applyProfileFromServer(res.profile);
+            alert("Profile updated.");
+        }else alert(res.message);
+    },
+    async saveAvatar(){
+        const avatar=document.getElementById('settings-avatar').value.trim();
+        const res=await apiRequest({action:'update_profile',avatar});
+        if(res.status==='success'){
+            applyProfileFromServer(res.profile);
+            alert("Avatar updated.");
+        }else alert(res.message);
+    },
+    async changeName(){
+        const newName=document.getElementById('settings-newname').value.trim();
+        if(!newName) return alert("请输入新名字。");
+        if(!confirm("改名将消耗 100 🪙，确定吗？")) return;
+        const res=await apiRequest({action:'update_profile',new_name:newName});
+        if(res.status==='success'){
+            applyProfileFromServer(res.profile);
+            alert("Name changed successfully.");
+        }else alert(res.message);
+    }
+};
+
+/* ================== 小说阅读器 ================== */
+
+const reader={
+    async ensureReady(){
+        if(!state.novel.initialized){
+            await this.init();
+            state.novel.initialized=true;
         }
-    };
+    },
+    async init(){
+        const textArea=document.getElementById('reader-text-area');
+        try{
+            const [novelResponse,commentRes]=await Promise.all([
+                fetch('novel.txt'),
+                apiRequest({action:'get_all_comments'})
+            ]);
+            if(!novelResponse.ok) throw new Error('novel.txt not found in your repo.');
+            const text=await novelResponse.text();
+            state.novel.lines=text.replace(/\r\n/g,"\n").split('\n');
+            if(commentRes.status==='success') state.novel.comments=commentRes.data||{};
+            this.parseAndPaginate();
+            visuals.initReaderBG();
+        }catch(err){
+            console.error(err);
+            textArea.innerHTML=`<p style="text-align:center;color:var(--pink);">${err.message}</p>`;
+        }
+    },
+    parseAndPaginate(){
+        const lines=state.novel.lines;
+        const chapterRegex=/第.{1,12}[章话回]|序章|终章|Prologue|Epilogue|Chapter\s+\d+/i;
+        const pages=[];
+        const toc=[];
+        let currentStart=0;
+        let buffer=[];
+        const LPP=state.novel.linesPerPage;
 
-    const reader={
-        async ensureReady(){
-            if(!state.novel.initialized){
-                await this.init();
-                state.novel.initialized=true;
+        for(let i=0;i<lines.length;i++){
+            let line=lines[i];
+            const pure=line.replace(/\s/g,'');
+            const isChapter=chapterRegex.test(pure);
+            if(isChapter && buffer.length>0){
+                pages.push({start:currentStart,end:i});
+                currentStart=i;
+                buffer=[];
             }
-        },
-        async init(){
-            const textArea=document.getElementById('reader-text-area');
-            try{
-                const [novelResponse,commentRes]=await Promise.all([
-                    fetch('novel.txt'),
-                    apiRequest({action:'get_all_comments'})
-                ]);
-                if(!novelResponse.ok) throw new Error('novel.txt not found in your repo.');
-                const text=await novelResponse.text();
-                // 统一行尾
-                state.novel.lines=text.replace(/\r\n/g,"\n").split('\n');
-                if(commentRes.status==='success') state.novel.comments=commentRes.data||{};
-                this.parseAndPaginate();
-                visuals.initReaderBG();
-            }catch(err){
-                console.error(err);
-                textArea.innerHTML=`<p style="text-align:center;color:var(--pink);">${err.message}</p>`;
+            if(isChapter){
+                toc.push({title:line.trim()||`Chapter @${i+1}`,lineIndex:i,pageIndex:pages.length});
             }
-        },
-        parseAndPaginate(){
-            const lines=state.novel.lines;
-            const chapterRegex=/第.{0,12}章|序章|终章|Prologue|Epilogue|Chapter\s+\d+/i;
-            const pages=[];
-            const toc=[];
-            let currentStart=0;
-            let buffer=[];
-            const LPP=state.novel.linesPerPage;
+            buffer.push(line);
+            if(buffer.length>=LPP){
+                pages.push({start:currentStart,end:i+1});
+                currentStart=i+1;
+                buffer=[];
+            }
+        }
+        if(buffer.length>0){
+            pages.push({start:currentStart,end:lines.length});
+        }
+        state.novel.pages=pages;
+        state.novel.totalPages=pages.length;
+        state.novel.toc=toc;
 
-            for(let i=0;i<lines.length;i++){
-                let line=lines[i];
-                const pure=line.replace(/\s/g,'');
-                const isChapter=chapterRegex.test(pure);
-                if(isChapter && buffer.length>0){
-                    pages.push({start:currentStart,end:i});
-                    currentStart=i;
-                    buffer=[];
-                }
-                if(isChapter){
-                    toc.push({title:line.trim()||`Chapter @${i+1}`,lineIndex:i,pageIndex:pages.length});
-                }
-                buffer.push(line);
-                if(buffer.length>=LPP){
-                    pages.push({start:currentStart,end:i+1});
-                    currentStart=i+1;
-                    buffer=[];
-                }
-            }
-            if(buffer.length>0){
-                pages.push({start:currentStart,end:lines.length});
-            }
-            state.novel.pages=pages;
-            state.novel.totalPages=pages.length;
-            state.novel.toc=toc;
-
-            this.renderTOC();
-            this.loadBookmarks();
-            this.renderBookmarks();
-            this.goToPage(0);
-        },
-        goToPage(page){
-            if(page<0 || page>=state.novel.totalPages) return;
-            state.novel.currentPage=page;
-            const seg=state.novel.pages[page];
-            const start=seg.start,end=seg.end;
-            const textArea=document.getElementById('reader-text-area');
-            const html=state.novel.lines.slice(start,end).map((line,i)=>{
-                const idx=start+i;
-                if(!line.trim()) return '<br>';
-                const cnt=state.novel.comments[idx]?state.novel.comments[idx].length:0;
-                return `<div class="line" data-line-index="${idx}">
-                    ${line}
-                    <div class="comment-bubble" onclick="reader.openCommentSidebar(${idx})">
-                        <span class="comment-icon">♟</span>
-                        ${cnt>0?`<span class="comment-count">${cnt}</span>`:""}
-                    </div>
-                </div>`;
-            }).join('');
-            textArea.innerHTML=html;
-            textArea.scrollTop=0;
-            document.getElementById('reader-progress').innerText=`${page+1} / ${state.novel.totalPages}`;
-        },
-        goToChapter(lineIndex){
-            const pageIdx=state.novel.pages.findIndex(p=>lineIndex>=p.start && lineIndex<p.end);
-            if(pageIdx>=0) this.goToPage(pageIdx);
-        },
-        switchTab(tab){
-            document.getElementById('tab-toc').classList.toggle('active',tab==='toc');
-            document.getElementById('content-toc').classList.toggle('hidden',tab!=='toc');
-            document.getElementById('tab-bm').classList.toggle('active',tab==='bm');
-            document.getElementById('content-bm').classList.toggle('hidden',tab!=='bm');
-        },
-        renderTOC(){
-            const c=document.getElementById('content-toc');
-            if(state.novel.toc.length===0){
-                c.innerHTML=`<p style="padding:12px;color:#888;">No chapter titles detected.</p>`;
-                return;
-            }
-            c.innerHTML=state.novel.toc.map(ch=>`
-                <div class="toc-item" onclick="reader.goToChapter(${ch.lineIndex})">
-                    <strong>${ch.title}</strong>
-                    <small>Page ${ch.pageIndex+1}</small>
-                </div>`).join('');
-        },
-        loadBookmarks(){
-            state.novel.bookmarks=JSON.parse(localStorage.getItem('ngnl_bookmarks')||'[]');
-        },
-        renderBookmarks(){
-            const c=document.getElementById('content-bm');
-            if(state.novel.bookmarks.length===0){
-                c.innerHTML=`<p style="padding:12px;color:#888;">No bookmarks yet.</p>`;
-                return;
-            }
-            c.innerHTML=state.novel.bookmarks.map((bm,idx)=>`
-                <div class="bm-item" onclick="reader.goToPage(${bm.page})">
-                    Page ${bm.page+1} - ${bm.line.substring(0,20)}...
-                    <button onclick="reader.removeBookmark(${idx},event)" style="float:right;background:none;border:none;color:var(--pink);font-size:.8rem;">X</button>
-                </div>`).join('');
-        },
-        addBookmark(){
-            const p=state.novel.currentPage;
-            if(state.novel.bookmarks.some(b=>b.page===p)) return alert("This page is already bookmarked.");
-            const seg=state.novel.pages[p];
-            const firstLine=state.novel.lines[seg.start]||"Empty Page";
-            state.novel.bookmarks.push({page:p,line:firstLine});
-            localStorage.setItem('ngnl_bookmarks',JSON.stringify(state.novel.bookmarks));
-            this.renderBookmarks();
-            alert(`Page ${p+1} bookmarked!`);
-        },
-        removeBookmark(i,e){
-            e.stopPropagation();
-            if(!confirm("Remove this bookmark?")) return;
-            state.novel.bookmarks.splice(i,1);
-            localStorage.setItem('ngnl_bookmarks',JSON.stringify(state.novel.bookmarks));
-            this.renderBookmarks();
-        },
-        openCommentSidebar(lineIndex){
-            state.novel.activeCommentLine=lineIndex;
-            document.getElementById('cmt-header-title').innerText=`Line ${lineIndex+1}`;
-            const cList=document.getElementById('cmt-list');
-            const arr=state.novel.comments[lineIndex]||[];
-            if(arr.length===0){
-                cList.innerHTML=`<p style="text-align:center;color:#888;padding:20px;">No comments yet. Be the first!</p>`;
-            }else{
-                cList.innerHTML=arr.map(this.formatComment).join('');
-            }
-            document.getElementById('reader-comment-sidebar').classList.add('open');
-        },
-        closeCommentSidebar(){
-            document.getElementById('reader-comment-sidebar').classList.remove('open');
-        },
-        formatComment(c){
-            const content=c.content.replace(/@(\w+)/g,`<span class="mention-link" onclick="ui.showOtherUserProfile('$1')">@$1</span>`);
-            const avatarHtml=c.avatar?`<img src="${c.avatar}">`:"";
-            const frameCls=c.frameKey?"avatar-frame":"";
-            return `<div class="cmt-card">
-                <div class="cmt-user" onclick="ui.showOtherUserProfile('${c.user}')">
-                    <div class="mini-avatar ${frameCls}">${avatarHtml}</div>
-                    <span>${c.user}</span>
-                    ${c.title?`<span style="color:var(--gold);font-size:.7rem;">${c.title}</span>`:""}
-                </div>
-                <div class="cmt-content">${content}</div>
-                <div class="cmt-actions">
-                    <span onclick="community.interact('like','${c.id}','comment')">♥ ${c.likes}</span>
-                    <span onclick="community.interact('tip','${c.id}','comment')">🪙 ${c.coins||0}</span>
+        this.renderTOC();
+        this.loadBookmarks();
+        this.renderBookmarks();
+        this.goToPage(0);
+    },
+    goToPage(page){
+        if(page<0 || page>=state.novel.totalPages) return;
+        state.novel.currentPage=page;
+        const seg=state.novel.pages[page];
+        const start=seg.start,end=seg.end;
+        const textArea=document.getElementById('reader-text-area');
+        const html=state.novel.lines.slice(start,end).map((line,i)=>{
+            const idx=start+i;
+            if(!line.trim()) return '<br>';
+            const cnt=state.novel.comments[idx]?state.novel.comments[idx].length:0;
+            return `<div class="line" data-line-index="${idx}">
+                ${line}
+                <div class="comment-bubble" onclick="reader.openCommentSidebar(${idx})">
+                    <span class="comment-icon">♟</span>
+                    ${cnt>0?`<span class="comment-count">${cnt}</span>`:""}
                 </div>
             </div>`;
-        },
-        async postComment(){
-            const input=document.getElementById('cmt-input');
-            const content=input.value.trim();
-            if(!content || state.novel.activeCommentLine<0) return;
-            if(!state.isLoggedIn) return alert("You must be logged in to comment.");
-            input.disabled=true;
-            await apiRequest({action:'post_line_comment',line_index:state.novel.activeCommentLine,content});
-            input.value="";input.disabled=false;
-            const res=await apiRequest({action:'get_all_comments'});
-            if(res.status==='success'){
-                state.novel.comments=res.data||{};
-                this.goToPage(state.novel.currentPage);
-                this.openCommentSidebar(state.novel.activeCommentLine);
-            }
+        }).join('');
+        textArea.innerHTML=html;
+        textArea.scrollTop=0;
+        document.getElementById('reader-progress').innerText=`${page+1} / ${state.novel.totalPages}`;
+    },
+    goToChapter(lineIndex){
+        const pageIdx=state.novel.pages.findIndex(p=>lineIndex>=p.start && lineIndex<p.end);
+        if(pageIdx>=0) this.goToPage(pageIdx);
+    },
+    switchTab(tab){
+        document.getElementById('tab-toc').classList.toggle('active',tab==='toc');
+        document.getElementById('content-toc').classList.toggle('hidden',tab!=='toc');
+        document.getElementById('tab-bm').classList.toggle('active',tab==='bm');
+        document.getElementById('content-bm').classList.toggle('hidden',tab!=='bm');
+    },
+    renderTOC(){
+        const c=document.getElementById('content-toc');
+        if(state.novel.toc.length===0){
+            c.innerHTML=`<p style="padding:12px;color:#888;">No chapter titles detected.</p>`;
+            return;
         }
-    };
-
-    const community={
-        async interact(subAction,id,type){
-            if(!state.isLoggedIn) return alert("Login required.");
-            if(subAction==='tip' && !confirm("Spend 1 coin?")) return;
-            const res=await apiRequest({action:'interact',sub_action:subAction,type,id});
-            if(res.status==='success'){
-                if(subAction==='tip' && typeof res.new_balance!=='undefined'){
-                    state.user.coins=res.new_balance;
-                    sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
-                    ui.updateHUD();
-                }
-                if(type==='comment' || type==='discussion'){
-                    const [cRes,dRes]=await Promise.all([
-                        apiRequest({action:'get_all_comments'}),
-                        apiRequest({action:'get_discussions'})
-                    ]);
-                    if(cRes.status==='success'){
-                        state.novel.comments=cRes.data||{};
-                        reader.goToPage(state.novel.currentPage);
-                        if(state.novel.activeCommentLine>=0) reader.openCommentSidebar(state.novel.activeCommentLine);
-                    }
-                    if(dRes.status==='success') forum.render(dRes.data);
-                }
-            }else alert(res.message);
+        c.innerHTML=state.novel.toc.map(ch=>`
+            <div class="toc-item" onclick="reader.goToChapter(${ch.lineIndex})">
+                <strong>${ch.title}</strong>
+                <small>Page ${ch.pageIndex+1}</small>
+            </div>`).join('');
+    },
+    loadBookmarks(){
+        state.novel.bookmarks=JSON.parse(localStorage.getItem('ngnl_bookmarks')||'[]');
+    },
+    renderBookmarks(){
+        const c=document.getElementById('content-bm');
+        if(state.novel.bookmarks.length===0){
+            c.innerHTML=`<p style="padding:12px;color:#888;">No bookmarks yet.</p>`;
+            return;
         }
-    };
-
-    const forum={
-        async init(){
-            const res=await apiRequest({action:'get_discussions'});
-            if(res.status==='success') this.render(res.data);
-        },
-        render(list){
-            const box=document.getElementById('forum-list');
-            if(!list || list.length===0){
-                box.innerHTML=`<p style="color:#888;padding:10px;">No posts yet. Be the first challenger.</p>`;
-                return;
-            }
-            box.innerHTML=list.map(p=>{
-                const avatarHtml=p.avatar?`<img src="${p.avatar}">`:"";
-                const frameCls=p.frameKey?"avatar-frame":"";
-                const content=p.content.replace(/@(\w+)/g,`<span class="mention-link" onclick="ui.showOtherUserProfile('$1')">@$1</span>`);
-                return `<div class="post-card">
-                    <div class="mini-avatar ${frameCls}">${avatarHtml}</div>
-                    <div class="post-main">
-                        <div class="post-header" onclick="ui.showOtherUserProfile('${p.user}')">
-                            <span>${p.user}</span>${p.title?`<span style="color:var(--gold);font-size:.7rem;">${p.title}</span>`:""}
-                        </div>
-                        <div class="post-content">${content}</div>
-                        <div class="post-meta">${p.time}</div>
-                        <div class="post-actions">
-                            <span onclick="community.interact('like','${p.id}','discussion')">♥ ${p.likes}</span>
-                            <span onclick="community.interact('tip','${p.id}','discussion')">🪙 ${p.coins||0}</span>
-                        </div>
-                    </div>
-                </div>`;
-            }).join('');
-        },
-        async post(){
-            const input=document.getElementById('forum-input');
-            const content=input.value.trim();
-            if(!content) return;
-            if(!state.isLoggedIn) return alert("Login required.");
-            input.disabled=true;
-            const res=await apiRequest({action:'post_discussion',content});
-            input.disabled=false;
-            if(res.status==='success'){
-                input.value="";
-                this.init();
-            }else alert(res.message);
-        }
-    };
-
-    const shop={
-        items:[
-            {key:'frame-elkia',price:80,type:'frame',name:'Elkia Frame',desc:'艾尔奇亚国徽风格的金色头像框。'},
-            {key:'frame-flugel',price:120,type:'frame',name:'Flügel Halo',desc:'天翼种羽翼与光环样式的头像框。'},
-            {key:'frame-warabeast',price:90,type:'frame',name:'Warbeast Neon',desc:'兽人种风格的粉蓝霓虹轮廓。'},
-            {key:'title-blank',price:50,type:'title',name:'Title: 『　　』',desc:'在名字下方显示传说中的空白称号。'},
-            {key:'title-king',price:70,type:'title',name:'Title: KING OF GAMES',desc:'只属于真正的游戏王。'},
-            {key:'title-gamer',price:100,type:'title',name:'Title: HARDCORE GAMER',desc:'把游戏当成生命的证明。'},
-            {key:'sig-ciallo',price:20,type:'signature',name:'Signature: Ciallo~',desc:'自动设置个性签名为 “Ciallo~ (≧ω≦)~”。'},
-            {key:'sig-blank',price:25,type:'signature',name:'Signature: BLANK',desc:'签名改为 “We are 『　　』.”。'}
-        ],
-        init(){
-            const grid=document.getElementById('shop-grid');
-            const owned=state.user.ownedItems||[];
-            ui.updateHUD();
-            grid.innerHTML=this.items.map(it=>{
-                const isOwned=owned.includes(it.key);
-                const canAfford=state.user.coins>=it.price;
-                const actionBtn=isOwned
-                    ? `<button class="btn" onclick="shop.equip('${it.key}')" style="width:100%;margin-top:6px;">EQUIP</button>`
-                    : `<button class="btn" onclick="shop.buy('${it.key}')" style="width:100%;margin-top:6px;" ${canAfford?'':"disabled"}>BUY</button>`;
-                return `<div class="shop-card">
-                    <div class="shop-inner">
-                        <div class="shop-tag">${it.type.toUpperCase()}</div>
-                        <div class="shop-name">${it.name}</div>
-                        <div class="shop-price">Price: ${it.price} 🪙</div>
-                        <div class="shop-desc">${it.desc}</div>
-                        ${isOwned?`<div class="shop-owned">OWNED</div>`:""}
-                        ${actionBtn}
-                    </div>
-                </div>`;
-            }).join('');
-        },
-        async buy(key){
-            const item=this.items.find(i=>i.key===key);
-            if(!item) return;
-            if(state.user.coins<item.price) return alert("Insufficient coins.");
-            if(!confirm(`Buy ${item.name} for ${item.price} coins?`)) return;
-            const res=await apiRequest({action:'shop',sub_action:'purchase',item_key:key});
-            if(res.status==='success'){
-                state.user.coins=res.new_balance;
-                state.user.frameKey=res.frameKey||state.user.frameKey;
-                state.user.signature=res.signature||state.user.signature;
-                state.user.title=res.title||state.user.title;
-                state.user.ownedItems=JSON.parse(res.owned_items||"[]");
-                sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
-                ui.updateHUD();
-                ui.updateProfileView();
-                this.init();
-            }else alert(res.message);
-        },
-        async equip(key){
-            const res=await apiRequest({action:'shop',sub_action:'equip',item_key:key});
-            if(res.status==='success'){
-                state.user.frameKey=res.frameKey||state.user.frameKey;
-                state.user.signature=res.signature||state.user.signature;
-                state.user.title=res.title||state.user.title;
-                sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
-                ui.updateProfileView();
-                this.init();
-            }else alert(res.message);
-        }
-    };
-
-    const visuals={
-        init(){
-            this.initPlayers();
-            this.initCursor();
-            this.initCanvas();
-            this.initRaces();
-        },
-        initPlayers(){
-            const players=[
-                {n:'IZUNA',r:'Warbeast / Knight',img:'izuna.png',d:'拥有“血坏”的兽人少女，瞬间读取场上的一切信息。'},
-                {n:'JIBRIL',r:'Flügel / Bishop',img:'jibril.png',d:'狂热的知识收集狂，掌握毁灭级魔法的天翼种。'},
-                {n:'SHIRO',r:'Imanity / Queen',img:'shiro.png',d:'计算力超越人类极限的天才少女，是『　　』的头脑。'},
-                {n:'SORA',r:'Imanity / King',img:'sora.png',d:'读心级心理战高手，相信“人类的可能性”胜过一切。'},
-                {n:'STEPH',r:'Imanity / Pawn',img:'steph.png',d:'艾尔奇亚公主，虽不擅游戏，却用执着与温柔支撑王国。'},
-                {n:'TET',r:'OldDeus / Joker',img:'tet.png',d:'唯一神，支配棋盘的观战者与发起者。'}
-            ];
-            document.getElementById('char-grid').innerHTML=players.map(p=>`
-                <div class="char-card">
-                    <div class="char-inner">
-                        <div class="char-face char-front">
-                            <img src="${p.img}" alt="${p.n}">
-                            <div class="char-front-info">
-                                <div class="char-name">${p.n}</div>
-                                <div class="char-race">${p.r}</div>
-                            </div>
-                        </div>
-                        <div class="char-face char-back">
-                            <div class="card-symbol">♜</div>
-                            <p class="char-desc">${p.d}</p>
-                        </div>
-                    </div>
-                </div>`).join('');
-        },
-        initCursor(){
-            const cursor=document.getElementById('cursor');
-            document.addEventListener('mousemove',e=>{
-                cursor.style.left=e.clientX+'px';
-                cursor.style.top=e.clientY+'px';
-            });
-            document.body.addEventListener('mouseover',e=>{
-                if(e.target.closest('a,button,.btn,.char-card,.f-item,.auth-link,[onclick]')) cursor.classList.add('hover');
-                else cursor.classList.remove('hover');
-            });
-            document.addEventListener('mousedown',()=>cursor.classList.add('click'));
-            document.addEventListener('mouseup',()=>cursor.classList.remove('click'));
-        },
-        initCanvas(){
-            const cvs=document.getElementById('canvas-bg'),ctx=cvs.getContext('2d');
-            let w=window.innerWidth,h=window.innerHeight;
-            cvs.width=w;cvs.height=h;
-            const particles=Array.from({length:60},()=>({
-                x:Math.random()*w,
-                y:Math.random()*h,
-                s:Math.random()*0.6+0.2,
-                char:['♔','♕','♖','♗','♘','♙'][Math.floor(Math.random()*6)],
-                opacity:Math.random()*0.4+0.2
-            }));
-            function loop(){
-                ctx.clearRect(0,0,w,h);
-                particles.forEach(p=>{
-                    p.y-=p.s;
-                    if(p.y<-40){p.y=h+40;p.x=Math.random()*w;}
-                    ctx.fillStyle=`rgba(255,255,255,${p.opacity})`;
-                    ctx.font='22px Orbitron';
-                    ctx.fillText(p.char,p.x,p.y);
-                });
-                requestAnimationFrame(loop);
-            }
-            requestAnimationFrame(loop);
-            window.addEventListener('resize',()=>{
-                w=window.innerWidth;h=window.innerHeight;
-                cvs.width=w;cvs.height=h;
-            });
-        },
-        initReaderBG(){
-            const cvs=document.getElementById('reader-bg-canvas');
-            if(!cvs.getContext) return;
-            const ctx=cvs.getContext('2d');
-            function resize(){
-                const panel=document.querySelector('.r-main-panel');
-                if(!panel) return;
-                cvs.width=panel.clientWidth;
-                cvs.height=panel.clientHeight;
-            }
-            resize();
-            const dots=Array.from({length:80},()=>({
-                x:Math.random()*cvs.width,
-                y:Math.random()*cvs.height,
-                r:Math.random()*2+1,
-                vy:Math.random()*0.4+0.2
-            }));
-            function draw(){
-                ctx.clearRect(0,0,cvs.width,cvs.height);
-                const gradient=ctx.createRadialGradient(cvs.width/2,cvs.height/2,0,cvs.width/2,cvs.height/2,cvs.width/1.2);
-                gradient.addColorStop(0,'rgba(5,217,232,0.35)');
-                gradient.addColorStop(0.5,'rgba(217,5,232,0.15)');
-                gradient.addColorStop(1,'rgba(0,0,0,0)');
-                ctx.fillStyle=gradient;
-                ctx.fillRect(0,0,cvs.width,cvs.height);
-                dots.forEach(d=>{
-                    d.y-=d.vy+scrollFactor*0.3;
-                    if(d.y<-10){d.y=cvs.height+10;d.x=Math.random()*cvs.width;}
-                    ctx.beginPath();
-                    ctx.fillStyle='rgba(255,255,255,0.7)';
-                    ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
-                    ctx.fill();
-                });
-                requestAnimationFrame(draw);
-            }
-            let scrollFactor=0;
-            const textArea=document.getElementById('reader-text-area');
-            textArea.addEventListener('scroll',()=>{
-                scrollFactor=textArea.scrollTop/200;
-            });
-            window.addEventListener('resize',resize);
-            requestAnimationFrame(draw);
-        },
-        initRaces(){
-            const races=[
-                {name:"Old Deus",piece:"King ♔",color:"var(--race-olddeus)"},
-                {name:"Phantasma",piece:"Queen ♕",color:"var(--race-phantasma)"},
-                {name:"Elemental",piece:"Queen ♕",color:"var(--race-elemental)"},
-                {name:"Dragonoia",piece:"Rook ♖",color:"var(--race-dragonia)"},
-                {name:"Flügel",piece:"Bishop ♗",color:"var(--race-flugel)"},
-                {name:"Demonia",piece:"Bishop ♗",color:"var(--race-demon)"},
-                {name:"Fairy",piece:"Bishop ♗",color:"var(--race-fairy)"},
-                {name:"Dwarf",piece:"Rook ♖",color:"var(--race-dwarf)"},
-                {name:"Warbeast",piece:"Knight ♘",color:"var(--race-werabeast)"},
-                {name:"Seiren",piece:"Pawn ♙",color:"var(--race-seiren)"},
-                {name:"Dhampir",piece:"Knight ♘",color:"var(--race-dhampir)"},
-                {name:"Elf",piece:"Bishop ♗",color:"var(--race-elf)"},
-                {name:"Angel (Ex-Machina)",piece:"Rook ♖",color:"var(--race-angel)"},
-                {name:"Goblin",piece:"Pawn ♙",color:"var(--race-goblin)"},
-                {name:"Automaton",piece:"Knight ♘",color:"var(--race-automaton)"},
-                {name:"Imanity",piece:"Pawn ♙",color:"var(--race-imanity)"}
-            ];
-            const grid=document.getElementById('race-grid');
-            grid.innerHTML=races.map(r=>`
-                <div class="race-chip">
-                    <div class="race-bg" style="background:radial-gradient(circle,${r.color},transparent);"></div>
-                    <span><strong>${r.name}</strong></span>
-                    <span class="race-piece">${r.piece}</span>
-                </div>`).join('');
-        }
-    };
-
-    document.addEventListener('DOMContentLoaded',()=>{
-        visuals.init();
-        const stored=sessionStorage.getItem('ngnlUser');
-        if(stored){
-            try{
-                state.user=JSON.parse(stored);
-                state.isLoggedIn=true;
-                ui.elements.authOverlay.classList.remove('active');
-                ui.elements.body.classList.remove('auth-active');
-                ui.updateHUD();
-                ui.updateProfileView();
-            }catch(e){
-                console.error(e);
-                sessionStorage.removeItem('ngnlUser');
-                ui.elements.body.classList.add('auth-active');
-                ui.elements.authOverlay.classList.add('active');
-            }
+        c.innerHTML=state.novel.bookmarks.map((bm,idx)=>`
+            <div class="bm-item" onclick="reader.goToPage(${bm.page})">
+                Page ${bm.page+1} - ${bm.line.substring(0,20)}...
+                <button onclick="reader.removeBookmark(${idx},event)" style="float:right;background:none;border:none;color:var(--pink);font-size:.8rem;">X</button>
+            </div>`).join('');
+    },
+    addBookmark(){
+        const p=state.novel.currentPage;
+        if(state.novel.bookmarks.some(b=>b.page===p)) return alert("This page is already bookmarked.");
+        const seg=state.novel.pages[p];
+        const firstLine=state.novel.lines[seg.start]||"Empty Page";
+        state.novel.bookmarks.push({page:p,line:firstLine});
+        localStorage.setItem('ngnl_bookmarks',JSON.stringify(state.novel.bookmarks));
+        this.renderBookmarks();
+        alert(`Page ${p+1} bookmarked!`);
+    },
+    removeBookmark(i,e){
+        e.stopPropagation();
+        if(!confirm("Remove this bookmark?")) return;
+        state.novel.bookmarks.splice(i,1);
+        localStorage.setItem('ngnl_bookmarks',JSON.stringify(state.novel.bookmarks));
+        this.renderBookmarks();
+    },
+    openCommentSidebar(lineIndex){
+        state.novel.activeCommentLine=lineIndex;
+        document.getElementById('cmt-header-title').innerText=`Line ${lineIndex+1}`;
+        const cList=document.getElementById('cmt-list');
+        const arr=state.novel.comments[lineIndex]||[];
+        if(arr.length===0){
+            cList.innerHTML=`<p style="text-align:center;color:#888;padding:20px;">No comments yet. Be the first!</p>`;
         }else{
+            cList.innerHTML=arr.map(reader.formatComment).join('');
+        }
+        document.getElementById('reader-comment-sidebar').classList.add('open');
+    },
+    closeCommentSidebar(){
+        document.getElementById('reader-comment-sidebar').classList.remove('open');
+    },
+    formatComment(c){
+        const content=c.content.replace(/@(\w+)/g,`<span class="mention-link" onclick="ui.showOtherUserProfile('$1')">@$1</span>`);
+        const style = ui.renderUserStyle(c);
+        return `<div class="cmt-card">
+            <div class="cmt-user">
+                ${style.avatarHTML}
+                <div>
+                    <div>${style.nameHTML}</div>
+                    ${style.subHTML ? `<div class="cmt-meta">${style.subHTML}</div>` : ""}
+                </div>
+            </div>
+            <div class="cmt-content">${content}</div>
+            <div class="cmt-actions">
+                <span onclick="community.interact('like','${c.id}','comment')">♥ ${c.likes}</span>
+                <span onclick="community.interact('tip','${c.id}','comment')">🪙 ${c.coins||0}</span>
+            </div>
+        </div>`;
+    },
+    async postComment(){
+        const input=document.getElementById('cmt-input');
+        const content=input.value.trim();
+        if(!content || state.novel.activeCommentLine<0) return;
+        if(!state.isLoggedIn) return alert("You must be logged in to comment.");
+        input.disabled=true;
+        await apiRequest({action:'post_line_comment',line_index:state.novel.activeCommentLine,content});
+        input.value="";input.disabled=false;
+        const res=await apiRequest({action:'get_all_comments'});
+        if(res.status==='success'){
+            state.novel.comments=res.data||{};
+            this.goToPage(state.novel.currentPage);
+            this.openCommentSidebar(state.novel.activeCommentLine);
+        }
+    }
+};
+
+/* ================== 点赞 / 打赏 ================== */
+
+const community={
+    async interact(subAction,id,type){
+        if(!state.isLoggedIn) return alert("Login required.");
+        if(subAction==='tip' && !confirm("Spend 1 coin?")) return;
+        const res=await apiRequest({action:'interact',sub_action:subAction,type,id});
+        if(res.status==='success'){
+            if(subAction==='tip' && typeof res.new_balance!=='undefined'){
+                state.user.coins=res.new_balance;
+                sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
+                ui.updateHUD();
+            }
+            // 同步评论 + 讨论区展示
+            const [cRes,dRes]=await Promise.all([
+                apiRequest({action:'get_all_comments'}),
+                apiRequest({action:'get_discussions'})
+            ]);
+            if(cRes.status==='success'){
+                state.novel.comments=cRes.data||{};
+                reader.goToPage(state.novel.currentPage);
+                if(state.novel.activeCommentLine>=0) reader.openCommentSidebar(state.novel.activeCommentLine);
+            }
+            if(dRes.status==='success') forum.render(dRes.data);
+        }else alert(res.message);
+    }
+};
+
+/* ================== 讨论区 ================== */
+
+const forum={
+    async init(){
+        const res=await apiRequest({action:'get_discussions'});
+        if(res.status==='success') this.render(res.data);
+    },
+    render(list){
+        const box=document.getElementById('forum-list');
+        if(!list || list.length===0){
+            box.innerHTML=`<p style="color:#888;padding:10px;">No posts yet. Be the first challenger.</p>`;
+            return;
+        }
+        box.innerHTML=list.map(p=>{
+            const style = ui.renderUserStyle(p);
+            const content=p.content.replace(/@(\w+)/g,`<span class="mention-link" onclick="ui.showOtherUserProfile('$1')">@$1</span>`);
+            return `<div class="post-card">
+                ${style.avatarHTML}
+                <div class="post-main">
+                    <div class="post-header">
+                        ${style.nameHTML}
+                    </div>
+                    <div class="post-content">${content}</div>
+                    <div class="post-meta">${p.time}</div>
+                    <div class="post-actions">
+                        <span onclick="community.interact('like','${p.id}','discussion')">♥ ${p.likes}</span>
+                        <span onclick="community.interact('tip','${p.id}','discussion')">🪙 ${p.coins||0}</span>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    },
+    async post(){
+        const input=document.getElementById('forum-input');
+        const content=input.value.trim();
+        if(!content) return;
+        if(!state.isLoggedIn) return alert("Login required.");
+        input.disabled=true;
+        const res=await apiRequest({action:'post_discussion',content});
+        input.disabled=false;
+        if(res.status==='success'){
+            input.value="";
+            this.init();
+        }else alert(res.message);
+    }
+};
+
+/* ================== 商店（对接后端 get_shop / buy_item） ================== */
+
+const shop={
+    async init(){
+        await this.refresh();
+    },
+    async refresh(){
+        ui.updateHUD();
+        const grid=document.getElementById('shop-grid');
+        grid.innerHTML="<p>Loading shop...</p>";
+        const res=await apiRequest({action:'get_shop'});
+        if(res.status!=='success'){
+            grid.innerHTML=`<p style="color:var(--pink);">${res.message}</p>`;
+            return;
+        }
+        const ownedMap=res.owned || {};
+        const styles=res.styles || {};
+        state.user.frameKey = styles.frameKey || state.user.frameKey;
+        state.user.titleKey = styles.titleKey || state.user.titleKey;
+        state.user.sigKey   = styles.sigKey   || state.user.sigKey;
+        ui.updateProfileView();
+        this.render(res.items || [], ownedMap, styles);
+    },
+    render(items, ownedMap, styles){
+        const grid=document.getElementById('shop-grid');
+        grid.innerHTML=items.map(it=>{
+            const own = ownedMap[it.key];
+            const isActive =
+                (it.category==='frame' && styles.frameKey===it.key) ||
+                (it.category==='title' && styles.titleKey===it.key) ||
+                (it.category==='signature' && styles.sigKey===it.key);
+            const btnLabel = own ? (isActive ? "EQUIPPED" : "EQUIP") : `BUY (${it.price}🪙)`;
+            const disabled = isActive ? "disabled" : "";
+            const ownedTag = own ? `<div class="shop-owned">OWNED</div>` : "";
+            return `<div class="shop-card">
+                <div class="shop-inner">
+                    <div class="shop-tag">${it.category.toUpperCase()}</div>
+                    <div class="shop-name">${it.name}</div>
+                    <div class="shop-price">Price: ${it.price} 🪙</div>
+                    <div class="shop-desc">${it.desc}</div>
+                    ${ownedTag}
+                    <button class="btn" style="width:100%;margin-top:6px;" ${disabled}
+                        onclick="shop.buy('${it.key}')">${btnLabel}</button>
+                </div>
+            </div>`;
+        }).join('');
+        ui.updateHUD();
+    },
+    async buy(key){
+        const res=await apiRequest({action:'buy_item',key});
+        if(res.status!=='success'){
+            alert(res.message);
+            return;
+        }
+        state.user.coins = res.new_balance;
+        if(res.styles){
+            state.user.frameKey = res.styles.frameKey || state.user.frameKey;
+            state.user.titleKey = res.styles.titleKey || state.user.titleKey;
+            state.user.sigKey   = res.styles.sigKey   || state.user.sigKey;
+        }
+        sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
+        ui.updateHUD();
+        ui.updateProfileView();
+        this.refresh();
+    }
+};
+
+/* ================== 视觉效果（角色卡 / 背景） ================== */
+
+const visuals={
+    init(){
+        this.initPlayers();
+        this.initCursor();
+        this.initCanvas();
+        this.initRaces();
+        this.initEmojiBar();
+    },
+    initPlayers(){
+        const players=[
+            {n:'IZUNA',r:'Warbeast / Knight',img:'izuna.png',d:'拥有“血坏”的兽人少女，瞬间读取场上的一切信息。'},
+            {n:'JIBRIL',r:'Flügel / Bishop',img:'jibril.png',d:'狂热的知识收集狂，掌握毁灭级魔法的天翼种。'},
+            {n:'SHIRO',r:'Imanity / Queen',img:'shiro.png',d:'计算力超越人类极限的天才少女，是『　　』的头脑。'},
+            {n:'SORA',r:'Imanity / King',img:'sora.png',d:'读心级心理战高手，相信“人类的可能性”胜过一切。'},
+            {n:'STEPH',r:'Imanity / Pawn',img:'steph.png',d:'艾尔奇亚公主，虽不擅游戏，却用执着与温柔支撑王国。'},
+            {n:'TET',r:'OldDeus / Joker',img:'tet.png',d:'唯一神，支配棋盘的观战者与发起者。'}
+        ];
+        document.getElementById('char-grid').innerHTML=players.map(p=>`
+            <div class="char-card">
+                <div class="char-inner">
+                    <div class="char-face char-front">
+                        <img src="${p.img}" alt="${p.n}">
+                        <div class="char-front-info">
+                            <div class="char-name">${p.n}</div>
+                            <div class="char-race">${p.r}</div>
+                        </div>
+                    </div>
+                    <div class="char-face char-back">
+                        <div class="card-symbol">♜</div>
+                        <p class="char-desc">${p.d}</p>
+                    </div>
+                </div>
+            </div>`).join('');
+    },
+    initCursor(){
+        const cursor=document.getElementById('cursor');
+        document.addEventListener('mousemove',e=>{
+            cursor.style.left=e.clientX+'px';
+            cursor.style.top=e.clientY+'px';
+        });
+        document.body.addEventListener('mouseover',e=>{
+            if(e.target.closest('a,button,.btn,.char-card,.f-item,.auth-link,[onclick]')) cursor.classList.add('hover');
+            else cursor.classList.remove('hover');
+        });
+        document.addEventListener('mousedown',()=>cursor.classList.add('click'));
+        document.addEventListener('mouseup',()=>cursor.classList.remove('click'));
+    },
+    initCanvas(){
+        const cvs=document.getElementById('canvas-bg'),ctx=cvs.getContext('2d');
+        let w=window.innerWidth,h=window.innerHeight;
+        cvs.width=w;cvs.height=h;
+        const particles=Array.from({length:60},()=>({
+            x:Math.random()*w,
+            y:Math.random()*h,
+            s:Math.random()*0.6+0.2,
+            char:['♔','♕','♖','♗','♘','♙'][Math.floor(Math.random()*6)],
+            opacity:Math.random()*0.4+0.2
+        }));
+        function loop(){
+            ctx.clearRect(0,0,w,h);
+            particles.forEach(p=>{
+                p.y-=p.s;
+                if(p.y<-40){p.y=h+40;p.x=Math.random()*w;}
+                ctx.fillStyle=`rgba(255,255,255,${p.opacity})`;
+                ctx.font='22px Orbitron';
+                ctx.fillText(p.char,p.x,p.y);
+            });
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+        window.addEventListener('resize',()=>{
+            w=window.innerWidth;h=window.innerHeight;
+            cvs.width=w;cvs.height=h;
+        });
+    },
+    initReaderBG(){
+        const cvs=document.getElementById('reader-bg-canvas');
+        if(!cvs.getContext) return;
+        const ctx=cvs.getContext('2d');
+        function resize(){
+            const panel=document.querySelector('.r-main-panel');
+            if(!panel) return;
+            cvs.width=panel.clientWidth;
+            cvs.height=panel.clientHeight;
+        }
+        resize();
+        const dots=Array.from({length:80},()=>({
+            x:Math.random()*cvs.width,
+            y:Math.random()*cvs.height,
+            r:Math.random()*2+1,
+            vy:Math.random()*0.4+0.2
+        }));
+        let scrollFactor=0;
+        const textArea=document.getElementById('reader-text-area');
+        textArea.addEventListener('scroll',()=>{scrollFactor=textArea.scrollTop/200;});
+        function draw(){
+            ctx.clearRect(0,0,cvs.width,cvs.height);
+            const gradient=ctx.createRadialGradient(cvs.width/2,cvs.height/2,0,cvs.width/2,cvs.height/2,cvs.width/1.2);
+            gradient.addColorStop(0,'rgba(5,217,232,0.35)');
+            gradient.addColorStop(0.5,'rgba(217,5,232,0.15)');
+            gradient.addColorStop(1,'rgba(0,0,0,0)');
+            ctx.fillStyle=gradient;
+            ctx.fillRect(0,0,cvs.width,cvs.height);
+            dots.forEach(d=>{
+                d.y-=d.vy+scrollFactor*0.3;
+                if(d.y<-10){d.y=cvs.height+10;d.x=Math.random()*cvs.width;}
+                ctx.beginPath();
+                ctx.fillStyle='rgba(255,255,255,0.7)';
+                ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+                ctx.fill();
+            });
+            requestAnimationFrame(draw);
+        }
+        window.addEventListener('resize',resize);
+        requestAnimationFrame(draw);
+    },
+    initRaces(){
+        const races=[
+            {name:"Old Deus",piece:"King ♔",color:"var(--race-olddeus)"},
+            {name:"Phantasma",piece:"Queen ♕",color:"var(--race-phantasma)"},
+            {name:"Elemental",piece:"Queen ♕",color:"var(--race-elemental)"},
+            {name:"Dragonoia",piece:"Rook ♖",color:"var(--race-dragonia)"},
+            {name:"Flügel",piece:"Bishop ♗",color:"var(--race-flugel)"},
+            {name:"Demonia",piece:"Bishop ♗",color:"var(--race-demon)"},
+            {name:"Fairy",piece:"Bishop ♗",color:"var(--race-fairy)"},
+            {name:"Dwarf",piece:"Rook ♖",color:"var(--race-dwarf)"},
+            {name:"Warbeast",piece:"Knight ♘",color:"var(--race-werabeast)"},
+            {name:"Seiren",piece:"Pawn ♙",color:"var(--race-seiren)"},
+            {name:"Dhampir",piece:"Knight ♘",color:"var(--race-dhampir)"},
+            {name:"Elf",piece:"Bishop ♗",color:"var(--race-elf)"},
+            {name:"Angel (Ex-Machina)",piece:"Rook ♖",color:"var(--race-angel)"},
+            {name:"Goblin",piece:"Pawn ♙",color:"var(--race-goblin)"},
+            {name:"Automaton",piece:"Knight ♘",color:"var(--race-automaton)"},
+            {name:"Imanity",piece:"Pawn ♙",color:"var(--race-imanity)"}
+        ];
+        const grid=document.getElementById('race-grid');
+        grid.innerHTML=races.map(r=>`
+            <div class="race-chip">
+                <div class="race-bg" style="background:radial-gradient(circle,${r.color},transparent);"></div>
+                <span><strong>${r.name}</strong></span>
+                <span class="race-piece">${r.piece}</span>
+            </div>`).join('');
+    },
+    /* 聊天表情条：不用改 HTML，这里自动插入 */
+    initEmojiBar(){
+        const wrapper=document.querySelector('.chat-input');
+        if(!wrapper) return;
+        const bar=document.createElement('div');
+        bar.className='chat-emoji-bar';
+        const emojis=['(≧▽≦)','(๑•̀ㅂ•́)و✧','orz','😂','❤️'];
+        emojis.forEach(e=>{
+            const span=document.createElement('span');
+            span.textContent=e;
+            span.onclick=()=>social.insertEmoji(e);
+            bar.appendChild(span);
+        });
+        wrapper.insertBefore(bar, wrapper.querySelector('.btn'));
+    }
+};
+
+/* ================== 启动 ================== */
+
+document.addEventListener('DOMContentLoaded',async ()=>{
+    visuals.init();
+
+    const stored=sessionStorage.getItem('ngnlUser');
+    if(stored){
+        try{
+            const obj=JSON.parse(stored);
+            state.user={...state.user,...obj};
+            state.isLoggedIn=true;
+            ui.elements.authOverlay.classList.remove('active');
+            ui.elements.body.classList.remove('auth-active');
+            ui.updateHUD();
+            ui.updateProfileView();
+            // 用后端数据刷新一次（拿到最新的 frame/title/signature）
+            const res=await apiRequest({action:'get_profile'});
+            if(res.status==='success') applyProfileFromServer(res.profile);
+        }catch(e){
+            console.error(e);
+            sessionStorage.removeItem('ngnlUser');
             ui.elements.body.classList.add('auth-active');
             ui.elements.authOverlay.classList.add('active');
         }
-    });
+    }else{
+        ui.elements.body.classList.add('auth-active');
+        ui.elements.authOverlay.classList.add('active');
+    }
+});
 </script>
 </body>
 </html>
