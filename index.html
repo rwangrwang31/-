@@ -16,23 +16,34 @@
         body { background-color:var(--dark); color:white; font-family:'Noto Sans SC', sans-serif; height:100vh; overflow-x:hidden; }
 
         /* ================= 1. 动态光标与基础组件 ================= */
-        #cursor { width:25px; height:25px; border:2px solid var(--cyan); border-radius:50%; position:fixed; pointer-events:none; z-index:999999; transform:translate(-50%,-50%); transition: all 0.1s ease-out; mix-blend-mode:difference; }
+        #cursor {
+            width:25px; height:25px; border:2px solid var(--cyan); border-radius:50%;
+            position:fixed; pointer-events:none; z-index:999999; transform:translate(-50%,-50%);
+            transition: all 0.1s ease-out; mix-blend-mode:difference;
+        }
         #cursor.hover { width:60px; height:60px; background:rgba(5, 217, 232, 0.2); border-color:var(--pink); }
         #cursor.click { transform:translate(-50%,-50%) scale(0.8); border-width: 4px; }
-
-        ::-webkit-scrollbar { width:8px; } 
-        ::-webkit-scrollbar-track { background:transparent; } 
+        ::-webkit-scrollbar { width:8px; }
+        ::-webkit-scrollbar-track { background:transparent; }
         ::-webkit-scrollbar-thumb { background:linear-gradient(180deg, var(--pink), var(--purple), var(--cyan)); border-radius:4px; }
 
-        .btn { background:transparent; border:2px solid var(--cyan); color:var(--cyan); padding:10px 25px; font-family:'Orbitron', sans-serif; font-weight:bold; transition:0.3s; position:relative; overflow:hidden; text-transform:uppercase; text-shadow: 0 0 5px var(--cyan); }
-        .btn::before { content:""; position:absolute; inset:0; background:linear-gradient(120deg, rgba(255,255,255,0.2), transparent, rgba(255,255,255,0.2)); transform:translateX(-120%); transition:transform 0.5s; }
-        .btn:hover::before { transform:translateX(120%); }
-        .btn:hover { background:var(--cyan); color:black; box-shadow:0 0 25px var(--cyan), inset 0 0 10px rgba(255,255,255,0.5); transform:scale(1.05) translateY(-2px); text-shadow: none; }
+        .btn {
+            background:transparent; border:2px solid var(--cyan); color:var(--cyan);
+            padding:10px 25px; font-family:'Orbitron', sans-serif; font-weight:bold;
+            transition:0.3s; position:relative; overflow:hidden; text-transform:uppercase;
+            text-shadow: 0 0 5px var(--cyan);
+        }
+        .btn:hover {
+            background:var(--cyan); color:black;
+            box-shadow:0 0 25px var(--cyan), inset 0 0 10px rgba(255,255,255,0.5);
+            transform:scale(1.05) translateY(-2px); text-shadow: none;
+        }
         .btn:disabled { border-color:#444; color:#444; cursor:not-allowed; box-shadow:none; transform:none; text-shadow:none; }
-
-        .input { width:100%; padding:14px; background:rgba(0,0,0,0.5); border:1px solid #444; color:white; font-family:'Orbitron', sans-serif; text-align:center; transition:0.3s; margin-bottom:15px; border-radius: 4px; }
+        .input {
+            width:100%; padding:14px; background:rgba(0,0,0,0.5); border:1px solid #444; color:white;
+            font-family:'Orbitron', sans-serif; text-align:center; transition:0.3s; margin-bottom:15px; border-radius: 4px;
+        }
         .input:focus { border-color:var(--cyan); box-shadow:0 0 15px rgba(5,217,232,0.3), inset 0 0 10px rgba(5,217,232,0.1); }
-
         .hidden { display:none !important; }
         .section-title { font-family:'Orbitron'; font-size: 2.5rem; text-align: center; margin-bottom: 50px; color: white; text-shadow: 0 0 15px var(--cyan); }
 
@@ -40,109 +51,137 @@
         #app-container { transition: filter 0.5s ease-out, transform 0.5s ease-out; }
         body.auth-active #app-container { filter:blur(10px) brightness(0.4); transform: scale(0.98); pointer-events:none; }
 
-        .bg-anim { position:fixed; inset:0; z-index:-10; background:radial-gradient(circle at 50% 0%, rgba(189,0,255,0.1), transparent 60%), url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2305d9e8' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
-        #canvas-bg { position:fixed; inset:0; z-index:-5; opacity:0.6; }
+        .bg-anim {
+            position:fixed; inset:0; z-index:-10;
+            background:radial-gradient(circle at 50% 0%, rgba(189,0,255,0.1), transparent 60%),
+                        url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2305d9e8' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        #canvas-bg { position:fixed; inset:0; z-index:-5; opacity:0.7; }
 
         /* ================= 3. 登录/注册系统 & Profile Viewer ================= */
-        #auth-overlay, #profile-viewer-overlay { position:fixed; inset:0; z-index:20000; background:rgba(5,2,10,0.8); display:flex; justify-content:center; align-items:center; backdrop-filter: blur(5px); opacity:0; pointer-events:none; transition: opacity 0.5s; }
+        #auth-overlay, #profile-viewer-overlay {
+            position:fixed; inset:0; z-index:20000; background:rgba(5,2,10,0.8);
+            display:flex; justify-content:center; align-items:center; backdrop-filter: blur(5px);
+            opacity:0; pointer-events:none; transition: opacity 0.5s;
+        }
         #auth-overlay.active, #profile-viewer-overlay.active { opacity:1; pointer-events:all; }
-
-        .auth-box, .profile-viewer-box { width:420px; padding:40px; background:rgba(0,0,0,0.7); border:2px solid var(--pink); box-shadow:0 0 60px rgba(255,42,109,0.4), inset 0 0 30px rgba(255,42,109,0.2); text-align:center; position:relative; animation: fadeIn 0.5s ease-out; border-radius: 8px; }
-
+        .auth-box, .profile-viewer-box {
+            width:420px; padding:40px; background:rgba(0,0,0,0.7); border:2px solid var(--pink);
+            box-shadow:0 0 60px rgba(255,42,109,0.4), inset 0 0 30px rgba(255,42,109,0.2);
+            text-align:center; position:relative; animation: fadeIn 0.5s ease-out; border-radius: 8px;
+        }
         @keyframes fadeIn { from { opacity:0; transform: scale(0.9); } to { opacity:1; transform: scale(1); } }
-
         .auth-title { font-family:'Orbitron', sans-serif; font-size:2rem; margin-bottom:30px; color:white; text-shadow:0 0 10px var(--cyan); }
         .auth-link { font-size:0.8rem; color:#888; text-decoration:underline; margin-top:10px; display:inline-block; transition: 0.2s; }
         .auth-link:hover { color:var(--cyan); }
         .err-msg { color:var(--pink); margin-top:15px; font-family:'Orbitron'; font-size:0.8rem; min-height:20px; text-shadow: 0 0 5px var(--pink); }
 
         /* ================= 4. 主页板块 (角色卡片特效升级) ================= */
-        nav { position:fixed; top:0; width:100%; height:70px; padding:0 40px; display:flex; justify-content:space-between; align-items:center; z-index:1000; background:rgba(5,1,10,0.9); border-bottom:1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
+        nav {
+            position:fixed; top:0; width:100%; height:70px; padding:0 40px;
+            display:flex; justify-content:space-between; align-items:center;
+            z-index:1000; background:rgba(5,1,10,0.8); border-bottom:1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+        }
         .brand { font-family:'Orbitron', sans-serif; font-weight:900; font-size:1.5rem; color:white; text-shadow:0 0 10px var(--cyan), 0 0 20px var(--purple); }
         .nav-item { margin-left:30px; color:#aaa; text-decoration:none; font-family:'Orbitron'; font-size:0.9rem; transition:0.3s; position:relative; padding: 5px 0; }
         .nav-item:after { content:''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px; background: var(--cyan); transition: width 0.3s; }
         .nav-item:hover { color:var(--cyan); text-shadow:0 0 8px var(--cyan); }
         .nav-item:hover:after { width: 100%; }
-
-        .user-badge { border:2px solid var(--gold); padding:5px 15px; color:var(--gold); border-radius:4px; font-family:'Orbitron'; display:flex; gap:10px; align-items: center; transition: 0.3s; text-shadow: 0 0 8px var(--gold); background: rgba(0,0,0,0.5); }
-        .user-badge:hover { background:rgba(255,215,0,0.14); box-shadow:0 0 15px rgba(255,215,0,0.3); transform: scale(1.05); }
+        .user-badge {
+            border:2px solid var(--gold); padding:5px 15px; color:var(--gold); border-radius:4px;
+            font-family:'Orbitron'; display:flex; gap:10px; align-items: center; transition: 0.3s; text-shadow: 0 0 8px var(--gold);
+        }
+        .user-badge:hover { background:rgba(255,215,0,0.1); box-shadow:0 0 15px rgba(255,215,0,0.3); transform: scale(1.05); }
 
         section { padding:120px 40px; max-width:1400px; margin:0 auto; }
-
         .hero { min-height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
-        h1 { font-family:'Orbitron', sans-serif; font-size:6rem; margin-bottom:20px; text-shadow:0 0 25px var(--pink), 0 0 40px var(--purple); animation:glitch 3s infinite alternate; }
-
+        h1 {
+            font-family:'Orbitron', sans-serif; font-size:6rem; margin-bottom:20px;
+            text-shadow:0 0 25px var(--pink), 0 0 40px var(--purple);
+            animation:glitch 3s infinite alternate;
+        }
         @keyframes glitch {
-            0%, 100% { text-shadow: 0 0 25px var(--pink), 0 0 40px var(--purple); transform:translate3d(0,0,0); }
-            45% { text-shadow: 2px 2px 0 var(--cyan), -2px -2px 0 var(--pink); transform:translate3d(-1px,0,0); }
-            50% { text-shadow: -2px 2px 0 var(--cyan), 2px -2px 0 var(--pink); transform:translate3d(1px,0,0); }
-            55% { text-shadow: 0 0 25px var(--pink), 0 0 40px var(--purple); transform:translate3d(0,0,0); }
+            0%, 100% { text-shadow: 0 0 25px var(--pink), 0 0 40px var(--purple); }
+            50% { transform: skew(-0.5deg); text-shadow: 2px 2px 0 var(--cyan), -2px -2px 0 var(--pink); }
+            51% { transform: skew(0.5deg); text-shadow: -2px 2px 0 var(--cyan), 2px -2px 0 var(--pink); }
         }
 
-        /* 角色卡片特效：扑克牌翻转 + 浮动 */
+        /* 角色卡片特效：扑克牌翻转 + 视差 */
         .char-gallery { display:flex; justify-content:center; gap:40px; flex-wrap:wrap; }
-        .char { width:260px; height:360px; perspective:1500px; transform-style: preserve-3d; position:relative; animation:cardFloat 6s ease-in-out infinite; }
-        .char:nth-child(2n) { animation-delay: 0.8s; }
-        .char:nth-child(3n) { animation-delay: 1.6s; }
-
-        @keyframes cardFloat {
-            0% { transform:translateY(0); }
-            50% { transform:translateY(-12px); }
-            100% { transform:translateY(0); }
+        .char { width:260px; height:380px; perspective:1500px; transform-style: preserve-3d; cursor:pointer; }
+        .char-in {
+            width:100%; height:100%; position:relative; transform-style:preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1), box-shadow 0.5s;
         }
-
-        .char::before {
-            content:""; position:absolute; inset:-4px;
-            border-radius:16px;
-            background:linear-gradient(135deg, rgba(255,42,109,0.6), rgba(5,217,232,0.3));
-            opacity:0; filter:blur(10px); transition:opacity 0.3s;
-            z-index:-1;
+        .char.flip .char-in { transform: rotateY(180deg); }
+        .c-front, .c-back {
+            position:absolute; inset:0; backface-visibility:hidden; border-radius:18px; overflow: hidden;
+            transform-style: preserve-3d; display:flex; flex-direction:column; align-items:center; justify-content:center;
+            background:linear-gradient(145deg, #1a1025, #050505); border:1px solid var(--border);
+            box-shadow:0 15px 40px rgba(0,0,0,0.6);
         }
-        .char:hover::before { opacity:1; }
-
-        .char-in { width:100%; height:100%; transition: transform 0.8s, box-shadow 0.5s; transform-style:preserve-3d; position:relative; border-radius:16px; }
-        .char:hover .char-in { transform: rotateY(180deg); }
-
-        .c-front, .c-back { position:absolute; inset:0; backface-visibility:hidden; border-radius:15px; overflow: hidden; transform-style: preserve-3d; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(145deg, #1a1025, #050505); border:1px solid var(--border); box-shadow:0 10px 30px rgba(0,0,0,0.5); }
-        .c-front { background:radial-gradient(circle at 20% 0%, rgba(255,42,109,0.4), transparent), radial-gradient(circle at 80% 100%, rgba(5,217,232,0.4), #05010d); }
-        .c-back { transform:rotateY(180deg); background:linear-gradient(135deg, var(--purple), #1f0c29); padding:20px; text-align:center; }
-
-        .c-front::after {
-            content:"NGNL"; position:absolute; bottom:10px; right:12px; font-family:'Orbitron'; font-size:0.75rem; letter-spacing:2px; color:rgba(255,255,255,0.25);
+        .c-front {
+            background: radial-gradient(circle at 20% 0%, rgba(255,42,109,0.15), transparent 55%),
+                        radial-gradient(circle at 80% 100%, rgba(5,217,232,0.2), transparent 55%),
+                        #05010d;
         }
+        .c-back {
+            transform:rotateY(180deg);
+            background:linear-gradient(135deg, #12071c, #2b0a3f);
+            padding:20px; text-align:center;
+        }
+        .c-av-wrapper { width: 100%; height: 100%; position: absolute; transform-style: preserve-3d; transition: transform 0.4s ease-out; }
+        .c-av { width: 100%; height: 100%; background-size: cover; background-position: center; transform: translateZ(40px); }
+        .char:hover .c-front { border-color: var(--cyan); box-shadow: 0 0 25px rgba(5,217,232,0.4), 0 0 10px rgba(255,42,109,0.3) inset; }
+        .c-front-overlay {
+            position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 10%, transparent 60%);
+            padding: 20px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; transform: translateZ(80px);
+        }
+        .char-name { font-family: 'Orbitron'; font-size: 1.7rem; text-shadow: 0 2px 10px black; color: #fff; letter-spacing: 2px; }
+        .char-race { color: var(--cyan); text-shadow: 0 2px 5px black; font-size: 0.85rem; margin-top:4px; }
+        .char-desc { font-size: 0.9rem; color: #eee; margin-top: 10px; line-height:1.6; }
 
-        .c-av-wrapper { width: 100%; height: 100%; position: absolute; transform-style: preserve-3d; transition: transform 0.5s ease-out; }
-        .c-av { width: 100%; height: 100%; background-size: cover; background-position: center; transition: transform 0.5s ease-out; transform: translateZ(20px); }
-        .char:hover .c-av { transform: translateZ(50px) scale(1.1); }
-        .char:hover .c-front { border-color: var(--cyan); box-shadow: 0 0 25px rgba(5,217,232,0.3), 0 0 10px rgba(255,42,109,0.2) inset; }
-        .c-front-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 8%, transparent 55%); padding: 20px; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; transform: translateZ(40px); }
+        /* 小花边：四个角的扑克牌花色 */
+        .corner-suit {
+            position:absolute; font-size:1.1rem; color:var(--pink); opacity:0.8;
+            text-shadow:0 0 6px rgba(255,42,109,0.6);
+        }
+        .corner-suit.tl { top:8px; left:10px; }
+        .corner-suit.tr { top:8px; right:10px; transform:scaleX(-1); }
+        .corner-suit.bl { bottom:8px; left:10px; transform:scaleY(-1); }
+        .corner-suit.br { bottom:8px; right:10px; transform:scale(-1,-1); }
 
-        .char-name { font-family: 'Orbitron'; font-size: 1.6rem; text-shadow: 0 2px 10px black; color: #fff; }
-        .char-race { color: var(--cyan); text-shadow: 0 2px 5px black; font-size:0.85rem; letter-spacing:1px; }
-        .char-desc { font-size: 0.9rem; color: #eee; margin-top: 15px; line-height:1.6; }
-
-        /* ================= 5. USER SYSTEM (UI重制) ================= */
+        /* ================= 5. USER SYSTEM (UI) ================= */
         #user-overlay { backdrop-filter: blur(8px); }
-        .profile-ui { width:1000px; height:650px; background-color: #0d0d18; background-image: linear-gradient(45deg, rgba(5, 217, 232, 0.05) 25%, transparent 25%, transparent 75%, rgba(5, 217, 232, 0.05) 75%, rgba(5, 217, 232, 0.05)), linear-gradient(45deg, rgba(5, 217, 232, 0.05) 25%, transparent 25%, transparent 75%, rgba(5, 217, 232, 0.05) 75%, rgba(5, 217, 232, 0.05)); background-size: 60px 60px; background-position: 0 0, 30px 30px; border:1px solid var(--cyan); display:flex; border-radius:10px; overflow:hidden; box-shadow:0 0 50px rgba(5,217,232,0.2); transform: scale(0.9); transition: transform 0.5s; }
+        .profile-ui {
+            width:1000px; height:650px; background-color: #0d0d18;
+            background-image: linear-gradient(45deg, rgba(5, 217, 232, 0.05) 25%, transparent 25%, transparent 75%, rgba(5, 217, 232, 0.05) 75%, rgba(5, 217, 232, 0.05)),
+                              linear-gradient(45deg, rgba(5, 217, 232, 0.05) 25%, transparent 25%, transparent 75%, rgba(5, 217, 232, 0.05) 75%, rgba(5, 217, 232, 0.05));
+            background-size: 60px 60px; background-position: 0 0, 30px 30px;
+            border:1px solid var(--cyan); display:flex; border-radius:10px; overflow:hidden;
+            box-shadow:0 0 50px rgba(5,217,232,0.2); transform: scale(0.9); transition: transform 0.5s;
+        }
         #user-overlay.active .profile-ui { transform: scale(1); }
-
-        .p-side { width:300px; background:rgba(0,0,0,0.6); border-right:1px solid #333; display:flex; flex-direction:column; }
+        .p-side { width:300px; background:rgba(0,0,0,0.5); border-right:1px solid #333; display:flex; flex-direction:column; }
         .p-head { padding:20px; border-bottom:1px solid #333; font-family:'Orbitron'; color:var(--pink); display:flex; justify-content:space-between; align-items: center; }
         .f-list { flex:1; overflow-y:auto; }
-        .f-item { padding:15px 20px; border-bottom:1px solid #222; display:flex; align-items:center; gap:10px; transition:0.2s; position: relative; cursor:pointer; }
+        .f-item {
+            padding:15px 20px; border-bottom:1px solid #222;
+            display:flex; align-items:center; gap:10px; transition:0.2s; position: relative; cursor:pointer;
+        }
         .f-item:hover, .f-item.active { background:linear-gradient(90deg, rgba(5,217,232,0.2), transparent); border-right:3px solid var(--cyan); }
-        .f-name { flex: 1; font-weight:bold; }
+        .f-name { flex: 1; }
         .f-status { font-size: 0.7rem; color: #888; }
         .f-actions { display: flex; gap: 5px; }
         .f-actions .btn { padding: 3px 8px; font-size: 0.7rem; border-width: 1px; }
 
-        .p-content { flex:1; display:flex; flex-direction:column; position: relative; background: radial-gradient(circle at top, rgba(255,42,109,0.2), transparent 65%); }
+        .p-content { flex:1; display:flex; flex-direction:column; position: relative; }
         .view { position: absolute; inset: 0; padding: 40px; transition: opacity 0.4s, transform 0.4s; }
         .view.hidden { opacity: 0; pointer-events: none; transform: scale(0.98); }
 
         .stats-view h2 { font-family: 'Orbitron'; font-size: 2.5rem; color: var(--pink); text-shadow: 0 0 10px var(--pink); }
         .stat-box { background:rgba(255,255,255,0.05); padding:20px; border-radius:8px; width:100%; text-align:center; border: 1px solid #333; transition: 0.3s; }
-        .stat-box:hover { transform:translateY(-4px); box-shadow:0 10px 25px rgba(0,0,0,0.6); }
+        .stat-box:hover { box-shadow:0 0 20px rgba(5,217,232,0.25); transform:translateY(-2px); }
 
         .exp-bar { width: 100%; height: 20px; background: #222; border-radius: 10px; margin: 10px 0; overflow: hidden; border: 1px solid #444; padding: 2px; }
         .exp-fill { height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--cyan), var(--purple)); box-shadow: 0 0 10px var(--cyan); transition: width 0.8s ease-out; }
@@ -152,78 +191,117 @@
         .chat-header { padding: 15px; border-bottom: 1px solid #333; font-family: 'Orbitron'; font-size: 1.2rem; color: var(--cyan); }
         .chat-box { flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:15px; }
         .msg { max-width:70%; padding:10px 15px; border-radius:15px; font-size:0.9rem; line-height: 1.4; position: relative; }
-        .msg.me { align-self:flex-end; background:linear-gradient(45deg, var(--cyan), #00b8c5); color:black; border-bottom-right-radius: 3px; box-shadow:0 0 10px rgba(5,217,232,0.5); }
+        .msg.me { align-self:flex-end; background:linear-gradient(45deg, var(--cyan), #00b8c5); color:black; border-bottom-right-radius: 3px; }
         .msg.them { align-self:flex-start; background:#333; border:1px solid #444; border-bottom-left-radius: 3px; }
-
-        .chat-input { padding:15px; border-top:1px solid #333; display:flex; gap:10px; }
+        .chat-input { display:flex; gap:10px; padding:15px; border-top:1px solid #333; }
 
         /* ================= 6. NOVEL READER (Advanced Features) ================= */
-        .modal-layer { position:fixed; inset:0; z-index:9000; background:rgba(5,5,10,0.98); display:flex; flex-direction:column; opacity:0; pointer-events:none; transition: all 0.5s; backdrop-filter: blur(5px); }
+        .modal-layer {
+            position:fixed; inset:0; z-index:9000; background:rgba(5,5,10,0.98);
+            display:flex; flex-direction:column; opacity:0; pointer-events:none;
+            transition: all 0.5s; backdrop-filter: blur(5px);
+        }
         .modal-layer.active { opacity:1; pointer-events:all; }
 
-        .m-head { height:60px; background:rgba(0,0,0,0.5); border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center; padding:0 30px; flex-shrink: 0; }
-        .m-title { font-family:'Orbitron'; letter-spacing:2px; color:var(--cyan); text-shadow:0 0 10px var(--cyan); }
+        .m-head {
+            height:60px; background:rgba(0,0,0,0.5); border-bottom:1px solid #333;
+            display:flex; justify-content:space-between; align-items:center; padding:0 30px; flex-shrink: 0;
+        }
+        .m-title { font-family:'Orbitron'; letter-spacing:3px; }
 
         .m-body { flex:1; display:flex; overflow:hidden; position: relative; }
 
         .r-left-panel { width: 280px; background: rgba(0,0,0,0.3); border-right: 1px solid #333; display: flex; flex-direction: column; }
         .r-tabs { display: flex; border-bottom: 1px solid #333; }
-        .r-tab { flex:1; background: transparent; border: none; color: #888; padding: 10px; font-family: 'Orbitron'; cursor:pointer; }
+        .r-tab { flex:1; background: transparent; border: none; color: #888; padding: 10px; font-family: 'Orbitron'; }
         .r-tab.active { color: white; background: rgba(255,255,255,0.1); border-bottom: 2px solid var(--cyan); }
         .r-tab-content { flex: 1; overflow-y: auto; }
 
-        .toc-item, .bm-item { padding: 12px 15px; border-bottom: 1px solid #222; transition: 0.2s; font-size: 0.9rem; cursor:pointer; position:relative; }
+        .toc-item, .bm-item {
+            padding: 12px 15px; border-bottom: 1px solid #222; transition: 0.2s; font-size: 0.9rem; cursor:pointer;
+        }
         .toc-item:hover, .bm-item:hover { background: rgba(5,217,232,0.1); color: var(--cyan); }
 
-        .r-main-panel { flex:1; display:flex; flex-direction:column; position:relative; overflow:hidden; background: radial-gradient(circle at top, rgba(5,217,232,0.1), transparent 50%); }
-        #reader-bg-canvas { position:absolute; inset:0; pointer-events:none; opacity:0.45; mix-blend-mode:screen; }
+        .r-main-panel { flex:1; display:flex; flex-direction:column; position:relative; }
+        .r-text-area {
+            flex:1; overflow-y:auto; padding: 20px 5%; font-family:'ZCOOL XiaoWei', serif;
+            font-size:1.5rem; line-height:2.4; color:#ddd;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        .r-text-area.page-switching { opacity:0; transform:translateY(10px); }
 
-        .r-text-area { position:relative; flex:1; overflow-y:auto; padding: 20px 5%; font-family:'ZCOOL XiaoWei', serif; font-size:1.5rem; line-height:2.4; color:#ddd; z-index:1; }
         .line { position:relative; padding-right: 40px; transition: background-color 0.2s; }
         .line:hover { background:rgba(255,255,255,0.05); }
 
-        /* NGNL 风格评论图标：粉青棋盘气泡 + 实时计数 */
-        .comment-bubble { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; background: radial-gradient(circle at 30% 30%, #fff, #ffd1e8, #ff2a6d); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: all 0.25s; box-shadow:0 0 8px rgba(255,42,109,0.7); border:1px solid rgba(255,255,255,0.6); }
+        .comment-bubble {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            width: 30px; height: 30px; background: rgba(255,255,255,0.05);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: all 0.3s;
+            border:1px solid rgba(255,255,255,0.15);
+        }
         .line:hover .comment-bubble { opacity: 1; transform: translateY(-50%) scale(1.1); }
-        .comment-bubble:hover { background: radial-gradient(circle at 30% 30%, #fff, #a8f6ff, #05d9e8); color: black; transform: translateY(-50%) scale(1.2); box-shadow:0 0 15px rgba(5,217,232,0.9); }
+        .comment-bubble:hover { background: var(--cyan); color: black; transform: translateY(-50%) scale(1.2); }
 
-        .comment-icon { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; text-shadow:0 0 5px rgba(0,0,0,0.6); }
-        .comment-count { font-family: 'Orbitron'; font-size: 0.65rem; position: absolute; top: -5px; right: -5px; background: var(--purple); border-radius: 50%; width: 16px; height: 16px; line-height: 16px; text-align: center; box-shadow: 0 0 5px var(--purple); color:#fff; }
-
-        .page-transition-enter { animation: pageEnter 0.55s ease-out; }
-        @keyframes pageEnter {
-            from { opacity:0; transform:translateY(20px); }
-            to { opacity:1; transform:translateY(0); }
+        .comment-icon { font-size: 1.1rem; }
+        .comment-count {
+            font-family: 'Orbitron'; font-size: 0.7rem; position: absolute; top: -5px; right: -5px;
+            background: var(--pink); border-radius: 50%; width: 16px; height: 16px; line-height: 16px;
+            text-align: center; box-shadow: 0 0 5px var(--pink);
         }
 
-        .chapter-transition-layer { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; opacity:0; z-index:2; }
-        .chapter-transition-layer.active { animation: chapterFlash 0.9s ease-out; }
-        .chapter-transition-title { padding:18px 40px; border-radius:999px; font-family:'Orbitron'; font-size:2.5rem; letter-spacing:3px; color:#fff; background:linear-gradient(135deg, rgba(255,42,109,0.95), rgba(5,217,232,0.9)); box-shadow:0 0 40px rgba(255,42,109,0.8),0 0 40px rgba(5,217,232,0.8); border:2px solid rgba(255,255,255,0.9); }
-
-        @keyframes chapterFlash {
-            0% { opacity:0; transform:scale(0.9); filter:blur(5px); }
-            20% { opacity:1; transform:scale(1); filter:blur(0); }
-            70% { opacity:0.9; transform:scale(1.02); }
-            100% { opacity:0; transform:scale(1.08); filter:blur(8px); }
+        .r-footer {
+            padding: 10px; background: rgba(0,0,0,0.5); border-top: 1px solid #333;
+            display: flex; justify-content: center; align-items: center; gap: 20px;
         }
-
-        .r-footer { padding: 10px; background: rgba(0,0,0,0.6); border-top: 1px solid #333; display: flex; justify-content: center; align-items: center; gap: 20px; z-index:1; }
         .r-progress { font-family: 'Orbitron'; color: #888; }
 
-        .r-side-r { position: absolute; top: 0; right: 0; width: 380px; height: 100%; background: #0a0a0a; border-left: 1px solid #333; transform: translateX(100%); transition: transform 0.4s ease-out; display: flex; flex-direction: column; z-index: 10; box-shadow:-10px 0 30px rgba(0,0,0,0.6); }
-        .r-side-r.open { transform: translateX(0); }
+        /* 右侧段评侧栏 */
+        .r-side-r {
+            position: absolute; top: 0; right: 0; width: 380px; height: 100%;
+            background: #0a0a0a; border-left: 1px solid #333;
+            transform: translateX(100%); transition: transform 0.4s ease-out;
+            display: flex; flex-direction: column; z-index: 10;
+        }
+        .r-side-r.open { transform: translateX(0); box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
 
-        .cmt-header { padding: 15px; border-bottom: 1px solid #333; font-family:'Orbitron'; color: var(--pink); display: flex; justify-content: space-between; align-items: center; }
+        .cmt-header {
+            padding: 15px; border-bottom: 1px solid #333; font-family:'Orbitron';
+            color: var(--pink); display: flex; justify-content: space-between; align-items: center;
+        }
         .cmt-list { flex: 1; overflow-y: auto; padding: 10px; }
-        .cmt-card { background: #1a1a1a; padding: 12px; margin-bottom: 8px; border-radius: 5px; border-left: 2px solid transparent; transition: border-color 0.3s, transform 0.2s; }
-        .cmt-card:hover { border-color: var(--cyan); transform:translateX(-2px); }
-
+        .cmt-card { background: #1a1a1a; padding: 12px; margin-bottom: 8px; border-radius: 5px; border-left: 2px solid transparent; transition: border-color 0.3s; }
+        .cmt-card:hover { border-color: var(--cyan); }
         .mention-link { color: var(--cyan); text-decoration: none; font-weight: bold; cursor:pointer; }
         .mention-link:hover { text-decoration: underline; }
 
-        /* ================= 7. DISCUSSION ================= */
-        /* 之前的论坛占位保持 */
+        /* ================= 7. FORUM 讨论区 ================= */
+        .forum-left { flex: 2; border-right:1px solid #333; padding:20px; overflow-y:auto; }
+        .forum-right { flex: 1; padding:20px; display:flex; flex-direction:column; border-left:1px solid rgba(255,255,255,0.05); background:rgba(0,0,0,0.35); }
+        .forum-title { font-family:'Orbitron'; font-size:1.2rem; margin-bottom:10px; color:var(--cyan); }
+        .post-card {
+            background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.06); border-radius:8px;
+            padding:12px 14px; margin-bottom:12px; box-shadow:0 6px 18px rgba(0,0,0,0.5); position:relative;
+        }
+        .post-header { display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; margin-bottom:6px; }
+        .post-user { color:var(--cyan); cursor:pointer; }
+        .post-time { color:#777; font-size:0.75rem; }
+        .post-content { white-space:pre-wrap; line-height:1.6; margin-bottom:8px; }
+        .post-actions { font-size:0.8rem; color:#999; display:flex; gap:18px; }
+        .post-actions span { cursor:pointer; }
+        .post-actions span:hover { color:var(--cyan); }
 
+        /* ================= 8. 其它 ================= */
+        footer { text-align:center; padding: 40px; color: #555; font-family: 'Orbitron'; }
+
+        @media (max-width: 900px) {
+            nav { padding:0 15px; }
+            .hero h1 { font-size:3.5rem; }
+            .profile-ui { width:100%; height:100%; border-radius:0; }
+            .r-left-panel { width:220px; }
+            .r-side-r { width:100%; }
+            .forum-left, .forum-right { width:50%; }
+        }
     </style>
 </head>
 <body id="body">
@@ -250,7 +328,7 @@
                 <p style="color:#888; font-size:0.8rem; margin-bottom:10px;">Code sent. (Test code: 123456)</p>
                 <input id="reg-code" class="input" placeholder="VERIFICATION CODE">
                 <button class="btn" style="width:100%" onclick="auth.register()">CONFIRM</button>
-                 <div class="auth-link" onclick="ui.switchAuth('register')">Back</div>
+                <div class="auth-link" onclick="ui.switchAuth('register')">Back</div>
             </div>
             <div id="auth-msg" class="err-msg"></div>
         </div>
@@ -285,19 +363,14 @@
             <div class="char-gallery" id="char-grid"></div>
         </section>
 
-        <footer style="text-align:center; padding: 40px; color: #555; font-family: 'Orbitron';">
-            <p>DISBOARD SYSTEM v33.1</p>
-        </footer>
+        <footer><p>DISBOARD SYSTEM v33.1</p></footer>
     </div>
 
     <!-- 3. USER PROFILE MODAL -->
     <div id="user-overlay" class="modal-layer">
         <div class="profile-ui">
             <div class="p-side">
-                <div class="p-head">
-                    <span>SOCIAL</span>
-                    <button class="btn" onclick="social.addFriend()">+</button>
-                </div>
+                <div class="p-head"><span>SOCIAL</span><button class="btn" onclick="social.addFriend()">+</button></div>
                 <div id="friend-list" class="f-list"></div>
                 <div style="padding: 10px; border-top: 1px solid #333;">
                     <button class="btn" style="width: 100%; border-color:var(--pink); color:var(--pink)" onclick="auth.logout()">LOGOUT</button>
@@ -308,14 +381,8 @@
                     <h2 id="profile-name"></h2>
                     <p id="profile-bio" style="color:#aaa; margin-top:10px; min-height: 40px;"></p>
                     <div class="stat-grid" style="margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div class="stat-box">
-                            <div>RANK</div>
-                            <div id="profile-rank" style="font-size: 2rem;"></div>
-                        </div>
-                        <div class="stat-box">
-                            <div>COINS</div>
-                            <div id="profile-coins" style="font-size: 2rem;"></div>
-                        </div>
+                        <div class="stat-box"><div>RANK</div><div id="profile-rank" style="font-size: 2rem;"></div></div>
+                        <div class="stat-box"><div>COINS</div><div id="profile-coins" style="font-size: 2rem;"></div></div>
                     </div>
                     <div style="margin-top: 20px;">
                         <div class="exp-text">EXP</div>
@@ -352,10 +419,6 @@
                 <div id="content-bm" class="r-tab-content hidden"></div>
             </div>
             <div class="r-main-panel">
-                <canvas id="reader-bg-canvas"></canvas>
-                <div id="chapter-transition-layer" class="chapter-transition-layer">
-                    <div id="chapter-transition-title" class="chapter-transition-title"></div>
-                </div>
                 <div id="reader-text-area" class="r-text-area">
                     <p style="text-align:center; color: #888; margin-top: 50px;">Loading novel...</p>
                 </div>
@@ -394,8 +457,17 @@
             <span class="m-title">FORUM</span>
             <button class="btn" style="border-color:var(--pink); color:var(--pink);" onclick="ui.hideAllModals()">CLOSE</button>
         </div>
-        <div class="m-body" style="padding:20px;">
-            <p>Forum is under construction.</p>
+        <div class="m-body">
+            <div class="forum-left">
+                <div class="forum-title">LATEST THREADS</div>
+                <div id="forum-list"></div>
+            </div>
+            <div class="forum-right">
+                <div class="forum-title">NEW POST</div>
+                <textarea id="forum-input" class="input" style="flex:1; text-align:left; margin-bottom:10px;" placeholder="Share your strategy, theory, or scream about Tet..."></textarea>
+                <button class="btn" style="width:100%;" onclick="forum.post()">POST</button>
+                <p style="font-size:0.75rem; color:#777; margin-top:8px;">Tips & likes will reward EXP / coins via backend rules.</p>
+            </div>
         </div>
     </div>
 
@@ -403,6 +475,7 @@
     // ==========================================================
     // NGNL SYSTEM FRONTEND v33.1 (ULTIMATE & UNABRIDGED)
     // ==========================================================
+
     const API_URL = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec";
 
     const state = {
@@ -418,7 +491,8 @@
             linesPerPage: 30,
             currentPage: 0,
             totalPages: 0,
-            pages: []        // {startLine, endLine}
+            pageStartIndices: [],
+            isLoaded: false
         }
     };
 
@@ -471,7 +545,13 @@
             this.hideAllModals();
             const modal = document.getElementById(modalId);
             if (modal) modal.classList.add('active');
+
             if (modalId === 'user-overlay') social.init();
+            if (modalId === 'reader-layer') {
+                reader.init();
+                setTimeout(() => reader.paginate(), 50);
+            }
+            if (modalId === 'discussion-layer') forum.init();
         },
         hideAllModals() {
             document.querySelectorAll('.modal-layer').forEach(m => m.classList.remove('active'));
@@ -530,10 +610,11 @@
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-pass').value;
             if (!email || !password) return ui.showAuthError("Email and password are required.");
+
             ui.showAuthError("Connecting...");
             const res = await apiRequest({ action: 'login', email: email, password: password });
             if (res.status === 'success') {
-                state.user = { name: res.username, rank: res.level, exp: res.exp, coins: res.coins, bio: res.bio, avatar: res.avatar };
+                state.user = { name: res.username, rank: res.rank, exp: res.exp, coins: res.coins, bio: res.bio, avatar: res.avatar };
                 state.isLoggedIn = true;
                 sessionStorage.setItem('ngnlUser', JSON.stringify(state.user));
                 ui.elements.authOverlay.classList.remove('active');
@@ -556,6 +637,7 @@
             ui.showAuthError("Requesting code...");
 
             const res = await apiRequest({ action: 'request_code', email: email });
+
             codeBtn.disabled = false;
             codeBtn.innerText = "GET CODE";
 
@@ -570,6 +652,7 @@
         async register() {
             const code = document.getElementById('reg-code').value.trim();
             if (!code) return ui.showAuthError("Verification code is required.");
+
             ui.showAuthError("Registering...");
             const payload = {
                 action: 'register',
@@ -663,6 +746,8 @@
             if (res.status === 'success' && res.data) {
                 box.innerHTML = res.data.map(m => `<div class="msg ${m.sender === state.user.name ? 'me' : 'them'}">${m.content}</div>`).join('') || "No messages yet. Say hi!";
                 box.scrollTop = box.scrollHeight;
+            } else {
+                box.innerHTML = `<div style="color:var(--pink);">Failed to load messages.</div>`;
             }
         },
         async sendMessage() {
@@ -679,103 +764,149 @@
 
     const reader = {
         async init() {
+            if (state.novel.isLoaded) return;
             const textArea = document.getElementById('reader-text-area');
             try {
                 const [novelResponse, commentRes] = await Promise.all([
                     fetch('novel.txt'),
                     apiRequest({ action: 'get_all_comments' })
                 ]);
-                if (!novelResponse.ok) throw new Error('novel.txt not found. Please create it in your GitHub repository.');
+
+                if (!novelResponse.ok) throw new Error('novel.txt not found. Please put it in the same folder.');
+
                 const text = await novelResponse.text();
-                state.novel.lines = text.split('\n');
+                state.novel.lines = text.split(/\r?\n/);
                 if (commentRes.status === 'success') {
-                    state.novel.comments = commentRes.data;
+                    state.novel.comments = commentRes.data || {};
+                } else {
+                    state.novel.comments = {};
                 }
-                this.parseAndPaginate();
+                state.novel.isLoaded = true;
+                this.loadBookmarks();
+                this.paginate();
             } catch (error) {
+                console.error(error);
                 textArea.innerHTML = `<p style="text-align:center; color:var(--pink);">${error.message}</p>`;
             }
         },
-        parseAndPaginate() {
+        detectChapterTitle(line) {
+            if (!line) return null;
+            const trimmed = line.trim();
+            if (!trimmed) return null;
+            const hasJuan = /第[一二三四五六七八九十百千万0-9]+卷/.test(trimmed);
+            const hasZhang = /第[一二三四五六七八九十百千万0-9]+章/.test(trimmed);
+            const hasXu = /序章/.test(trimmed);
+            const hasZhong = /终章/.test(trimmed);
+            if (hasJuan && (hasZhang || hasXu || hasZhong)) return trimmed;
+            if (hasZhang) return trimmed;
+            if (hasXu || hasZhong) return trimmed;
+            if (/^Chapter\s*\d+/i.test(trimmed)) return trimmed;
+            return null;
+        },
+        paginate() {
+            if (!state.novel.isLoaded || state.novel.lines.length === 0) return;
+
             const textArea = document.getElementById('reader-text-area');
             const style = window.getComputedStyle(textArea);
-            const lineHeight = parseFloat(style.lineHeight);
-            const containerHeight = textArea.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
-            state.novel.linesPerPage = Math.max(10, Math.floor(containerHeight / lineHeight));
-            const chapterRegex = /^(第[一二三四五六七八九十百千零〇]+章|序章|终章|Chapter\s+\d+)/;
+            let lineHeight = parseFloat(style.lineHeight);
+            if (!lineHeight || isNaN(lineHeight)) lineHeight = 32;
 
-            // TOC
+            let containerHeight = textArea.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+            if (!containerHeight || containerHeight < lineHeight * 4) {
+                containerHeight = window.innerHeight * 0.6;
+            }
+
+            const linesPerPage = Math.max(8, Math.floor(containerHeight / lineHeight));
+            state.novel.linesPerPage = linesPerPage;
+
+            // Build TOC & chapter positions
             state.novel.toc = [];
-            state.novel.lines.forEach((line, index) => {
-                if (chapterRegex.test(line.trim())) {
-                    state.novel.toc.push({ title: line.trim(), lineIndex: index });
+            const chapterPositions = [];
+            for (let i = 0; i < state.novel.lines.length; i++) {
+                const title = this.detectChapterTitle(state.novel.lines[i]);
+                if (title) {
+                    state.novel.toc.push({ title: state.novel.lines[i].trim(), lineIndex: i });
+                    chapterPositions.push(i);
+                }
+            }
+
+            this.renderTOC();
+
+            const totalLines = state.novel.lines.length;
+            const pageStarts = [];
+
+            // Segments: 前置内容 + 每一章
+            const segments = [];
+            if (chapterPositions.length === 0) {
+                segments.push({ start: 0, end: totalLines });
+            } else {
+                if (chapterPositions[0] > 0) {
+                    segments.push({ start: 0, end: chapterPositions[0] });
+                }
+                for (let i = 0; i < chapterPositions.length; i++) {
+                    const start = chapterPositions[i];
+                    const end = (i + 1 < chapterPositions.length) ? chapterPositions[i + 1] : totalLines;
+                    segments.push({ start, end });
+                }
+            }
+
+            segments.forEach(seg => {
+                let pos = seg.start;
+                while (pos < seg.end) {
+                    pageStarts.push(pos);
+                    pos += linesPerPage;
                 }
             });
 
-            // 按行数+章节标题重新构建页面，保证章节标题总是在页首
-            const pages = [];
-            const lines = state.novel.lines;
-            const LPP = state.novel.linesPerPage;
-            let i = 0;
-            while (i < lines.length) {
-                const startLine = i;
-                let endLine = Math.min(i + LPP, lines.length);
-                for (let j = startLine + 1; j < endLine; j++) {
-                    if (chapterRegex.test(lines[j].trim())) {
-                        endLine = j;
-                        break;
-                    }
-                }
-                pages.push({ startLine, endLine });
-                i = endLine;
+            state.novel.pageStartIndices = pageStarts;
+            state.novel.totalPages = pageStarts.length;
+            if (state.novel.currentPage >= state.novel.totalPages) {
+                state.novel.currentPage = 0;
             }
-            state.novel.pages = pages;
-            state.novel.totalPages = pages.length;
-
-            this.renderTOC();
-            this.loadBookmarks();
-            this.renderBookmarks();
-            visuals.initReaderBackground();
-            this.goToPage(0);
+            this.goToPage(state.novel.currentPage);
         },
         goToPage(page) {
-            if (!state.novel.pages || state.novel.pages.length === 0) return;
-            if (page < 0 || page >= state.novel.pages.length) return;
-            state.novel.currentPage = page;
+            if (!state.novel.pageStartIndices || state.novel.pageStartIndices.length === 0) return;
+            if (page < 0 || page >= state.novel.totalPages) return;
 
-            const pageInfo = state.novel.pages[page];
-            const startLine = pageInfo.startLine;
-            const endLine = pageInfo.endLine;
-            const pageLines = state.novel.lines.slice(startLine, endLine);
             const textArea = document.getElementById('reader-text-area');
+            textArea.classList.add('page-switching');
+
+            const startLine = state.novel.pageStartIndices[page];
+            const endLine = (page + 1 < state.novel.pageStartIndices.length) ? state.novel.pageStartIndices[page + 1] : state.novel.lines.length;
+            const pageLines = state.novel.lines.slice(startLine, endLine);
 
             const html = pageLines.map((line, i) => {
                 const globalLineIndex = startLine + i;
                 if (!line.trim()) return '<br>';
                 const commentCount = state.novel.comments[globalLineIndex] ? state.novel.comments[globalLineIndex].length : 0;
                 return `<div class="line" data-line-index="${globalLineIndex}">
-                    ${line}
-                    <div class="comment-bubble" onclick="reader.openCommentSidebar(${globalLineIndex}); event.stopPropagation();">
-                        <span class="comment-icon">★</span>
-                        ${commentCount > 0 ? `<span class="comment-count">${commentCount}</span>` : ''}
-                    </div>
-                </div>`;
+                            ${line.replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+                            <div class="comment-bubble" onclick="reader.openCommentSidebar(${globalLineIndex})">
+                                <span class="comment-icon">♚</span>
+                                ${commentCount > 0 ? `<span class="comment-count">${commentCount}</span>` : ''}
+                            </div>
+                        </div>`;
             }).join('');
 
-            textArea.innerHTML = html;
-            textArea.scrollTop = 0;
-            textArea.classList.remove('page-transition-enter');
-            void textArea.offsetWidth;
-            textArea.classList.add('page-transition-enter');
-            document.getElementById('reader-progress').innerText = `${page + 1} / ${state.novel.totalPages}`;
+            setTimeout(() => {
+                textArea.innerHTML = html || '<p style="text-align:center; color:#888; margin-top:40px;">Empty page.</p>';
+                textArea.scrollTop = 0;
+                state.novel.currentPage = page;
+                document.getElementById('reader-progress').innerText = `${page + 1} / ${state.novel.totalPages}`;
+                textArea.classList.remove('page-switching');
+            }, 120);
         },
-        goToChapter(lineIndex, title) {
-            let pageIndex = state.novel.pages.findIndex(p => p.startLine === lineIndex);
-            if (pageIndex < 0) {
-                pageIndex = Math.floor(lineIndex / state.novel.linesPerPage);
+        goToChapter(lineIndex) {
+            if (!state.novel.pageStartIndices) return;
+            const pageIndex = state.novel.pageStartIndices.findIndex(idx => idx === lineIndex);
+            if (pageIndex >= 0) {
+                this.goToPage(pageIndex);
+            } else {
+                // 找不到就退化成按行数估算
+                const approx = Math.floor(lineIndex / state.novel.linesPerPage);
+                this.goToPage(Math.max(0, Math.min(state.novel.totalPages - 1, approx)));
             }
-            visuals.playChapterTransition(title || 'CHAPTER');
-            this.goToPage(pageIndex);
         },
         switchTab(tabName) {
             document.getElementById('tab-toc').classList.toggle('active', tabName === 'toc');
@@ -785,46 +916,34 @@
         },
         renderTOC() {
             const tocContainer = document.getElementById('content-toc');
-            if (state.novel.toc.length === 0) {
+            if (!state.novel.toc || state.novel.toc.length === 0) {
                 tocContainer.innerHTML = `<p style="padding: 15px; color: #888;">No chapter titles detected.</p>`;
                 return;
             }
             tocContainer.innerHTML = state.novel.toc.map(chapter =>
-                `<div class="toc-item" data-line="${chapter.lineIndex}" data-title="${chapter.title}">
-                    ${chapter.title}
-                </div>`
+                `<div class="toc-item" onclick="reader.goToChapter(${chapter.lineIndex})">${chapter.title}</div>`
             ).join('');
-            document.querySelectorAll('.toc-item').forEach(el => {
-                el.addEventListener('click', () => {
-                    const line = Number(el.dataset.line);
-                    const title = el.dataset.title;
-                    reader.goToChapter(line, title);
-                });
-            });
         },
         loadBookmarks() {
-            state.novel.bookmarks = JSON.parse(localStorage.getItem('ngnl_bookmarks') || '[]');
+            try {
+                state.novel.bookmarks = JSON.parse(localStorage.getItem('ngnl_bookmarks') || '[]');
+            } catch (e) {
+                state.novel.bookmarks = [];
+            }
+            this.renderBookmarks();
         },
         renderBookmarks() {
             const bmContainer = document.getElementById('content-bm');
-            if (state.novel.bookmarks.length === 0) {
+            if (!state.novel.bookmarks || state.novel.bookmarks.length === 0) {
                 bmContainer.innerHTML = `<p style="padding: 15px; color: #888;">No bookmarks yet.</p>`;
                 return;
             }
             bmContainer.innerHTML = state.novel.bookmarks.map((bm, index) =>
-                `<div class="bm-item" data-page="${bm.page}" data-index="${index}">
+                `<div class="bm-item" onclick="reader.goToPage(${bm.page})">
                     Page ${bm.page + 1} - ${bm.line.substring(0, 20)}...
-                    <button class="btn" style="position:absolute; right:8px; top:8px; padding:2px 6px; font-size:0.65rem; border-color:var(--pink); color:var(--pink);"
-                        onclick="reader.removeBookmark(${index}, event)">X</button>
+                    <button onclick="reader.removeBookmark(${index}, event)" style="float:right; background:none; border:none; color: var(--pink);">X</button>
                 </div>`
             ).join('');
-            document.querySelectorAll('.bm-item').forEach(el => {
-                el.addEventListener('click', (e) => {
-                    if (e.target.tagName === 'BUTTON') return;
-                    const page = Number(el.dataset.page);
-                    reader.goToPage(page);
-                });
-            });
         },
         addBookmark() {
             const currentPage = state.novel.currentPage;
@@ -832,7 +951,7 @@
                 alert("This page is already bookmarked.");
                 return;
             }
-            const firstLineIndex = state.novel.pages[currentPage].startLine;
+            const firstLineIndex = state.novel.pageStartIndices[currentPage] || 0;
             const firstLine = state.novel.lines[firstLineIndex] || "Empty Page";
             state.novel.bookmarks.push({ page: currentPage, line: firstLine });
             localStorage.setItem('ngnl_bookmarks', JSON.stringify(state.novel.bookmarks));
@@ -849,32 +968,37 @@
         },
         openCommentSidebar(lineIndex) {
             state.novel.activeCommentLine = lineIndex;
-            document.getElementById('cmt-header-title').innerText = `Comments for Line ${lineIndex + 1}`;
+            document.getElementById('cmt-header-title').innerText = `Line ${lineIndex + 1}`;
             const comments = state.novel.comments[lineIndex] || [];
-            document.getElementById('cmt-list').innerHTML = comments.length > 0
-                ? comments.map(c => this.formatComment(c)).join('')
-                : `<p style="text-align:center; color:#888; padding:20px;">No comments yet. Be the first!</p>`;
+            if (comments.length === 0) {
+                document.getElementById('cmt-list').innerHTML = `<p style="text-align:center; color:#888; padding:20px;">No comments yet. Be the first!</p>`;
+            } else {
+                document.getElementById('cmt-list').innerHTML = comments.map(c => this.formatComment(c)).join('');
+            }
             document.getElementById('reader-comment-sidebar').classList.add('open');
         },
         closeCommentSidebar() {
             document.getElementById('reader-comment-sidebar').classList.remove('open');
         },
         formatComment(comment) {
-            const formattedContent = comment.content.replace(/@([\u4e00-\u9fa5\w]+)/g, `<span class="mention-link" onclick="ui.showOtherUserProfile('$1')">@$1</span>`);
+            const formattedContent = comment.content.replace(/@(\S+)/g, function(match, name){
+                return `<span class="mention-link" onclick="ui.showOtherUserProfile('${name}')">@${name}</span>`;
+            });
             return `<div class="cmt-card">
-                <div class="cmt-user" style="color:var(--cyan); font-weight:bold; cursor:pointer;" onclick="ui.showOtherUserProfile('${comment.user}')">${comment.user}</div>
-                <div class="cmt-content" style="margin: 5px 0; white-space: pre-wrap;">${formattedContent}</div>
-                <div class="cmt-actions" style="font-size:0.8rem; color:#888; display:flex; gap:15px; margin-top:5px;">
-                    <span style="cursor:pointer" onclick="community.interact('like', '${comment.id}', 'comment')">♥ ${comment.likes}</span>
-                    <span style="cursor:pointer" onclick="community.interact('tip', '${comment.id}', 'comment')">🪙 ${comment.coins || 0}</span>
-                </div>
-            </div>`;
+                        <div class="cmt-user" style="color:var(--cyan); font-weight:bold; cursor:pointer;" onclick="ui.showOtherUserProfile('${comment.user}')">${comment.user}</div>
+                        <div class="cmt-content" style="margin: 5px 0; white-space: pre-wrap;">${formattedContent}</div>
+                        <div class="cmt-actions" style="font-size:0.8rem; color:#888; display:flex; gap:15px; margin-top:5px;">
+                            <span style="cursor:pointer" onclick="community.interact('like', '${comment.id}', 'comment')">♥ ${comment.likes}</span>
+                            <span style="cursor:pointer" onclick="community.interact('tip', '${comment.id}', 'comment')">🪙 ${comment.coins || 0}</span>
+                        </div>
+                    </div>`;
         },
         async postComment() {
             const input = document.getElementById('cmt-input');
             const content = input.value.trim();
             if (!content || state.novel.activeCommentLine < 0) return;
             if (!state.isLoggedIn) return alert("You must be logged in to comment.");
+
             input.disabled = true;
             await apiRequest({
                 action: 'post_line_comment',
@@ -883,9 +1007,10 @@
             });
             input.value = '';
             input.disabled = false;
+
             const commentRes = await apiRequest({ action: 'get_all_comments' });
             if (commentRes.status === 'success') {
-                state.novel.comments = commentRes.data;
+                state.novel.comments = commentRes.data || {};
                 this.goToPage(state.novel.currentPage);
                 this.openCommentSidebar(state.novel.activeCommentLine);
             }
@@ -896,9 +1021,11 @@
         async interact(subAction, id, type) {
             if (!state.isLoggedIn) return alert("Login required to interact.");
             if (subAction === 'tip' && !confirm("Spend 1 coin?")) return;
+
             const res = await apiRequest({ action: 'interact', sub_action: subAction, type: type, id: id });
+
             if (res.status === 'success') {
-                if (subAction === 'tip') {
+                if (subAction === 'tip' && typeof res.new_balance !== 'undefined') {
                     state.user.coins = res.new_balance;
                     sessionStorage.setItem('ngnlUser', JSON.stringify(state.user));
                     ui.updateHUD();
@@ -906,10 +1033,15 @@
                 if (type === 'comment') {
                     const commentRes = await apiRequest({ action: 'get_all_comments' });
                     if (commentRes.status === 'success') {
-                        state.novel.comments = commentRes.data;
+                        state.novel.comments = commentRes.data || {};
                         reader.goToPage(state.novel.currentPage);
-                        reader.openCommentSidebar(state.novel.activeCommentLine);
+                        if (state.novel.activeCommentLine >= 0) {
+                            reader.openCommentSidebar(state.novel.activeCommentLine);
+                        }
                     }
+                }
+                if (type === 'discussion') {
+                    forum.load(); // refresh forum list
                 }
             } else {
                 alert(res.message);
@@ -917,34 +1049,80 @@
         }
     };
 
-    const visuals = {
-        readerBG: {
-            initialized: false,
-            particles: [],
-            ctx: null,
-            width: 0,
-            height: 0,
-            scrollTop: 0
+    const forum = {
+        async init() {
+            await this.load();
         },
+        async load() {
+            const list = document.getElementById('forum-list');
+            list.innerHTML = `<p style="color:#888;">Loading discussions...</p>`;
+            const res = await apiRequest({ action: 'get_discussions' });
+            if (res.status !== 'success') {
+                list.innerHTML = `<p style="color:var(--pink);">Failed to load forum: ${res.message}</p>`;
+                return;
+            }
+            if (!res.data || res.data.length === 0) {
+                list.innerHTML = `<p style="color:#888;">No threads yet. Start the first game!</p>`;
+                return;
+            }
+            list.innerHTML = res.data.map(p => this.renderPost(p)).join('');
+        },
+        renderPost(p) {
+            const safeContent = (p.content || '').replace(/</g,"&lt;").replace(/>/g,"&gt;");
+            return `<div class="post-card">
+                        <div class="post-header">
+                            <span class="post-user" onclick="ui.showOtherUserProfile('${p.user}')">${p.user}</span>
+                            <span class="post-time">${p.time}</span>
+                        </div>
+                        <div class="post-content">${safeContent}</div>
+                        <div class="post-actions">
+                            <span onclick="community.interact('like','${p.id}','discussion')">♥ ${p.likes}</span>
+                            <span onclick="community.interact('tip','${p.id}','discussion')">🪙 ${p.coins || 0}</span>
+                        </div>
+                    </div>`;
+        },
+        async post() {
+            const input = document.getElementById('forum-input');
+            const content = input.value.trim();
+            if (!content) return;
+            if (!state.isLoggedIn) return alert("Login required to post.");
+
+            input.disabled = true;
+            const res = await apiRequest({ action: 'post_discussion', content: content });
+            input.disabled = false;
+            if (res.status === 'success') {
+                input.value = '';
+                await this.load();
+            } else {
+                alert(res.message);
+            }
+        }
+    };
+
+    const visuals = {
         init() {
             this.initPlayers();
             this.initCursor();
             this.initCanvas();
         },
         initPlayers() {
-            // 使用你提供的本地图片文件
             const players = [
-                {n:'IZUNA', r:'Werebeast', i:'izuna.png', d:'兽人种少女，以“血坏”能力与惊人直觉在博弈中横扫战场。'},
-                {n:'JIBRIL', r:'Flügel', i:'jibril.png', d:'天翼种的“书痴”天使，为知识与游戏而生的最强兵器。'},
-                {n:'SHIRO', r:'Imanity', i:'shiro.png', d:'『 』之白，绝对计算力与完美记忆的天才 NEET。'},
-                {n:'SORA', r:'Imanity', i:'sora.png', d:'『 』之空，读心般的洞察与策略家，让胜利化为必然。'},
-                {n:'STEPH', r:'Imanity', i:'steph.png', d:'艾尔奇亚的公主，在看似笨拙的外表下藏着无可替代的执着。'},
-                {n:'TET', r:'Old Deus', i:'tet.png', d:'唯一的神，十六种族共同的对局裁判，“游戏人生”的发牌者。'}
+                { n:'IZUNA', r:'Werebeast', i:'izuna.png', d:'兽人种少女，以「血坏」能力与惊人的直觉在赌局中驰骋。' },
+                { n:'JIBRIL', r:'Flügel', i:'jibril.png', d:'天翼种，对知识有着极端渴望的图书狂战士，游戏外禁止出手。' },
+                { n:'SHIRO', r:'Imanity', i:'shiro.png', d:'『　　』的计算核心，真正意义上的游戏天才。' },
+                { n:'SORA', r:'Imanity', i:'sora.png', d:'『　　』的交涉与心理战担当，相信人类直到最后一刻。' },
+                { n:'STEPH', r:'Imanity', i:'steph.png', d:'艾尔奇亚前王的孙女，运气爆死但内政满点的苦命公主。' },
+                { n:'TET', r:'Old Deus', i:'tet.png', d:'游戏之神，十六种族与十条盟约的制定者，一切游戏的发牌者。' }
             ];
-            document.getElementById('char-grid').innerHTML = players.map(p => `
-                <div class="char" onmousemove="visuals.moveCard(event)" onmouseleave="visuals.resetCard(event)">
+            const grid = document.getElementById('char-grid');
+            grid.innerHTML = players.map(p => `
+                <div class="char" onmousemove="visuals.moveCard(event)" onmouseleave="visuals.resetCard(event)" onclick="visuals.toggleFlip(this)">
                     <div class="char-in">
                         <div class="c-front">
+                            <span class="corner-suit tl">♠</span>
+                            <span class="corner-suit tr">♠</span>
+                            <span class="corner-suit bl">♠</span>
+                            <span class="corner-suit br">♠</span>
                             <div class="c-av-wrapper"><div class="c-av" style="background-image:url('${p.i}')"></div></div>
                             <div class="c-front-overlay">
                                 <div class="char-name">${p.n}</div>
@@ -958,22 +1136,22 @@
                     </div>
                 </div>`).join('');
         },
+        toggleFlip(card) {
+            card.classList.toggle('flip');
+        },
         moveCard(e) {
             const card = e.currentTarget;
-            const cardInner = card.querySelector('.char-in');
-            const { width, height, left, top } = card.getBoundingClientRect();
-            const x = e.clientX - left;
-            const y = e.clientY - top;
-            const rotateX = -10 * ((y - height / 2) / height);
-            const rotateY = 10 * ((x - width / 2) / width);
-            cardInner.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
             const wrapper = card.querySelector('.c-av-wrapper');
-            wrapper.style.transform = `translateX(${rotateY * 1.5}px) translateY(${rotateX * 1.5}px)`;
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const moveX = (x - rect.width / 2) / 10;
+            const moveY = (y - rect.height / 2) / 10;
+            wrapper.style.transform = `translateX(${moveX}px) translateY(${moveY}px) translateZ(40px)`;
         },
         resetCard(e) {
-            const cardInner = e.currentTarget.querySelector('.char-in');
-            cardInner.style.transform = `rotateX(0) rotateY(0)`;
-            e.currentTarget.querySelector('.c-av-wrapper').style.transform = `translateX(0) translateY(0)`;
+            const wrapper = e.currentTarget.querySelector('.c-av-wrapper');
+            wrapper.style.transform = `translateX(0) translateY(0) translateZ(40px)`;
         },
         initCursor() {
             const cursor = document.getElementById('cursor');
@@ -996,14 +1174,24 @@
             const ctx = cvs.getContext('2d');
             let w = window.innerWidth, h = window.innerHeight;
             cvs.width = w; cvs.height = h;
-            const chessChars = ['♔', '♕', '♖', '♗', '♘', '♙'];
-            const particles = Array.from({ length: 60 }, () => ({
+
+            let scrollParallax = 0;
+            const readerArea = document.getElementById('reader-text-area');
+            if (readerArea) {
+                readerArea.addEventListener('scroll', () => {
+                    scrollParallax = readerArea.scrollTop * 0.05;
+                });
+            }
+
+            const pieces = ['♔','♕','♖','♗','♘','♙','♤','♧','♢','♡'];
+            const particles = Array.from({ length: 70 }, () => ({
                 x: Math.random() * w,
                 y: Math.random() * h,
-                s: Math.random() * 0.6 + 0.2,
-                char: chessChars[Math.floor(Math.random() * chessChars.length)],
-                opacity: Math.random() * 0.3 + 0.1
+                s: Math.random() * 0.4 + 0.3,
+                char: pieces[Math.floor(Math.random() * pieces.length)],
+                opacity: Math.random() * 0.35 + 0.15
             }));
+
             function loop() {
                 ctx.clearRect(0, 0, w, h);
                 particles.forEach(p => {
@@ -1012,87 +1200,29 @@
                         p.y = h + 30;
                         p.x = Math.random() * w;
                     }
-                    ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
-                    ctx.font = '25px Arial';
-                    ctx.fillText(p.char, p.x, p.y);
+                    const drawY = p.y + scrollParallax;
+                    ctx.globalAlpha = p.opacity;
+                    ctx.font = '24px Orbitron';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(p.char, p.x, drawY);
+                    ctx.globalAlpha = 1;
                 });
                 requestAnimationFrame(loop);
             }
             requestAnimationFrame(loop);
+
             window.addEventListener('resize', () => {
                 w = window.innerWidth;
                 h = window.innerHeight;
                 cvs.width = w;
                 cvs.height = h;
             });
-        },
-        initReaderBackground() {
-            if (this.readerBG.initialized) return;
-            const canvas = document.getElementById('reader-bg-canvas');
-            const panel = document.querySelector('.r-main-panel');
-            const textArea = document.getElementById('reader-text-area');
-            if (!canvas || !panel || !textArea) return;
-
-            const ctx = canvas.getContext('2d');
-            const resize = () => {
-                canvas.width = panel.clientWidth;
-                canvas.height = panel.clientHeight;
-                this.readerBG.width = canvas.width;
-                this.readerBG.height = canvas.height;
-            };
-            resize();
-            window.addEventListener('resize', resize);
-
-            const particles = Array.from({ length: 55 }, () => ({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                baseY: Math.random() * canvas.height,
-                r: Math.random() * 2 + 1,
-                speed: Math.random() * 0.2 + 0.05,
-                hue: 280 + Math.random() * 80
-            }));
-            this.readerBG.particles = particles;
-            this.readerBG.ctx = ctx;
-            this.readerBG.initialized = true;
-
-            textArea.addEventListener('scroll', (e) => {
-                this.readerBG.scrollTop = e.target.scrollTop;
-            });
-
-            const draw = () => {
-                const { width, height } = this.readerBG;
-                ctx.clearRect(0, 0, width, height);
-                particles.forEach(p => {
-                    p.baseY -= p.speed;
-                    if (p.baseY < -20) p.baseY = height + 20;
-                    const y = p.baseY - this.readerBG.scrollTop * 0.25;
-                    const x = p.x + Math.sin((p.baseY + this.readerBG.scrollTop) * 0.01) * 8;
-                    const gradient = ctx.createRadialGradient(x, y, 0, x, y, p.r * 4);
-                    gradient.addColorStop(0, `hsla(${p.hue}, 100%, 80%, 0.9)`);
-                    gradient.addColorStop(1, `hsla(${p.hue}, 100%, 40%, 0)`);
-                    ctx.fillStyle = gradient;
-                    ctx.beginPath();
-                    ctx.arc(x, y, p.r * 4, 0, Math.PI * 2);
-                    ctx.fill();
-                });
-                requestAnimationFrame(draw);
-            };
-            requestAnimationFrame(draw);
-        },
-        playChapterTransition(title) {
-            const layer = document.getElementById('chapter-transition-layer');
-            const titleEl = document.getElementById('chapter-transition-title');
-            if (!layer || !titleEl) return;
-            titleEl.textContent = title || 'CHAPTER';
-            layer.classList.remove('active');
-            void layer.offsetWidth;
-            layer.classList.add('active');
         }
     };
 
     document.addEventListener('DOMContentLoaded', () => {
         visuals.init();
-        reader.init();
+        reader.init(); // 预加载文本与评论
         const storedUser = sessionStorage.getItem('ngnlUser');
         if (storedUser) {
             try {
