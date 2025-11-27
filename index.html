@@ -1282,45 +1282,72 @@ const reader={
         }
     },
     parseAndPaginate(){
-        const lines=state.novel.lines;
-        const chapterRegex=/第.{1,12}[章话回]|序章|终章|Prologue|Epilogue|Chapter\s+\d+/i;
-        const pages=[];
-        const toc=[];
-        let currentStart=0;
-        let buffer=[];
-        const LPP=state.novel.linesPerPage;
+    const lines = state.novel.lines;
 
-        for(let i=0;i<lines.length;i++){
-            let line=lines[i];
-            const pure=line.replace(/\s/g,'');
-            const isChapter=chapterRegex.test(pure);
-            if(isChapter && buffer.length>0){
-                pages.push({start:currentStart,end:i});
-                currentStart=i;
-                buffer=[];
-            }
-            if(isChapter){
-                toc.push({title:line.trim()||`Chapter @${i+1}`,lineIndex:i,pageIndex:pages.length});
-            }
-            buffer.push(line);
-            if(buffer.length>=LPP){
-                pages.push({start:currentStart,end:i+1});
-                currentStart=i+1;
-                buffer=[];
-            }
-        }
-        if(buffer.length>0){
-            pages.push({start:currentStart,end:lines.length});
-        }
-        state.novel.pages=pages;
-        state.novel.totalPages=pages.length;
-        state.novel.toc=toc;
+    // ✅ 1. 更严格的章节识别：行首 + 章/话/回/卷 + 常见特例
+    const chapterRegex = /^(第.{1,12}[章话回卷]|序章|终章|Prologue|Epilogue|Chapter\s+\d+)/i;
 
-        this.renderTOC();
-        this.loadBookmarks();
-        this.renderBookmarks();
-        this.goToPage(0);
-    },
+    const pages = [];
+    const toc   = [];
+    let currentStart = 0;
+    let buffer = [];
+    const LPP = state.novel.linesPerPage;
+
+    const flushPage = (endIndex)=>{
+        if(endIndex > currentStart){
+            pages.push({ start: currentStart, end: endIndex });
+        }
+    };
+
+    for(let i=0;i<lines.length;i++){
+        const line = lines[i];
+        const pure = line.replace(/\s/g,"");
+        const isChapter = chapterRegex.test(pure);
+
+        // 碰到新章节标题：如果当前页已有内容，先结算上一页
+        if(isChapter && buffer.length > 0){
+            flushPage(i);
+            currentStart = i;   // 新页从本章节标题开始
+            buffer = [];
+        }
+
+        // 只记录“章节标题行”到目录，不再提前猜 pageIndex
+        if(isChapter){
+            toc.push({
+                title: line.trim() || `Chapter @${i+1}`,
+                lineIndex: i
+            });
+        }
+
+        buffer.push(line);
+
+        // 正常按 LPP 行数分页
+        if(buffer.length >= LPP){
+            flushPage(i+1);
+            currentStart = i+1;
+            buffer = [];
+        }
+    }
+
+    // 收尾：最后一页
+    if(buffer.length > 0){
+        flushPage(lines.length);
+    }
+
+    state.novel.pages      = pages;
+    state.novel.totalPages = pages.length;
+
+    // ✅ 2. 在分页完成之后，再统一给 TOC 补上正确的 pageIndex
+    state.novel.toc = toc.map(ch=>{
+        const pageIndex = pages.findIndex(p => ch.lineIndex >= p.start && ch.lineIndex < p.end);
+        return { ...ch, pageIndex };
+    });
+
+    this.renderTOC();
+    this.loadBookmarks();
+    this.renderBookmarks();
+    this.goToPage(0);
+},
     goToPage(page){
         if(page<0 || page>=state.novel.totalPages) return;
         state.novel.currentPage=page;
