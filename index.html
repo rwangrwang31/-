@@ -8,838 +8,221 @@
     <style>
         /* ================= 0. 核心变量与全局设定 ================= */
         :root {
-            --pink: #ff2a6d;
-            --cyan: #05d9e8;
-            --purple: #d905e8;
-            --gold: #ffd700;
-            --dark: #05010d;
-            --glass: rgba(20, 20, 35, 0.9);
-            --border: rgba(255, 255, 255, 0.1);
+            --pink: #ff2a6d; --cyan: #05d9e8; --purple: #d905e8; --gold: #ffd700;
+            --dark: #05010d; --glass: rgba(20, 20, 35, 0.9); --border: rgba(255, 255, 255, 0.1);
         }
         * { margin:0; padding:0; box-sizing:border-box; cursor:none; outline:none; user-select:none; }
         html { scroll-behavior: smooth; }
         body { background-color:var(--dark); color:white; font-family:'Noto Sans SC', sans-serif; height:100vh; overflow-x:hidden; }
 
         /* ================= 1. 动态光标与基础组件 ================= */
-        #cursor {
-            width:25px;
-            height:25px;
-            border:2px solid var(--cyan);
-            border-radius:50%;
-            position:fixed;
-            pointer-events:none;
-            z-index:999999;
-            transform:translate(-50%,-50%);
-            transition: all 0.1s ease-out;
-            mix-blend-mode:difference;
-        }
-        #cursor.hover {
-            width:60px;
-            height:60px;
-            background:rgba(5, 217, 232, 0.2);
-            border-color:var(--pink);
-        }
-        #cursor.click {
-            transform:translate(-50%,-50%) scale(0.8);
-            border-width: 4px;
-        }
-        ::-webkit-scrollbar { width:8px; }
-        ::-webkit-scrollbar-track { background:transparent; }
-        ::-webkit-scrollbar-thumb {
-            background:linear-gradient(180deg, var(--pink), var(--purple), var(--cyan));
-            border-radius:4px;
-        }
-        .btn {
-            background:transparent;
-            border:2px solid var(--cyan);
-            color:var(--cyan);
-            padding:10px 25px;
-            font-family:'Orbitron', sans-serif;
-            font-weight:bold;
-            transition:0.3s;
-            position:relative;
-            overflow:hidden;
-            text-transform:uppercase;
-            text-shadow: 0 0 5px var(--cyan);
-        }
-        .btn::before {
-            content:"";
-            position:absolute;
-            left:-50%;
-            top:0;
-            width:40%;
-            height:100%;
-            background:linear-gradient(120deg, transparent, rgba(255,255,255,0.7), transparent);
-            transform:skewX(-25deg);
-            opacity:0;
-            transition:0.4s;
-        }
-        .btn:hover::before {
-            left:120%;
-            opacity:1;
-        }
-        .btn:hover {
-            background:var(--cyan);
-            color:black;
-            box-shadow:0 0 25px var(--cyan), inset 0 0 10px rgba(255,255,255,0.5);
-            transform:scale(1.05) translateY(-2px);
-            text-shadow: none;
-        }
+        #cursor { width:25px; height:25px; border:2px solid var(--cyan); border-radius:50%; position:fixed; pointer-events:none; z-index:999999; transform:translate(-50%,-50%); transition: all 0.1s ease-out; mix-blend-mode:difference; }
+        #cursor.hover { width:60px; height:60px; background:rgba(5, 217, 232, 0.2); border-color:var(--pink); }
+        #cursor.click { transform:translate(-50%,-50%) scale(0.8); border-width: 4px; }
+
+        ::-webkit-scrollbar { width:8px; } 
+        ::-webkit-scrollbar-track { background:transparent; } 
+        ::-webkit-scrollbar-thumb { background:linear-gradient(180deg, var(--pink), var(--purple), var(--cyan)); border-radius:4px; }
+
+        .btn { background:transparent; border:2px solid var(--cyan); color:var(--cyan); padding:10px 25px; font-family:'Orbitron', sans-serif; font-weight:bold; transition:0.3s; position:relative; overflow:hidden; text-transform:uppercase; text-shadow: 0 0 5px var(--cyan); }
+        .btn::before { content:""; position:absolute; inset:0; background:linear-gradient(120deg, rgba(255,255,255,0.2), transparent, rgba(255,255,255,0.2)); transform:translateX(-120%); transition:transform 0.5s; }
+        .btn:hover::before { transform:translateX(120%); }
+        .btn:hover { background:var(--cyan); color:black; box-shadow:0 0 25px var(--cyan), inset 0 0 10px rgba(255,255,255,0.5); transform:scale(1.05) translateY(-2px); text-shadow: none; }
         .btn:disabled { border-color:#444; color:#444; cursor:not-allowed; box-shadow:none; transform:none; text-shadow:none; }
-        .input {
-            width:100%;
-            padding:14px;
-            background:rgba(0,0,0,0.5);
-            border:1px solid #444;
-            color:white;
-            font-family:'Orbitron', sans-serif;
-            text-align:center;
-            transition:0.3s;
-            margin-bottom:15px;
-            border-radius: 4px;
-        }
-        .input:focus {
-            border-color:var(--cyan);
-            box-shadow:0 0 15px rgba(5,217,232,0.3), inset 0 0 10px rgba(5,217,232,0.1);
-        }
+
+        .input { width:100%; padding:14px; background:rgba(0,0,0,0.5); border:1px solid #444; color:white; font-family:'Orbitron', sans-serif; text-align:center; transition:0.3s; margin-bottom:15px; border-radius: 4px; }
+        .input:focus { border-color:var(--cyan); box-shadow:0 0 15px rgba(5,217,232,0.3), inset 0 0 10px rgba(5,217,232,0.1); }
+
         .hidden { display:none !important; }
-        .section-title {
-            font-family:'Orbitron';
-            font-size: 2.5rem;
-            text-align: center;
-            margin-bottom: 50px;
-            color: white;
-            text-shadow: 0 0 15px var(--cyan);
-        }
+        .section-title { font-family:'Orbitron'; font-size: 2.5rem; text-align: center; margin-bottom: 50px; color: white; text-shadow: 0 0 15px var(--cyan); }
 
         /* ================= 2. 布局与背景特效 ================= */
         #app-container { transition: filter 0.5s ease-out, transform 0.5s ease-out; }
-        body.auth-active #app-container {
-            filter:blur(10px) brightness(0.4);
-            transform: scale(0.98);
-            pointer-events:none;
-        }
-        .bg-anim {
-            position:fixed;
-            inset:0;
-            z-index:-10;
-            background:
-                radial-gradient(circle at 50% 0%, rgba(189,0,255,0.1), transparent 60%),
-                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2305d9e8' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        }
+        body.auth-active #app-container { filter:blur(10px) brightness(0.4); transform: scale(0.98); pointer-events:none; }
+
+        .bg-anim { position:fixed; inset:0; z-index:-10; background:radial-gradient(circle at 50% 0%, rgba(189,0,255,0.1), transparent 60%), url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2305d9e8' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
         #canvas-bg { position:fixed; inset:0; z-index:-5; opacity:0.6; }
 
         /* ================= 3. 登录/注册系统 & Profile Viewer ================= */
-        #auth-overlay,
-        #profile-viewer-overlay {
-            position:fixed;
-            inset:0;
-            z-index:20000;
-            background:rgba(5,2,10,0.8);
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            backdrop-filter: blur(5px);
-            opacity:0;
-            pointer-events:none;
-            transition: opacity 0.5s;
-        }
-        #auth-overlay.active,
-        #profile-viewer-overlay.active {
-            opacity:1;
-            pointer-events:all;
-        }
-        .auth-box,
-        .profile-viewer-box {
-            width:420px;
-            padding:40px;
-            background:rgba(0,0,0,0.7);
-            border:2px solid var(--pink);
-            box-shadow:0 0 60px rgba(255,42,109,0.4), inset 0 0 30px rgba(255,42,109,0.2);
-            text-align:center;
-            position:relative;
-            animation: fadeIn 0.5s ease-out;
-            border-radius: 8px;
-        }
-        @keyframes fadeIn {
-            from { opacity:0; transform: scale(0.9); }
-            to   { opacity:1; transform: scale(1); }
-        }
-        .auth-title {
-            font-family:'Orbitron', sans-serif;
-            font-size:2rem;
-            margin-bottom:30px;
-            color:white;
-            text-shadow:0 0 10px var(--cyan);
-        }
-        .auth-link {
-            font-size:0.8rem;
-            color:#888;
-            text-decoration:underline;
-            margin-top:10px;
-            display:inline-block;
-            transition: 0.2s;
-        }
+        #auth-overlay, #profile-viewer-overlay { position:fixed; inset:0; z-index:20000; background:rgba(5,2,10,0.8); display:flex; justify-content:center; align-items:center; backdrop-filter: blur(5px); opacity:0; pointer-events:none; transition: opacity 0.5s; }
+        #auth-overlay.active, #profile-viewer-overlay.active { opacity:1; pointer-events:all; }
+
+        .auth-box, .profile-viewer-box { width:420px; padding:40px; background:rgba(0,0,0,0.7); border:2px solid var(--pink); box-shadow:0 0 60px rgba(255,42,109,0.4), inset 0 0 30px rgba(255,42,109,0.2); text-align:center; position:relative; animation: fadeIn 0.5s ease-out; border-radius: 8px; }
+
+        @keyframes fadeIn { from { opacity:0; transform: scale(0.9); } to { opacity:1; transform: scale(1); } }
+
+        .auth-title { font-family:'Orbitron', sans-serif; font-size:2rem; margin-bottom:30px; color:white; text-shadow:0 0 10px var(--cyan); }
+        .auth-link { font-size:0.8rem; color:#888; text-decoration:underline; margin-top:10px; display:inline-block; transition: 0.2s; }
         .auth-link:hover { color:var(--cyan); }
-        .err-msg {
-            color:var(--pink);
-            margin-top:15px;
-            font-family:'Orbitron';
-            font-size:0.8rem;
-            min-height:20px;
-            text-shadow: 0 0 5px var(--pink);
-        }
+        .err-msg { color:var(--pink); margin-top:15px; font-family:'Orbitron'; font-size:0.8rem; min-height:20px; text-shadow: 0 0 5px var(--pink); }
 
         /* ================= 4. 主页板块 (角色卡片特效升级) ================= */
-        nav {
-            position:fixed;
-            top:0;
-            width:100%;
-            height:70px;
-            padding:0 40px;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            z-index:1000;
-            background:rgba(5,1,10,0.8);
-            border-bottom:1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-        }
-        .brand {
-            font-family:'Orbitron', sans-serif;
-            font-weight:900;
-            font-size:1.5rem;
-            color:white;
-            text-shadow:0 0 10px var(--cyan), 0 0 20px var(--purple);
-            letter-spacing: 0.15em;
-        }
-        .nav-item {
-            margin-left:30px;
-            color:#aaa;
-            text-decoration:none;
-            font-family:'Orbitron';
-            font-size:0.9rem;
-            transition:0.3s;
-            position:relative;
-            padding: 5px 0;
-        }
-        .nav-item:after {
-            content:'';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--cyan);
-            transition: width 0.3s;
-        }
+        nav { position:fixed; top:0; width:100%; height:70px; padding:0 40px; display:flex; justify-content:space-between; align-items:center; z-index:1000; background:rgba(5,1,10,0.9); border-bottom:1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
+        .brand { font-family:'Orbitron', sans-serif; font-weight:900; font-size:1.5rem; color:white; text-shadow:0 0 10px var(--cyan), 0 0 20px var(--purple); }
+        .nav-item { margin-left:30px; color:#aaa; text-decoration:none; font-family:'Orbitron'; font-size:0.9rem; transition:0.3s; position:relative; padding: 5px 0; }
+        .nav-item:after { content:''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px; background: var(--cyan); transition: width 0.3s; }
         .nav-item:hover { color:var(--cyan); text-shadow:0 0 8px var(--cyan); }
         .nav-item:hover:after { width: 100%; }
-        .user-badge {
-            border:2px solid var(--gold);
-            padding:5px 15px;
-            color:var(--gold);
-            border-radius:999px;
-            font-family:'Orbitron';
-            display:flex;
-            gap:10px;
-            align-items: center;
-            transition: 0.3s;
-            text-shadow: 0 0 8px var(--gold);
-            background: radial-gradient(circle at 0% 0%, rgba(255,215,0,0.2), transparent 60%);
-        }
-        .user-badge:hover {
-            background:rgba(255,215,0,0.18);
-            box-shadow:0 0 15px rgba(255,215,0,0.5);
-            transform: scale(1.05);
-        }
+
+        .user-badge { border:2px solid var(--gold); padding:5px 15px; color:var(--gold); border-radius:4px; font-family:'Orbitron'; display:flex; gap:10px; align-items: center; transition: 0.3s; text-shadow: 0 0 8px var(--gold); background: rgba(0,0,0,0.5); }
+        .user-badge:hover { background:rgba(255,215,0,0.14); box-shadow:0 0 15px rgba(255,215,0,0.3); transform: scale(1.05); }
+
         section { padding:120px 40px; max-width:1400px; margin:0 auto; }
-        .hero {
-            min-height:100vh;
-            display:flex;
-            flex-direction:column;
-            justify-content:center;
-            align-items:center;
-            text-align:center;
-        }
-        h1 {
-            font-family:'Orbitron', sans-serif;
-            font-size:6rem;
-            margin-bottom:20px;
-            text-shadow:0 0 25px var(--pink), 0 0 40px var(--purple);
-            animation:glitch 3s infinite alternate;
-        }
+
+        .hero { min-height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
+        h1 { font-family:'Orbitron', sans-serif; font-size:6rem; margin-bottom:20px; text-shadow:0 0 25px var(--pink), 0 0 40px var(--purple); animation:glitch 3s infinite alternate; }
+
         @keyframes glitch {
-            0%, 100% {
-                text-shadow: 0 0 25px var(--pink), 0 0 40px var(--purple);
-            }
-            50% {
-                transform: skew(-0.5deg);
-                text-shadow: 2px 2px 0 var(--cyan), -2px -2px 0 var(--pink);
-            }
-            51% {
-                transform: skew(0.5deg);
-                text-shadow: -2px 2px 0 var(--cyan), 2px -2px 0 var(--pink);
-            }
+            0%, 100% { text-shadow: 0 0 25px var(--pink), 0 0 40px var(--purple); transform:translate3d(0,0,0); }
+            45% { text-shadow: 2px 2px 0 var(--cyan), -2px -2px 0 var(--pink); transform:translate3d(-1px,0,0); }
+            50% { text-shadow: -2px 2px 0 var(--cyan), 2px -2px 0 var(--pink); transform:translate3d(1px,0,0); }
+            55% { text-shadow: 0 0 25px var(--pink), 0 0 40px var(--purple); transform:translate3d(0,0,0); }
         }
 
-        /* 角色卡片特效 */
-        .char-gallery {
-            display:flex;
-            justify-content:center;
-            gap:40px;
-            flex-wrap:wrap;
+        /* 角色卡片特效：扑克牌翻转 + 浮动 */
+        .char-gallery { display:flex; justify-content:center; gap:40px; flex-wrap:wrap; }
+        .char { width:260px; height:360px; perspective:1500px; transform-style: preserve-3d; position:relative; animation:cardFloat 6s ease-in-out infinite; }
+        .char:nth-child(2n) { animation-delay: 0.8s; }
+        .char:nth-child(3n) { animation-delay: 1.6s; }
+
+        @keyframes cardFloat {
+            0% { transform:translateY(0); }
+            50% { transform:translateY(-12px); }
+            100% { transform:translateY(0); }
         }
-        .char {
-            width:280px;
-            height:400px;
-            perspective:1500px;
-            transform-style: preserve-3d;
+
+        .char::before {
+            content:""; position:absolute; inset:-4px;
+            border-radius:16px;
+            background:linear-gradient(135deg, rgba(255,42,109,0.6), rgba(5,217,232,0.3));
+            opacity:0; filter:blur(10px); transition:opacity 0.3s;
+            z-index:-1;
         }
-        .char-in {
-            width:100%;
-            height:100%;
-            transition: transform 0.8s, box-shadow 0.5s;
-            transform-style:preserve-3d;
-            position:relative;
-        }
+        .char:hover::before { opacity:1; }
+
+        .char-in { width:100%; height:100%; transition: transform 0.8s, box-shadow 0.5s; transform-style:preserve-3d; position:relative; border-radius:16px; }
         .char:hover .char-in { transform: rotateY(180deg); }
-        .c-front, .c-back {
-            position:absolute;
-            inset:0;
-            backface-visibility:hidden;
-            border-radius:15px;
-            overflow: hidden;
-            transform-style: preserve-3d;
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            justify-content:center;
-            background:linear-gradient(145deg, #1a1025, #050505);
-            border:1px solid var(--border);
-            box-shadow:0 10px 30px rgba(0,0,0,0.5);
-        }
-        .c-front::after {
-            content:"";
-            position:absolute;
-            inset:0;
-            background:radial-gradient(circle at 0% 0%, rgba(255,42,109,0.4), transparent 60%);
-            mix-blend-mode:screen;
-            opacity:0;
-            transition:0.4s;
-        }
-        .char:hover .c-front::after { opacity:1; }
-        .c-back {
-            transform:rotateY(180deg);
-            background:linear-gradient(135deg, var(--purple), #1f0c29);
-            padding:20px;
-            text-align:center;
-        }
-        .c-av-wrapper {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            transform-style: preserve-3d;
-            transition: transform 0.5s ease-out;
-        }
-        .c-av {
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-            transition: transform 0.5s ease-out;
-            transform: translateZ(20px);
-        }
-        .char:hover .c-av { transform: translateZ(50px) scale(1.1); }
-        .char:hover .c-front {
-            border-color: var(--cyan);
-            box-shadow: 0 0 25px rgba(5,217,232,0.3), 0 0 10px rgba(255,42,109,0.2) inset;
-        }
-        .c-front-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.8) 10%, transparent 50%);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            align-items: center;
-            transform: translateZ(40px);
-        }
-        .char-name {
-            font-family: 'Orbitron';
-            font-size: 1.8rem;
-            text-shadow: 0 2px 10px black;
-            color: #fff;
-        }
-        .char-race { color: var(--cyan); text-shadow: 0 2px 5px black; }
-        .char-desc { font-size: 0.9rem; color: #ddd; margin-top: 15px; }
 
-        /* ================= 5. USER SYSTEM (UI重制 + 炫酷特效) ================= */
+        .c-front, .c-back { position:absolute; inset:0; backface-visibility:hidden; border-radius:15px; overflow: hidden; transform-style: preserve-3d; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(145deg, #1a1025, #050505); border:1px solid var(--border); box-shadow:0 10px 30px rgba(0,0,0,0.5); }
+        .c-front { background:radial-gradient(circle at 20% 0%, rgba(255,42,109,0.4), transparent), radial-gradient(circle at 80% 100%, rgba(5,217,232,0.4), #05010d); }
+        .c-back { transform:rotateY(180deg); background:linear-gradient(135deg, var(--purple), #1f0c29); padding:20px; text-align:center; }
+
+        .c-front::after {
+            content:"NGNL"; position:absolute; bottom:10px; right:12px; font-family:'Orbitron'; font-size:0.75rem; letter-spacing:2px; color:rgba(255,255,255,0.25);
+        }
+
+        .c-av-wrapper { width: 100%; height: 100%; position: absolute; transform-style: preserve-3d; transition: transform 0.5s ease-out; }
+        .c-av { width: 100%; height: 100%; background-size: cover; background-position: center; transition: transform 0.5s ease-out; transform: translateZ(20px); }
+        .char:hover .c-av { transform: translateZ(50px) scale(1.1); }
+        .char:hover .c-front { border-color: var(--cyan); box-shadow: 0 0 25px rgba(5,217,232,0.3), 0 0 10px rgba(255,42,109,0.2) inset; }
+        .c-front-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 8%, transparent 55%); padding: 20px; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; transform: translateZ(40px); }
+
+        .char-name { font-family: 'Orbitron'; font-size: 1.6rem; text-shadow: 0 2px 10px black; color: #fff; }
+        .char-race { color: var(--cyan); text-shadow: 0 2px 5px black; font-size:0.85rem; letter-spacing:1px; }
+        .char-desc { font-size: 0.9rem; color: #eee; margin-top: 15px; line-height:1.6; }
+
+        /* ================= 5. USER SYSTEM (UI重制) ================= */
         #user-overlay { backdrop-filter: blur(8px); }
-        .profile-ui {
-            width:1000px;
-            height:650px;
-            background-color: #0d0d18;
-            background-image:
-                linear-gradient(45deg, rgba(5, 217, 232, 0.07) 25%, transparent 25%, transparent 75%, rgba(5, 217, 232, 0.07) 75%, rgba(5, 217, 232, 0.07)),
-                linear-gradient(45deg, rgba(5, 217, 232, 0.07) 25%, transparent 25%, transparent 75%, rgba(5, 217, 232, 0.07) 75%, rgba(5, 217, 232, 0.07));
-            background-size: 60px 60px;
-            background-position: 0 0, 30px 30px;
-            border:1px solid var(--cyan);
-            display:flex;
-            border-radius:10px;
-            overflow:hidden;
-            box-shadow:0 0 50px rgba(5,217,232,0.3);
-            transform: scale(0.9);
-            transition: transform 0.5s;
-            position:relative;
-        }
-        .profile-ui::before {
-            content:"";
-            position:absolute;
-            inset:-50%;
-            background:linear-gradient(120deg, transparent, rgba(255,255,255,0.06), transparent);
-            transform:translateX(-100%) rotate(5deg);
-            animation: scanner 8s linear infinite;
-            pointer-events:none;
-        }
-        @keyframes scanner {
-            0% { transform:translateX(-120%) rotate(5deg); }
-            50% { transform:translateX(0%) rotate(5deg); }
-            100% { transform:translateX(120%) rotate(5deg); }
-        }
+        .profile-ui { width:1000px; height:650px; background-color: #0d0d18; background-image: linear-gradient(45deg, rgba(5, 217, 232, 0.05) 25%, transparent 25%, transparent 75%, rgba(5, 217, 232, 0.05) 75%, rgba(5, 217, 232, 0.05)), linear-gradient(45deg, rgba(5, 217, 232, 0.05) 25%, transparent 25%, transparent 75%, rgba(5, 217, 232, 0.05) 75%, rgba(5, 217, 232, 0.05)); background-size: 60px 60px; background-position: 0 0, 30px 30px; border:1px solid var(--cyan); display:flex; border-radius:10px; overflow:hidden; box-shadow:0 0 50px rgba(5,217,232,0.2); transform: scale(0.9); transition: transform 0.5s; }
         #user-overlay.active .profile-ui { transform: scale(1); }
-        .p-side {
-            width:300px;
-            background:rgba(0,0,0,0.7);
-            border-right:1px solid #333;
-            display:flex;
-            flex-direction:column;
-            position:relative;
-        }
-        .p-side::after {
-            content:"SOCIAL LINKED";
-            position:absolute;
-            bottom:10px;
-            left:20px;
-            font-family:'Orbitron';
-            font-size:0.6rem;
-            color:#333;
-            letter-spacing:0.2em;
-        }
-        .p-head {
-            padding:20px;
-            border-bottom:1px solid #333;
-            font-family:'Orbitron';
-            color:var(--pink);
-            display:flex;
-            justify-content:space-between;
-            align-items: center;
-        }
+
+        .p-side { width:300px; background:rgba(0,0,0,0.6); border-right:1px solid #333; display:flex; flex-direction:column; }
+        .p-head { padding:20px; border-bottom:1px solid #333; font-family:'Orbitron'; color:var(--pink); display:flex; justify-content:space-between; align-items: center; }
         .f-list { flex:1; overflow-y:auto; }
-        .f-item {
-            padding:15px 20px;
-            border-bottom:1px solid #222;
-            display:flex;
-            align-items:center;
-            gap:10px;
-            transition:0.2s;
-            position: relative;
-        }
-        .f-item::before {
-            content:"";
-            position:absolute;
-            left:0;
-            top:0;
-            bottom:0;
-            width:3px;
-            background:linear-gradient(var(--cyan), var(--purple));
-            opacity:0;
-            transition:0.3s;
-        }
-        .f-item:hover,
-        .f-item.active {
-            background:linear-gradient(90deg, rgba(5,217,232,0.2), transparent);
-        }
-        .f-item.active::before { opacity:1; }
-        .f-name { flex: 1; cursor:pointer; }
+        .f-item { padding:15px 20px; border-bottom:1px solid #222; display:flex; align-items:center; gap:10px; transition:0.2s; position: relative; cursor:pointer; }
+        .f-item:hover, .f-item.active { background:linear-gradient(90deg, rgba(5,217,232,0.2), transparent); border-right:3px solid var(--cyan); }
+        .f-name { flex: 1; font-weight:bold; }
         .f-status { font-size: 0.7rem; color: #888; }
         .f-actions { display: flex; gap: 5px; }
         .f-actions .btn { padding: 3px 8px; font-size: 0.7rem; border-width: 1px; }
-        .p-content {
-            flex:1;
-            display:flex;
-            flex-direction:column;
-            position: relative;
-            background: radial-gradient(circle at 0% 0%, rgba(5,217,232,0.1), transparent 60%);
-        }
-        .p-content::after {
-            content:"DISBOARD USER SYSTEM v3.3";
-            position:absolute;
-            top:15px;
-            right:20px;
-            font-family:'Orbitron';
-            font-size:0.6rem;
-            color:#444;
-            letter-spacing:0.2em;
-        }
-        .view {
-            position: absolute;
-            inset: 0;
-            padding: 40px;
-            transition: opacity 0.4s, transform 0.4s;
-        }
-        .view.hidden {
-            opacity: 0;
-            pointer-events: none;
-            transform: scale(0.98) translateY(10px);
-        }
-        .stats-view h2 {
-            font-family: 'Orbitron';
-            font-size: 2.5rem;
-            color: var(--pink);
-            text-shadow: 0 0 10px var(--pink);
-        }
-        .stat-grid {
-            margin-top: 30px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        .stat-box {
-            background:rgba(255,255,255,0.05);
-            padding:20px;
-            border-radius:8px;
-            width:100%;
-            text-align:center;
-            border: 1px solid #333;
-            transition: 0.3s;
-            box-shadow: 0 0 0 rgba(5,217,232,0);
-        }
-        .stat-box:hover {
-            transform: translateY(-4px) scale(1.02);
-            box-shadow: 0 0 20px rgba(5,217,232,0.3);
-            border-color:var(--cyan);
-        }
-        .exp-bar {
-            width: 100%;
-            height: 20px;
-            background: #222;
-            border-radius: 10px;
-            margin: 10px 0;
-            overflow: hidden;
-            border: 1px solid #444;
-            padding: 2px;
-        }
-        .exp-fill {
-            height: 100%;
-            border-radius: 8px;
-            background: linear-gradient(90deg, var(--cyan), var(--purple));
-            box-shadow: 0 0 10px var(--cyan);
-            transition: width 0.8s ease-out;
-        }
-        .exp-text {
-            font-family: 'Orbitron';
-            color: #ccc;
-            text-align: right;
-        }
+
+        .p-content { flex:1; display:flex; flex-direction:column; position: relative; background: radial-gradient(circle at top, rgba(255,42,109,0.2), transparent 65%); }
+        .view { position: absolute; inset: 0; padding: 40px; transition: opacity 0.4s, transform 0.4s; }
+        .view.hidden { opacity: 0; pointer-events: none; transform: scale(0.98); }
+
+        .stats-view h2 { font-family: 'Orbitron'; font-size: 2.5rem; color: var(--pink); text-shadow: 0 0 10px var(--pink); }
+        .stat-box { background:rgba(255,255,255,0.05); padding:20px; border-radius:8px; width:100%; text-align:center; border: 1px solid #333; transition: 0.3s; }
+        .stat-box:hover { transform:translateY(-4px); box-shadow:0 10px 25px rgba(0,0,0,0.6); }
+
+        .exp-bar { width: 100%; height: 20px; background: #222; border-radius: 10px; margin: 10px 0; overflow: hidden; border: 1px solid #444; padding: 2px; }
+        .exp-fill { height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--cyan), var(--purple)); box-shadow: 0 0 10px var(--cyan); transition: width 0.8s ease-out; }
+        .exp-text { font-family: 'Orbitron'; color: #ccc; text-align: right; }
+
         .chat-view { display:flex; flex-direction:column; height:100%; }
-        .chat-header {
-            padding: 15px;
-            border-bottom: 1px solid #333;
-            font-family: 'Orbitron';
-            font-size: 1.2rem;
-            color: var(--cyan);
-        }
-        .chat-box {
-            flex:1;
-            padding:20px;
-            overflow-y:auto;
-            display:flex;
-            flex-direction:column;
-            gap:15px;
-        }
-        .msg {
-            max-width:70%;
-            padding:10px 15px;
-            border-radius:15px;
-            font-size:0.9rem;
-            line-height: 1.4;
-            position: relative;
-            opacity:0;
-            transform: translateY(10px);
-            animation: msgPop 0.25s ease-out forwards;
-        }
-        .msg.me {
-            align-self:flex-end;
-            background:linear-gradient(45deg, var(--cyan), #00b8c5);
-            color:black;
-            border-bottom-right-radius: 3px;
-        }
-        .msg.them {
-            align-self:flex-start;
-            background:#333;
-            border:1px solid #444;
-            border-bottom-left-radius: 3px;
-        }
-        @keyframes msgPop {
-            to { opacity:1; transform: translateY(0); }
-        }
-        .chat-input {
-            padding:10px 20px 20px 20px;
-            border-top:1px solid #333;
-            display:flex;
-            gap:10px;
-        }
+        .chat-header { padding: 15px; border-bottom: 1px solid #333; font-family: 'Orbitron'; font-size: 1.2rem; color: var(--cyan); }
+        .chat-box { flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:15px; }
+        .msg { max-width:70%; padding:10px 15px; border-radius:15px; font-size:0.9rem; line-height: 1.4; position: relative; }
+        .msg.me { align-self:flex-end; background:linear-gradient(45deg, var(--cyan), #00b8c5); color:black; border-bottom-right-radius: 3px; box-shadow:0 0 10px rgba(5,217,232,0.5); }
+        .msg.them { align-self:flex-start; background:#333; border:1px solid #444; border-bottom-left-radius: 3px; }
+
+        .chat-input { padding:15px; border-top:1px solid #333; display:flex; gap:10px; }
 
         /* ================= 6. NOVEL READER (Advanced Features) ================= */
-        .modal-layer {
-            position:fixed;
-            inset:0;
-            z-index:9000;
-            background:rgba(5,5,10,0.98);
-            display:flex;
-            flex-direction:column;
-            opacity:0;
-            pointer-events:none;
-            transition: all 0.5s;
-            backdrop-filter: blur(5px);
-        }
-        .modal-layer.active {
-            opacity:1;
-            pointer-events:all;
-        }
-        .m-head {
-            height:60px;
-            background:rgba(0,0,0,0.5);
-            border-bottom:1px solid #333;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            padding:0 30px;
-            flex-shrink: 0;
-        }
-        .m-title {
-            font-family:'Orbitron';
-            letter-spacing:0.2em;
-            color:var(--cyan);
-        }
-        .m-body {
-            flex:1;
-            display:flex;
-            overflow:hidden;
-            position: relative;
-        }
-        .r-left-panel {
-            width: 280px;
-            background: rgba(0,0,0,0.3);
-            border-right: 1px solid #333;
-            display: flex;
-            flex-direction: column;
-        }
+        .modal-layer { position:fixed; inset:0; z-index:9000; background:rgba(5,5,10,0.98); display:flex; flex-direction:column; opacity:0; pointer-events:none; transition: all 0.5s; backdrop-filter: blur(5px); }
+        .modal-layer.active { opacity:1; pointer-events:all; }
+
+        .m-head { height:60px; background:rgba(0,0,0,0.5); border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center; padding:0 30px; flex-shrink: 0; }
+        .m-title { font-family:'Orbitron'; letter-spacing:2px; color:var(--cyan); text-shadow:0 0 10px var(--cyan); }
+
+        .m-body { flex:1; display:flex; overflow:hidden; position: relative; }
+
+        .r-left-panel { width: 280px; background: rgba(0,0,0,0.3); border-right: 1px solid #333; display: flex; flex-direction: column; }
         .r-tabs { display: flex; border-bottom: 1px solid #333; }
-        .r-tab {
-            flex:1;
-            background: transparent;
-            border: none;
-            color: #888;
-            padding: 10px;
-            font-family: 'Orbitron';
-            cursor:pointer;
-        }
-        .r-tab.active {
-            color: white;
-            background: rgba(255,255,255,0.1);
-            border-bottom: 2px solid var(--cyan);
-        }
+        .r-tab { flex:1; background: transparent; border: none; color: #888; padding: 10px; font-family: 'Orbitron'; cursor:pointer; }
+        .r-tab.active { color: white; background: rgba(255,255,255,0.1); border-bottom: 2px solid var(--cyan); }
         .r-tab-content { flex: 1; overflow-y: auto; }
-        .toc-item, .bm-item {
-            padding: 12px 15px;
-            border-bottom: 1px solid #222;
-            transition: 0.2s;
-            font-size: 0.9rem;
-            cursor:pointer;
+
+        .toc-item, .bm-item { padding: 12px 15px; border-bottom: 1px solid #222; transition: 0.2s; font-size: 0.9rem; cursor:pointer; position:relative; }
+        .toc-item:hover, .bm-item:hover { background: rgba(5,217,232,0.1); color: var(--cyan); }
+
+        .r-main-panel { flex:1; display:flex; flex-direction:column; position:relative; overflow:hidden; background: radial-gradient(circle at top, rgba(5,217,232,0.1), transparent 50%); }
+        #reader-bg-canvas { position:absolute; inset:0; pointer-events:none; opacity:0.45; mix-blend-mode:screen; }
+
+        .r-text-area { position:relative; flex:1; overflow-y:auto; padding: 20px 5%; font-family:'ZCOOL XiaoWei', serif; font-size:1.5rem; line-height:2.4; color:#ddd; z-index:1; }
+        .line { position:relative; padding-right: 40px; transition: background-color 0.2s; }
+        .line:hover { background:rgba(255,255,255,0.05); }
+
+        /* NGNL 风格评论图标：粉青棋盘气泡 + 实时计数 */
+        .comment-bubble { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; background: radial-gradient(circle at 30% 30%, #fff, #ffd1e8, #ff2a6d); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: all 0.25s; box-shadow:0 0 8px rgba(255,42,109,0.7); border:1px solid rgba(255,255,255,0.6); }
+        .line:hover .comment-bubble { opacity: 1; transform: translateY(-50%) scale(1.1); }
+        .comment-bubble:hover { background: radial-gradient(circle at 30% 30%, #fff, #a8f6ff, #05d9e8); color: black; transform: translateY(-50%) scale(1.2); box-shadow:0 0 15px rgba(5,217,232,0.9); }
+
+        .comment-icon { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; text-shadow:0 0 5px rgba(0,0,0,0.6); }
+        .comment-count { font-family: 'Orbitron'; font-size: 0.65rem; position: absolute; top: -5px; right: -5px; background: var(--purple); border-radius: 50%; width: 16px; height: 16px; line-height: 16px; text-align: center; box-shadow: 0 0 5px var(--purple); color:#fff; }
+
+        .page-transition-enter { animation: pageEnter 0.55s ease-out; }
+        @keyframes pageEnter {
+            from { opacity:0; transform:translateY(20px); }
+            to { opacity:1; transform:translateY(0); }
         }
-        .toc-item:hover, .bm-item:hover {
-            background: rgba(5,217,232,0.1);
-            color: var(--cyan);
+
+        .chapter-transition-layer { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; opacity:0; z-index:2; }
+        .chapter-transition-layer.active { animation: chapterFlash 0.9s ease-out; }
+        .chapter-transition-title { padding:18px 40px; border-radius:999px; font-family:'Orbitron'; font-size:2.5rem; letter-spacing:3px; color:#fff; background:linear-gradient(135deg, rgba(255,42,109,0.95), rgba(5,217,232,0.9)); box-shadow:0 0 40px rgba(255,42,109,0.8),0 0 40px rgba(5,217,232,0.8); border:2px solid rgba(255,255,255,0.9); }
+
+        @keyframes chapterFlash {
+            0% { opacity:0; transform:scale(0.9); filter:blur(5px); }
+            20% { opacity:1; transform:scale(1); filter:blur(0); }
+            70% { opacity:0.9; transform:scale(1.02); }
+            100% { opacity:0; transform:scale(1.08); filter:blur(8px); }
         }
-        .r-main-panel {
-            flex:1;
-            display:flex;
-            flex-direction:column;
-            position:relative;
-            overflow:hidden;
-        }
-        .r-text-area {
-            flex:1;
-            overflow-y:auto;
-            padding: 20px 5%;
-            font-family:'ZCOOL XiaoWei', serif;
-            font-size:1.5rem;
-            line-height:2.2;
-            color:#ddd;
-            position:relative;
-        }
-        .reader-loader {
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            height:100%;
-            flex-direction:column;
-            gap:15px;
-            color:#888;
-        }
-        .reader-loader-spinner {
-            width:40px;
-            height:40px;
-            border-radius:50%;
-            border:3px solid rgba(255,255,255,0.1);
-            border-top-color:var(--cyan);
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to { transform:rotate(360deg); }
-        }
-        .line {
-            position:relative;
-            padding-right: 50px;
-            transition: background-color 0.2s;
-            margin-bottom:8px;
-        }
-        .line:hover { background:rgba(255,255,255,0.03); }
-        .page-chapter-title {
-            font-family:'Orbitron';
-            font-size:1.1rem;
-            letter-spacing:0.2em;
-            margin-bottom:20px;
-            text-align:center;
-            color:var(--cyan);
-            text-shadow:0 0 8px rgba(5,217,232,0.7);
-            position:relative;
-        }
-        .page-chapter-title::after {
-            content:"";
-            position:absolute;
-            left:50%;
-            transform:translateX(-50%);
-            bottom:-8px;
-            width:60px;
-            height:2px;
-            background:linear-gradient(90deg, transparent, var(--cyan), transparent);
-        }
-        .comment-bubble {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%) scale(0.8);
-            width: 34px;
-            height: 34px;
-            background: radial-gradient(circle at 30% 20%, #fff, #ffd1f0);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: all 0.25s;
-            box-shadow:0 0 10px rgba(255,42,109,0.6);
-            border:2px solid #fff;
-        }
-        .line:hover .comment-bubble {
-            opacity: 1;
-            transform: translateY(-50%) scale(1);
-        }
-        .comment-bubble:hover {
-            background: radial-gradient(circle at 30% 20%, var(--gold), var(--pink));
-            color: black;
-            transform: translateY(-50%) scale(1.15);
-            box-shadow:0 0 20px rgba(255,215,0,0.8);
-        }
-        .comment-icon {
-            font-family:'Orbitron';
-            font-size: 1.1rem;
-        }
-        .comment-count {
-            font-family: 'Orbitron';
-            font-size: 0.7rem;
-            position: absolute;
-            top: -6px;
-            right: -6px;
-            background: var(--purple);
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            line-height: 18px;
-            text-align: center;
-            box-shadow: 0 0 5px var(--purple);
-        }
-        .r-footer {
-            padding: 10px;
-            background: rgba(0,0,0,0.5);
-            border-top: 1px solid #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-        }
-        .r-progress {
-            font-family: 'Orbitron';
-            color: #888;
-        }
-        .r-progress span {
-            color:var(--cyan);
-        }
-        .r-side-r {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 380px;
-            height: 100%;
-            background: #0a0a0a;
-            border-left: 1px solid #333;
-            transform: translateX(100%);
-            transition: transform 0.4s ease-out;
-            display: flex;
-            flex-direction: column;
-            z-index: 10;
-        }
-        .r-side-r.open {
-            transform: translateX(0);
-            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
-        }
-        .cmt-header {
-            padding: 15px;
-            border-bottom: 1px solid #333;
-            font-family:'Orbitron';
-            color: var(--pink);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+
+        .r-footer { padding: 10px; background: rgba(0,0,0,0.6); border-top: 1px solid #333; display: flex; justify-content: center; align-items: center; gap: 20px; z-index:1; }
+        .r-progress { font-family: 'Orbitron'; color: #888; }
+
+        .r-side-r { position: absolute; top: 0; right: 0; width: 380px; height: 100%; background: #0a0a0a; border-left: 1px solid #333; transform: translateX(100%); transition: transform 0.4s ease-out; display: flex; flex-direction: column; z-index: 10; box-shadow:-10px 0 30px rgba(0,0,0,0.6); }
+        .r-side-r.open { transform: translateX(0); }
+
+        .cmt-header { padding: 15px; border-bottom: 1px solid #333; font-family:'Orbitron'; color: var(--pink); display: flex; justify-content: space-between; align-items: center; }
         .cmt-list { flex: 1; overflow-y: auto; padding: 10px; }
-        .cmt-card {
-            background: #1a1a1a;
-            padding: 12px;
-            margin-bottom: 8px;
-            border-radius: 5px;
-            border-left: 2px solid transparent;
-            transition: border-color 0.3s, transform 0.2s;
-        }
-        .cmt-card:hover {
-            border-color: var(--cyan);
-            transform: translateY(-2px);
-        }
-        .mention-link {
-            color: var(--cyan);
-            text-decoration: none;
-            font-weight: bold;
-            cursor:pointer;
-        }
+        .cmt-card { background: #1a1a1a; padding: 12px; margin-bottom: 8px; border-radius: 5px; border-left: 2px solid transparent; transition: border-color 0.3s, transform 0.2s; }
+        .cmt-card:hover { border-color: var(--cyan); transform:translateX(-2px); }
+
+        .mention-link { color: var(--cyan); text-decoration: none; font-weight: bold; cursor:pointer; }
         .mention-link:hover { text-decoration: underline; }
 
-        /* ================= 7. DISCUSSION 占位（保持结构） ================= */
-        /* 保留论坛结构，方便后续扩展 */
+        /* ================= 7. DISCUSSION ================= */
+        /* 之前的论坛占位保持 */
 
     </style>
 </head>
@@ -867,7 +250,7 @@
                 <p style="color:#888; font-size:0.8rem; margin-bottom:10px;">Code sent. (Test code: 123456)</p>
                 <input id="reg-code" class="input" placeholder="VERIFICATION CODE">
                 <button class="btn" style="width:100%" onclick="auth.register()">CONFIRM</button>
-                <div class="auth-link" onclick="ui.switchAuth('register')">Back</div>
+                 <div class="auth-link" onclick="ui.switchAuth('register')">Back</div>
             </div>
             <div id="auth-msg" class="err-msg"></div>
         </div>
@@ -877,6 +260,7 @@
     <div id="app-container">
         <div class="bg-anim"></div>
         <canvas id="canvas-bg"></canvas>
+
         <nav>
             <div class="brand">DISBOARD</div>
             <div class="nav-links">
@@ -889,17 +273,20 @@
                 <span id="hud-coins">🪙 0</span>
             </div>
         </nav>
+
         <header id="hero" class="hero">
             <h1>NO GAME NO LIFE</h1>
             <p style="color:#aaa; letter-spacing:2px; margin-bottom:40px;">『さあ、ゲームを始めよう』</p>
             <button class="btn" onclick="ui.showModal('reader-layer')">READ NOVEL</button>
         </header>
+
         <section id="players">
             <h2 class="section-title">MAIN PLAYERS</h2>
             <div class="char-gallery" id="char-grid"></div>
         </section>
+
         <footer style="text-align:center; padding: 40px; color: #555; font-family: 'Orbitron';">
-            <p>DISBOARD SYSTEM v33.0</p>
+            <p>DISBOARD SYSTEM v33.1</p>
         </footer>
     </div>
 
@@ -920,7 +307,7 @@
                 <div id="view-stats" class="view">
                     <h2 id="profile-name"></h2>
                     <p id="profile-bio" style="color:#aaa; margin-top:10px; min-height: 40px;"></p>
-                    <div class="stat-grid">
+                    <div class="stat-grid" style="margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <div class="stat-box">
                             <div>RANK</div>
                             <div id="profile-rank" style="font-size: 2rem;"></div>
@@ -965,17 +352,16 @@
                 <div id="content-bm" class="r-tab-content hidden"></div>
             </div>
             <div class="r-main-panel">
+                <canvas id="reader-bg-canvas"></canvas>
+                <div id="chapter-transition-layer" class="chapter-transition-layer">
+                    <div id="chapter-transition-title" class="chapter-transition-title"></div>
+                </div>
                 <div id="reader-text-area" class="r-text-area">
-                    <div class="reader-loader">
-                        <div class="reader-loader-spinner"></div>
-                        <div>Loading novel...</div>
-                    </div>
+                    <p style="text-align:center; color: #888; margin-top: 50px;">Loading novel...</p>
                 </div>
                 <div class="r-footer">
                     <button class="btn" onclick="reader.goToPage(state.novel.currentPage - 1)">PREV</button>
-                    <span id="reader-progress" class="r-progress">
-                        <span>0</span> / <span>0</span> (0%)
-                    </span>
+                    <span id="reader-progress" class="r-progress">0 / 0</span>
                     <button class="btn" onclick="reader.goToPage(state.novel.currentPage + 1)">NEXT</button>
                     <button class="btn" style="border-color:var(--gold); color:var(--gold);" onclick="reader.addBookmark()">BOOKMARK</button>
                 </div>
@@ -987,7 +373,7 @@
                 </div>
                 <div id="cmt-list" class="cmt-list"></div>
                 <div class="cmt-input-box" style="padding:10px; border-top:1px solid #333;">
-                    <textarea id="cmt-input" class="input" rows="3" placeholder="Add a comment... Support @username"></textarea>
+                    <textarea id="cmt-input" class="input" rows="3" placeholder="Add a comment..."></textarea>
                     <button class="btn" style="width:100%; margin-top:5px;" onclick="reader.postComment()">POST</button>
                 </div>
             </div>
@@ -997,8 +383,8 @@
     <!-- 5. OTHER USER PROFILE VIEWER -->
     <div id="profile-viewer-overlay" class="modal-layer">
         <div class="profile-viewer-box">
-            <div id="profile-viewer-content"></div>
-            <button class="btn" style="margin-top: 20px;" onclick="document.getElementById('profile-viewer-overlay').classList.remove('active')">CLOSE</button>
+             <div id="profile-viewer-content"></div>
+             <button class="btn" style="margin-top: 20px;" onclick="document.getElementById('profile-viewer-overlay').classList.remove('active')">CLOSE</button>
         </div>
     </div>
 
@@ -1015,9 +401,8 @@
 
 <script>
     // ==========================================================
-    // NGNL SYSTEM FRONTEND v33.1 (UPGRADED & UNABRIDGED)
+    // NGNL SYSTEM FRONTEND v33.1 (ULTIMATE & UNABRIDGED)
     // ==========================================================
-
     const API_URL = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec";
 
     const state = {
@@ -1025,20 +410,15 @@
         isLoggedIn: false,
         activeChat: null,
         novel: {
-            lines: [],          // 实际上是“段落”
+            lines: [],
             comments: {},
             activeCommentLine: -1,
             toc: [],
             bookmarks: [],
-            linesPerPage: 30,   // 兼容旧字段，不再用于分页核心逻辑
+            linesPerPage: 30,
             currentPage: 0,
             totalPages: 0,
-            pages: [],          // 智能分页结构
-            maxLinesPerPage: 12,
-            isLoaded: false,
-            isLoading: false,
-            chapterPageMap: {},
-            lastCommentSync: 0
+            pages: []        // {startLine, endLine}
         }
     };
 
@@ -1091,17 +471,7 @@
             this.hideAllModals();
             const modal = document.getElementById(modalId);
             if (modal) modal.classList.add('active');
-
             if (modalId === 'user-overlay') social.init();
-            if (modalId === 'reader-layer') {
-                // 确保小说自动加载且只加载一次
-                if (!state.novel.isLoaded && !state.novel.isLoading) {
-                    reader.init();
-                } else {
-                    // 打开阅读器时刷新当前页的评论数量
-                    reader.refreshCommentsIfNeeded(true);
-                }
-            }
         },
         hideAllModals() {
             document.querySelectorAll('.modal-layer').forEach(m => m.classList.remove('active'));
@@ -1160,18 +530,16 @@
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-pass').value;
             if (!email || !password) return ui.showAuthError("Email and password are required.");
-
             ui.showAuthError("Connecting...");
             const res = await apiRequest({ action: 'login', email: email, password: password });
             if (res.status === 'success') {
-                state.user = { name: res.username, rank: res.rank, exp: res.exp, coins: res.coins, bio: res.bio, avatar: res.avatar };
+                state.user = { name: res.username, rank: res.level, exp: res.exp, coins: res.coins, bio: res.bio, avatar: res.avatar };
                 state.isLoggedIn = true;
                 sessionStorage.setItem('ngnlUser', JSON.stringify(state.user));
                 ui.elements.authOverlay.classList.remove('active');
                 ui.elements.body.classList.remove('auth-active');
                 ui.updateHUD();
                 ui.showAuthError("");
-                ui.updateProfileView();
             } else {
                 ui.showAuthError(res.message);
             }
@@ -1188,7 +556,6 @@
             ui.showAuthError("Requesting code...");
 
             const res = await apiRequest({ action: 'request_code', email: email });
-
             codeBtn.disabled = false;
             codeBtn.innerText = "GET CODE";
 
@@ -1203,7 +570,6 @@
         async register() {
             const code = document.getElementById('reg-code').value.trim();
             if (!code) return ui.showAuthError("Verification code is required.");
-
             ui.showAuthError("Registering...");
             const payload = {
                 action: 'register',
@@ -1243,7 +609,7 @@
             if (res.status === 'success' && res.data) {
                 res.data.forEach(f => {
                     html += `<div class="f-item" data-name="${f.name}">
-                        <span class="f-name" onclick="social.startChat('${f.name.replace(/'/g,"\\'")}', event)">${f.name}</span>
+                        <span class="f-name" onclick="social.startChat('${f.name}', event)">${f.name}</span>
                         ${this.getFriendStatusUI(f)}
                     </div>`;
                 });
@@ -1255,8 +621,8 @@
             if (friend.status === 'Sent') return `<span class="f-status">SENT</span>`;
             if (friend.status === 'Received') {
                 return `<div class="f-actions">
-                    <button class="btn" onclick="social.handleFriendRequest('${friend.name.replace(/'/g,"\\'")}', 'Accepted')">✓</button>
-                    <button class="btn" style="border-color:var(--pink); color:var(--pink)" onclick="social.handleFriendRequest('${friend.name.replace(/'/g,"\\'")}', 'Declined')">×</button>
+                    <button class="btn" onclick="social.handleFriendRequest('${friend.name}', 'Accepted')">✓</button>
+                    <button class="btn" style="border-color:var(--pink); color:var(--pink)" onclick="social.handleFriendRequest('${friend.name}', 'Declined')">×</button>
                 </div>`;
             }
             return '';
@@ -1297,8 +663,6 @@
             if (res.status === 'success' && res.data) {
                 box.innerHTML = res.data.map(m => `<div class="msg ${m.sender === state.user.name ? 'me' : 'them'}">${m.content}</div>`).join('') || "No messages yet. Say hi!";
                 box.scrollTop = box.scrollHeight;
-            } else {
-                box.innerHTML = `<span style="color:var(--pink);">${res.message || 'Failed to load messages.'}</span>`;
             }
         },
         async sendMessage() {
@@ -1314,198 +678,133 @@
     };
 
     const reader = {
-        commentPollerId: null,
-
         async init() {
-            if (state.novel.isLoading || state.novel.isLoaded) return;
-            state.novel.isLoading = true;
-
             const textArea = document.getElementById('reader-text-area');
             try {
                 const [novelResponse, commentRes] = await Promise.all([
                     fetch('novel.txt'),
                     apiRequest({ action: 'get_all_comments' })
                 ]);
-
                 if (!novelResponse.ok) throw new Error('novel.txt not found. Please create it in your GitHub repository.');
-                const rawText = await novelResponse.text();
-
-                // 将文本合并为“段落”：以空行分割
-                const rawLines = rawText.split(/\r?\n/);
-                const paragraphs = [];
-                let buffer = [];
-                rawLines.forEach(line => {
-                    if (line.trim() === '') {
-                        if (buffer.length) {
-                            paragraphs.push(buffer.join('\n'));
-                            buffer = [];
-                        }
-                    } else {
-                        buffer.push(line);
-                    }
-                });
-                if (buffer.length) paragraphs.push(buffer.join('\n'));
-
-                state.novel.lines = paragraphs;
-
+                const text = await novelResponse.text();
+                state.novel.lines = text.split('\n');
                 if (commentRes.status === 'success') {
-                    state.novel.comments = commentRes.data || {};
+                    state.novel.comments = commentRes.data;
                 }
-
                 this.parseAndPaginate();
-                state.novel.isLoaded = true;
-                this.startCommentPolling();
             } catch (error) {
                 textArea.innerHTML = `<p style="text-align:center; color:var(--pink);">${error.message}</p>`;
-            } finally {
-                state.novel.isLoading = false;
             }
         },
-
         parseAndPaginate() {
-            const paragraphs = state.novel.lines;
-            const chapterRegex = /^(第[一二三四五六七八九十百千零〇两\d]+章.*|序章.*|终章.*|Chapter\s+\d+.*)$/;
+            const textArea = document.getElementById('reader-text-area');
+            const style = window.getComputedStyle(textArea);
+            const lineHeight = parseFloat(style.lineHeight);
+            const containerHeight = textArea.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+            state.novel.linesPerPage = Math.max(10, Math.floor(containerHeight / lineHeight));
+            const chapterRegex = /^(第[一二三四五六七八九十百千零〇]+章|序章|终章|Chapter\s+\d+)/;
 
+            // TOC
             state.novel.toc = [];
-            paragraphs.forEach((p, index) => {
-                if (chapterRegex.test(p.trim())) {
-                    state.novel.toc.push({ title: p.trim(), lineIndex: index });
+            state.novel.lines.forEach((line, index) => {
+                if (chapterRegex.test(line.trim())) {
+                    state.novel.toc.push({ title: line.trim(), lineIndex: index });
                 }
             });
-            if (state.novel.toc.length === 0) {
-                state.novel.toc.push({ title: 'MAIN STORY', lineIndex: 0 });
-            }
 
-            this.buildPages();
+            // 按行数+章节标题重新构建页面，保证章节标题总是在页首
+            const pages = [];
+            const lines = state.novel.lines;
+            const LPP = state.novel.linesPerPage;
+            let i = 0;
+            while (i < lines.length) {
+                const startLine = i;
+                let endLine = Math.min(i + LPP, lines.length);
+                for (let j = startLine + 1; j < endLine; j++) {
+                    if (chapterRegex.test(lines[j].trim())) {
+                        endLine = j;
+                        break;
+                    }
+                }
+                pages.push({ startLine, endLine });
+                i = endLine;
+            }
+            state.novel.pages = pages;
+            state.novel.totalPages = pages.length;
+
             this.renderTOC();
             this.loadBookmarks();
             this.renderBookmarks();
+            visuals.initReaderBackground();
             this.goToPage(0);
         },
-
-        buildPages() {
-            const paragraphs = state.novel.lines;
-            const toc = state.novel.toc;
-            const maxLines = state.novel.maxLinesPerPage;
-            const pages = [];
-            const chapterPageMap = {};
-
-            function getChapterForLine(lineIndex) {
-                for (let i = toc.length - 1; i >= 0; i--) {
-                    if (toc[i].lineIndex <= lineIndex) {
-                        return { index: i, title: toc[i].title };
-                    }
-                }
-                return { index: 0, title: toc[0].title };
-            }
-
-            let i = 0;
-            let pageIndex = 0;
-            while (i < paragraphs.length) {
-                const chapterInfo = getChapterForLine(i);
-                let start = i;
-                let count = 0;
-                while (i < paragraphs.length && count < maxLines) {
-                    i++;
-                    count++;
-                    // 如果下一段刚好是新章节且当前页已有至少一半段落，则换页，保证章节标题页更整齐
-                    if (i < paragraphs.length) {
-                        const nextChapter = toc.find(c => c.lineIndex === i);
-                        if (nextChapter && count >= Math.floor(maxLines / 2)) break;
-                    }
-                }
-                const end = i - 1;
-                pages.push({
-                    start: start,
-                    end: end,
-                    chapterTitle: chapterInfo.title,
-                    chapterIndex: chapterInfo.index
-                });
-                if (chapterPageMap[chapterInfo.index] == null) {
-                    chapterPageMap[chapterInfo.index] = pageIndex;
-                }
-                pageIndex++;
-            }
-
-            state.novel.pages = pages;
-            state.novel.totalPages = pages.length;
-            state.novel.chapterPageMap = chapterPageMap;
-        },
-
         goToPage(page) {
-            if (!state.novel.pages.length) return;
-            if (page < 0 || page >= state.novel.totalPages) return;
-
+            if (!state.novel.pages || state.novel.pages.length === 0) return;
+            if (page < 0 || page >= state.novel.pages.length) return;
             state.novel.currentPage = page;
+
             const pageInfo = state.novel.pages[page];
-            const paragraphs = state.novel.lines;
+            const startLine = pageInfo.startLine;
+            const endLine = pageInfo.endLine;
+            const pageLines = state.novel.lines.slice(startLine, endLine);
             const textArea = document.getElementById('reader-text-area');
 
-            const escapeHtml = (str) => str
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
-
-            let html = '';
-            const chapterTitleSafe = escapeHtml(pageInfo.chapterTitle || '');
-            html += `<div class="page-chapter-title">${chapterTitleSafe}</div>`;
-
-            for (let i = pageInfo.start; i <= pageInfo.end; i++) {
-                const para = paragraphs[i] || '';
-                if (!para.trim()) {
-                    html += '<br>';
-                    continue;
-                }
-                const display = escapeHtml(para).replace(/\n/g, '<br>');
-                const commentCount = state.novel.comments[i] ? state.novel.comments[i].length : 0;
-                html += `
-                <div class="line" data-line-index="${i}">
-                    ${display}
-                    <div class="comment-bubble" onclick="reader.openCommentSidebar(${i})">
-                        <span class="comment-icon">♜</span>
+            const html = pageLines.map((line, i) => {
+                const globalLineIndex = startLine + i;
+                if (!line.trim()) return '<br>';
+                const commentCount = state.novel.comments[globalLineIndex] ? state.novel.comments[globalLineIndex].length : 0;
+                return `<div class="line" data-line-index="${globalLineIndex}">
+                    ${line}
+                    <div class="comment-bubble" onclick="reader.openCommentSidebar(${globalLineIndex}); event.stopPropagation();">
+                        <span class="comment-icon">★</span>
                         ${commentCount > 0 ? `<span class="comment-count">${commentCount}</span>` : ''}
                     </div>
                 </div>`;
-            }
+            }).join('');
+
             textArea.innerHTML = html;
             textArea.scrollTop = 0;
-
-            const progressEl = document.getElementById('reader-progress');
-            const pageNum = page + 1;
-            const total = state.novel.totalPages;
-            const percent = total > 0 ? Math.round(pageNum / total * 100) : 0;
-            progressEl.innerHTML = `<span>${pageNum}</span> / <span>${total}</span> (${percent}%)`;
+            textArea.classList.remove('page-transition-enter');
+            void textArea.offsetWidth;
+            textArea.classList.add('page-transition-enter');
+            document.getElementById('reader-progress').innerText = `${page + 1} / ${state.novel.totalPages}`;
         },
-
-        goToChapter(chapterIndex) {
-            if (!state.novel.toc.length) return;
-            const idx = Math.max(0, Math.min(chapterIndex, state.novel.toc.length - 1));
-            const pageIndex = state.novel.chapterPageMap[idx] || 0;
+        goToChapter(lineIndex, title) {
+            let pageIndex = state.novel.pages.findIndex(p => p.startLine === lineIndex);
+            if (pageIndex < 0) {
+                pageIndex = Math.floor(lineIndex / state.novel.linesPerPage);
+            }
+            visuals.playChapterTransition(title || 'CHAPTER');
             this.goToPage(pageIndex);
         },
-
         switchTab(tabName) {
             document.getElementById('tab-toc').classList.toggle('active', tabName === 'toc');
             document.getElementById('content-toc').classList.toggle('hidden', tabName !== 'toc');
             document.getElementById('tab-bm').classList.toggle('active', tabName === 'bm');
             document.getElementById('content-bm').classList.toggle('hidden', tabName !== 'bm');
         },
-
         renderTOC() {
             const tocContainer = document.getElementById('content-toc');
-            tocContainer.innerHTML = state.novel.toc.map((chapter, index) =>
-                `<div class="toc-item" onclick="reader.goToChapter(${index})">${chapter.title}</div>`
-            ).join('');
-        },
-
-        loadBookmarks() {
-            try {
-                state.novel.bookmarks = JSON.parse(localStorage.getItem('ngnl_bookmarks') || '[]');
-            } catch (e) {
-                state.novel.bookmarks = [];
+            if (state.novel.toc.length === 0) {
+                tocContainer.innerHTML = `<p style="padding: 15px; color: #888;">No chapter titles detected.</p>`;
+                return;
             }
+            tocContainer.innerHTML = state.novel.toc.map(chapter =>
+                `<div class="toc-item" data-line="${chapter.lineIndex}" data-title="${chapter.title}">
+                    ${chapter.title}
+                </div>`
+            ).join('');
+            document.querySelectorAll('.toc-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const line = Number(el.dataset.line);
+                    const title = el.dataset.title;
+                    reader.goToChapter(line, title);
+                });
+            });
         },
-
+        loadBookmarks() {
+            state.novel.bookmarks = JSON.parse(localStorage.getItem('ngnl_bookmarks') || '[]');
+        },
         renderBookmarks() {
             const bmContainer = document.getElementById('content-bm');
             if (state.novel.bookmarks.length === 0) {
@@ -1513,29 +812,33 @@
                 return;
             }
             bmContainer.innerHTML = state.novel.bookmarks.map((bm, index) =>
-                `<div class="bm-item" onclick="reader.goToPage(${bm.page})">
-                    [${bm.chapter}] Page ${bm.page + 1} - ${bm.preview.substring(0, 20)}...
-                    <button onclick="reader.removeBookmark(${index}, event)" style="float: right; background:none; border:none; color: var(--pink); cursor:pointer;">X</button>
+                `<div class="bm-item" data-page="${bm.page}" data-index="${index}">
+                    Page ${bm.page + 1} - ${bm.line.substring(0, 20)}...
+                    <button class="btn" style="position:absolute; right:8px; top:8px; padding:2px 6px; font-size:0.65rem; border-color:var(--pink); color:var(--pink);"
+                        onclick="reader.removeBookmark(${index}, event)">X</button>
                 </div>`
             ).join('');
+            document.querySelectorAll('.bm-item').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') return;
+                    const page = Number(el.dataset.page);
+                    reader.goToPage(page);
+                });
+            });
         },
-
         addBookmark() {
             const currentPage = state.novel.currentPage;
             if (state.novel.bookmarks.some(bm => bm.page === currentPage)) {
                 alert("This page is already bookmarked.");
                 return;
             }
-            const pageInfo = state.novel.pages[currentPage];
-            const firstLineIndex = pageInfo.start;
+            const firstLineIndex = state.novel.pages[currentPage].startLine;
             const firstLine = state.novel.lines[firstLineIndex] || "Empty Page";
-            const chapter = pageInfo.chapterTitle || 'MAIN STORY';
-            state.novel.bookmarks.push({ page: currentPage, preview: firstLine, chapter: chapter });
+            state.novel.bookmarks.push({ page: currentPage, line: firstLine });
             localStorage.setItem('ngnl_bookmarks', JSON.stringify(state.novel.bookmarks));
             this.renderBookmarks();
             alert(`Page ${currentPage + 1} bookmarked!`);
         },
-
         removeBookmark(index, event) {
             event.stopPropagation();
             if (confirm("Remove this bookmark?")) {
@@ -1544,99 +847,47 @@
                 this.renderBookmarks();
             }
         },
-
         openCommentSidebar(lineIndex) {
             state.novel.activeCommentLine = lineIndex;
-            document.getElementById('cmt-header-title').innerText = `Comments for Segment ${lineIndex + 1}`;
+            document.getElementById('cmt-header-title').innerText = `Comments for Line ${lineIndex + 1}`;
             const comments = state.novel.comments[lineIndex] || [];
-            const list = document.getElementById('cmt-list');
-            list.innerHTML = comments.length > 0
+            document.getElementById('cmt-list').innerHTML = comments.length > 0
                 ? comments.map(c => this.formatComment(c)).join('')
                 : `<p style="text-align:center; color:#888; padding:20px;">No comments yet. Be the first!</p>`;
             document.getElementById('reader-comment-sidebar').classList.add('open');
         },
-
         closeCommentSidebar() {
             document.getElementById('reader-comment-sidebar').classList.remove('open');
         },
-
         formatComment(comment) {
-            const esc = (str) => str
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
-            const withEsc = esc(comment.content);
-            const formattedContent = withEsc.replace(/@([\w\u4e00-\u9fa5]+)/g, (match, name) =>
-                `<span class="mention-link" onclick="ui.showOtherUserProfile('${name}')">@${name}</span>`
-            );
-            const id = comment.id;
-            const likes = comment.likes || 0;
-            const coins = comment.coins || 0;
-            return `
-                <div class="cmt-card">
-                    <div class="cmt-user" style="color:var(--cyan); font-weight:bold; cursor:pointer;" onclick="ui.showOtherUserProfile('${comment.user}')">
-                        ${comment.user}
-                    </div>
-                    <div class="cmt-content" style="margin: 5px 0; white-space: pre-wrap;">${formattedContent}</div>
-                    <div class="cmt-actions" style="font-size:0.8rem; color:#888; display:flex; gap:15px; margin-top:5px;">
-                        <span style="cursor:pointer" onclick="community.interact('like', '${id}', 'comment')">♥ ${likes}</span>
-                        <span style="cursor:pointer" onclick="community.interact('tip', '${id}', 'comment')">🪙 ${coins}</span>
-                    </div>
-                </div>`;
+            const formattedContent = comment.content.replace(/@([\u4e00-\u9fa5\w]+)/g, `<span class="mention-link" onclick="ui.showOtherUserProfile('$1')">@$1</span>`);
+            return `<div class="cmt-card">
+                <div class="cmt-user" style="color:var(--cyan); font-weight:bold; cursor:pointer;" onclick="ui.showOtherUserProfile('${comment.user}')">${comment.user}</div>
+                <div class="cmt-content" style="margin: 5px 0; white-space: pre-wrap;">${formattedContent}</div>
+                <div class="cmt-actions" style="font-size:0.8rem; color:#888; display:flex; gap:15px; margin-top:5px;">
+                    <span style="cursor:pointer" onclick="community.interact('like', '${comment.id}', 'comment')">♥ ${comment.likes}</span>
+                    <span style="cursor:pointer" onclick="community.interact('tip', '${comment.id}', 'comment')">🪙 ${comment.coins || 0}</span>
+                </div>
+            </div>`;
         },
-
         async postComment() {
             const input = document.getElementById('cmt-input');
             const content = input.value.trim();
             if (!content || state.novel.activeCommentLine < 0) return;
             if (!state.isLoggedIn) return alert("You must be logged in to comment.");
-
             input.disabled = true;
-            const res = await apiRequest({
+            await apiRequest({
                 action: 'post_line_comment',
                 line_index: state.novel.activeCommentLine,
                 content: content
             });
             input.value = '';
             input.disabled = false;
-
-            if (res.status !== 'success') {
-                alert(res.message || 'Failed to post comment.');
-                return;
-            }
-
             const commentRes = await apiRequest({ action: 'get_all_comments' });
             if (commentRes.status === 'success') {
-                state.novel.comments = commentRes.data || {};
-                this.goToPage(state.novel.currentPage); // 更新气泡计数
-                this.openCommentSidebar(state.novel.activeCommentLine); // 刷新侧栏
-            }
-        },
-
-        startCommentPolling() {
-            if (this.commentPollerId) {
-                clearInterval(this.commentPollerId);
-            }
-            this.commentPollerId = setInterval(() => {
-                this.refreshCommentsIfNeeded(false);
-            }, 15000);
-        },
-
-        async refreshCommentsIfNeeded(forceNow) {
-            const now = Date.now();
-            const layer = document.getElementById('reader-layer');
-            if (!layer.classList.contains('active') && !forceNow) return;
-
-            if (!forceNow && now - state.novel.lastCommentSync < 10000) return;
-            state.novel.lastCommentSync = now;
-
-            const commentRes = await apiRequest({ action: 'get_all_comments' });
-            if (commentRes.status === 'success') {
-                state.novel.comments = commentRes.data || {};
+                state.novel.comments = commentRes.data;
                 this.goToPage(state.novel.currentPage);
-                if (state.novel.activeCommentLine >= 0) {
-                    this.openCommentSidebar(state.novel.activeCommentLine);
-                }
+                this.openCommentSidebar(state.novel.activeCommentLine);
             }
         }
     };
@@ -1645,11 +896,9 @@
         async interact(subAction, id, type) {
             if (!state.isLoggedIn) return alert("Login required to interact.");
             if (subAction === 'tip' && !confirm("Spend 1 coin?")) return;
-
             const res = await apiRequest({ action: 'interact', sub_action: subAction, type: type, id: id });
-
             if (res.status === 'success') {
-                if (subAction === 'tip' && typeof res.new_balance === 'number') {
+                if (subAction === 'tip') {
                     state.user.coins = res.new_balance;
                     sessionStorage.setItem('ngnlUser', JSON.stringify(state.user));
                     ui.updateHUD();
@@ -1657,48 +906,53 @@
                 if (type === 'comment') {
                     const commentRes = await apiRequest({ action: 'get_all_comments' });
                     if (commentRes.status === 'success') {
-                        state.novel.comments = commentRes.data || {};
+                        state.novel.comments = commentRes.data;
                         reader.goToPage(state.novel.currentPage);
-                        if (state.novel.activeCommentLine >= 0) {
-                            reader.openCommentSidebar(state.novel.activeCommentLine);
-                        }
+                        reader.openCommentSidebar(state.novel.activeCommentLine);
                     }
                 }
             } else {
-                alert(res.message || 'Interaction failed.');
+                alert(res.message);
             }
         }
     };
 
     const visuals = {
+        readerBG: {
+            initialized: false,
+            particles: [],
+            ctx: null,
+            width: 0,
+            height: 0,
+            scrollTop: 0
+        },
         init() {
             this.initPlayers();
             this.initCursor();
             this.initCanvas();
         },
         initPlayers() {
+            // 使用你提供的本地图片文件
             const players = [
-                {n:'SORA',r:'Imanity',i:'https://i.imgur.com/gA3plv3.png', d: '『 』的男性玩家，擅长心理战和策略，对人类抱有无与伦比的信任。'},
-                {n:'SHIRO',r:'Imanity',i:'https://i.imgur.com/Z4oV5O8.png', d: '『 』的女性玩家，拥有超乎常人的计算能力，是一位游戏天才。'},
-                {n:'JIBRIL',r:'Flügel',i:'https://i.imgur.com/oWk4s4Y.png', d: '天翼种，对知识有着极端的渴望，拥有强大的战斗力。'},
-                {n:'STEPH',r:'Imanity',i:'https://i.imgur.com/E8w6V2a.png', d: '艾尔奇亚先王的孙女，虽然游戏能力平庸，但内政能力出众，是『 』可靠的伙伴。'},
-                {n:'IZUNA',r:'Werebeast',i:'https://i.imgur.com/t4x7yL5.png', d: '兽人种的少女，拥有“血坏”能力，在游戏中展现出惊人的直觉和实力。'},
-                {n:'TET',r:'Old Deus',i:'https://i.imgur.com/U3F2A0I.png', d: '游戏之神，将十六种族召唤到异世界并制定了“十条盟约”的唯一神。'}
+                {n:'IZUNA', r:'Werebeast', i:'izuna.png', d:'兽人种少女，以“血坏”能力与惊人直觉在博弈中横扫战场。'},
+                {n:'JIBRIL', r:'Flügel', i:'jibril.png', d:'天翼种的“书痴”天使，为知识与游戏而生的最强兵器。'},
+                {n:'SHIRO', r:'Imanity', i:'shiro.png', d:'『 』之白，绝对计算力与完美记忆的天才 NEET。'},
+                {n:'SORA', r:'Imanity', i:'sora.png', d:'『 』之空，读心般的洞察与策略家，让胜利化为必然。'},
+                {n:'STEPH', r:'Imanity', i:'steph.png', d:'艾尔奇亚的公主，在看似笨拙的外表下藏着无可替代的执着。'},
+                {n:'TET', r:'Old Deus', i:'tet.png', d:'唯一的神，十六种族共同的对局裁判，“游戏人生”的发牌者。'}
             ];
             document.getElementById('char-grid').innerHTML = players.map(p => `
                 <div class="char" onmousemove="visuals.moveCard(event)" onmouseleave="visuals.resetCard(event)">
                     <div class="char-in">
                         <div class="c-front">
-                            <div class="c-av-wrapper">
-                                <div class="c-av" style="background-image:url(${p.i}); background-color:#111;"></div>
-                            </div>
+                            <div class="c-av-wrapper"><div class="c-av" style="background-image:url('${p.i}')"></div></div>
                             <div class="c-front-overlay">
                                 <div class="char-name">${p.n}</div>
                                 <div class="char-race">${p.r}</div>
                             </div>
                         </div>
                         <div class="c-back">
-                            <h3>${p.n}</h3>
+                            <h3 style="font-family:'Orbitron'; margin-bottom:10px;">${p.n}</h3>
                             <p class="char-desc">${p.d}</p>
                         </div>
                     </div>
@@ -1713,7 +967,8 @@
             const rotateX = -10 * ((y - height / 2) / height);
             const rotateY = 10 * ((x - width / 2) / width);
             cardInner.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-            card.querySelector('.c-av-wrapper').style.transform = `translateX(${rotateY * 1.5}px) translateY(${rotateX * 1.5}px)`;
+            const wrapper = card.querySelector('.c-av-wrapper');
+            wrapper.style.transform = `translateX(${rotateY * 1.5}px) translateY(${rotateX * 1.5}px)`;
         },
         resetCard(e) {
             const cardInner = e.currentTarget.querySelector('.char-in');
@@ -1737,33 +992,29 @@
             document.addEventListener('mouseup', () => cursor.classList.remove('click'));
         },
         initCanvas() {
-            const cvs = document.getElementById('canvas-bg'), ctx = cvs.getContext('2d');
+            const cvs = document.getElementById('canvas-bg');
+            const ctx = cvs.getContext('2d');
             let w = window.innerWidth, h = window.innerHeight;
             cvs.width = w; cvs.height = h;
+            const chessChars = ['♔', '♕', '♖', '♗', '♘', '♙'];
             const particles = Array.from({ length: 60 }, () => ({
                 x: Math.random() * w,
                 y: Math.random() * h,
-                s: Math.random() * 0.4 + 0.2,
-                char: ['♚', '♛', '♜', '♝', '♞', '♟'][Math.floor(Math.random() * 6)],
-                opacity: Math.random() * 0.4 + 0.1,
-                drift: (Math.random() - 0.5) * 0.3
+                s: Math.random() * 0.6 + 0.2,
+                char: chessChars[Math.floor(Math.random() * chessChars.length)],
+                opacity: Math.random() * 0.3 + 0.1
             }));
             function loop() {
                 ctx.clearRect(0, 0, w, h);
                 particles.forEach(p => {
                     p.y -= p.s;
-                    p.x += p.drift;
                     if (p.y < -30) {
                         p.y = h + 30;
                         p.x = Math.random() * w;
                     }
-                    if (p.x < -30) p.x = w + 30;
-                    if (p.x > w + 30) p.x = -30;
-                    ctx.globalAlpha = p.opacity;
-                    ctx.font = '26px "ZCOOL XiaoWei", serif';
-                    ctx.fillStyle = '#ffffff';
+                    ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
+                    ctx.font = '25px Arial';
                     ctx.fillText(p.char, p.x, p.y);
-                    ctx.globalAlpha = 1;
                 });
                 requestAnimationFrame(loop);
             }
@@ -1774,12 +1025,73 @@
                 cvs.width = w;
                 cvs.height = h;
             });
+        },
+        initReaderBackground() {
+            if (this.readerBG.initialized) return;
+            const canvas = document.getElementById('reader-bg-canvas');
+            const panel = document.querySelector('.r-main-panel');
+            const textArea = document.getElementById('reader-text-area');
+            if (!canvas || !panel || !textArea) return;
+
+            const ctx = canvas.getContext('2d');
+            const resize = () => {
+                canvas.width = panel.clientWidth;
+                canvas.height = panel.clientHeight;
+                this.readerBG.width = canvas.width;
+                this.readerBG.height = canvas.height;
+            };
+            resize();
+            window.addEventListener('resize', resize);
+
+            const particles = Array.from({ length: 55 }, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                baseY: Math.random() * canvas.height,
+                r: Math.random() * 2 + 1,
+                speed: Math.random() * 0.2 + 0.05,
+                hue: 280 + Math.random() * 80
+            }));
+            this.readerBG.particles = particles;
+            this.readerBG.ctx = ctx;
+            this.readerBG.initialized = true;
+
+            textArea.addEventListener('scroll', (e) => {
+                this.readerBG.scrollTop = e.target.scrollTop;
+            });
+
+            const draw = () => {
+                const { width, height } = this.readerBG;
+                ctx.clearRect(0, 0, width, height);
+                particles.forEach(p => {
+                    p.baseY -= p.speed;
+                    if (p.baseY < -20) p.baseY = height + 20;
+                    const y = p.baseY - this.readerBG.scrollTop * 0.25;
+                    const x = p.x + Math.sin((p.baseY + this.readerBG.scrollTop) * 0.01) * 8;
+                    const gradient = ctx.createRadialGradient(x, y, 0, x, y, p.r * 4);
+                    gradient.addColorStop(0, `hsla(${p.hue}, 100%, 80%, 0.9)`);
+                    gradient.addColorStop(1, `hsla(${p.hue}, 100%, 40%, 0)`);
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(x, y, p.r * 4, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                requestAnimationFrame(draw);
+            };
+            requestAnimationFrame(draw);
+        },
+        playChapterTransition(title) {
+            const layer = document.getElementById('chapter-transition-layer');
+            const titleEl = document.getElementById('chapter-transition-title');
+            if (!layer || !titleEl) return;
+            titleEl.textContent = title || 'CHAPTER';
+            layer.classList.remove('active');
+            void layer.offsetWidth;
+            layer.classList.add('active');
         }
     };
 
     document.addEventListener('DOMContentLoaded', () => {
         visuals.init();
-        // 提前预加载小说，解决“小说没有自动加载”的问题
         reader.init();
         const storedUser = sessionStorage.getItem('ngnlUser');
         if (storedUser) {
@@ -1789,7 +1101,6 @@
                 document.body.classList.remove('auth-active');
                 document.getElementById('auth-overlay').classList.remove('active');
                 ui.updateHUD();
-                ui.updateProfileView();
             } catch (e) {
                 console.error("Failed to parse stored user data:", e);
                 sessionStorage.removeItem('ngnlUser');
