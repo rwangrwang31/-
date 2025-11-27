@@ -8,1481 +8,388 @@
     <style>
         /* ================= 0. 核心变量与全局设定 ================= */
         :root {
-            --pink: #ff2a6d;
-            --cyan: #05d9e8;
-            --purple: #d905e8;
-            --gold: #ffd700;
-            --dark: #05010d;
-            --glass: rgba(20, 20, 35, 0.9);
-            --border: rgba(255, 255, 255, 0.1);
-
-            --race-imanity: #ffb6c1;
-            --race-flugel: #e0b3ff;
-            --race-warabeast: #ff9966;
-            --race-exmachina: #ccccff;
-            --race-seiren: #66ccff;
-            --race-dhampir: #aa88ff;
-            --race-goblin: #99ff99;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            cursor: none;
-            outline: none;
-            user-select: none;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            background-color: var(--dark);
-            color: white;
-            font-family: 'Noto Sans SC', sans-serif;
-            height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* ================= 1. 动态光标与基础组件 ================= */
-        #cursor {
-            width: 25px;
-            height: 25px;
-            border: 2px solid var(--cyan);
-            border-radius: 50%;
-            position: fixed;
-            pointer-events: none;
-            z-index: 999999;
-            transform: translate(-50%, -50%);
-            transition: all 0.1s ease-out;
-            mix-blend-mode: difference;
-        }
-
-        #cursor.hover {
-            width: 60px;
-            height: 60px;
-            background: rgba(5, 217, 232, 0.2);
-            border-color: var(--pink);
-        }
-
-        #cursor.click {
-            transform: translate(-50%, -50%) scale(0.8);
-            border-width: 4px;
-        }
-
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, var(--pink), var(--purple), var(--cyan));
-            border-radius: 4px;
-        }
-
-        .btn {
-            background: transparent;
-            border: 2px solid var(--cyan);
-            color: var(--cyan);
-            padding: 10px 25px;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: bold;
-            transition: 0.3s;
-            position: relative;
-            overflow: hidden;
-            text-transform: uppercase;
-            text-shadow: 0 0 5px var(--cyan);
-            cursor: pointer;
-        }
-
-        .btn::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: -120%;
-            width: 120%;
-            height: 100%;
-            background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-            transform: skewX(-20deg);
-            transition: 0.4s;
-        }
-
-        .btn:hover::before {
-            left: 120%;
-        }
-
-        .btn:hover {
-            background: var(--cyan);
-            color: black;
-            box-shadow: 0 0 25px var(--cyan), inset 0 0 10px rgba(255, 255, 255, 0.5);
-            transform: scale(1.05) translateY(-2px);
-            text-shadow: none;
-        }
-
-        .btn:disabled {
-            border-color: #444;
-            color: #444;
-            cursor: not-allowed;
-            box-shadow: none;
-            transform: none;
-            text-shadow: none;
-        }
-
-        .input {
-            width: 100%;
-            padding: 14px;
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid #444;
-            color: white;
-            font-family: 'Orbitron', sans-serif;
-            text-align: center;
-            transition: 0.3s;
-            margin-bottom: 15px;
-            border-radius: 4px;
-        }
-
-        .input:focus {
-            border-color: var(--cyan);
-            box-shadow: 0 0 15px rgba(5, 217, 232, 0.3), inset 0 0 10px rgba(5, 217, 232, 0.1);
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .section-title {
-            font-family: 'Orbitron';
-            font-size: 2.5rem;
-            text-align: center;
-            margin-bottom: 50px;
-            color: white;
-            text-shadow: 0 0 15px var(--cyan);
-        }
-
-        /* ================= 2. 布局与背景特效 ================= */
-        #app-container {
-            transition: filter 0.5s ease-out, transform 0.5s ease-out;
-        }
-
-        body.auth-active #app-container {
-            filter: blur(10px) brightness(0.4);
-            transform: scale(0.98);
-            pointer-events: none;
-        }
-
-        .bg-anim {
-            position: fixed;
-            inset: 0;
-            z-index: -10;
-            background:
-                radial-gradient(circle at 50% 0%, rgba(189, 0, 255, 0.1), transparent 60%),
-                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2305d9e8' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        }
-
-        #canvas-bg {
-            position: fixed;
-            inset: 0;
-            z-index: -5;
-            opacity: 0.55;
-        }
-
-        /* ================= 3. 登录/注册系统 & Profile Viewer ================= */
-        #auth-overlay,
-        #profile-viewer-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 20000;
-            background: rgba(5, 2, 10, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(5px);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s;
-        }
-
-        #auth-overlay.active,
-        #profile-viewer-overlay.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        .auth-box,
-        .profile-viewer-box {
-            width: 420px;
-            padding: 40px;
-            background: rgba(0, 0, 0, 0.7);
-            border: 2px solid var(--pink);
-            box-shadow: 0 0 60px rgba(255, 42, 109, 0.4), inset 0 0 30px rgba(255, 42, 109, 0.2);
-            text-align: center;
-            position: relative;
-            animation: fadeIn 0.5s ease-out;
-            border-radius: 8px;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .auth-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
-            margin-bottom: 30px;
-            color: white;
-            text-shadow: 0 0 10px var(--cyan);
-        }
-
-        .auth-link {
-            font-size: 0.8rem;
-            color: #888;
-            text-decoration: underline;
-            margin-top: 10px;
-            display: inline-block;
-            transition: 0.2s;
-            cursor: pointer;
-        }
-
-        .auth-link:hover {
-            color: var(--cyan);
-        }
-
-        .err-msg {
-            color: var(--pink);
-            margin-top: 15px;
-            font-family: 'Orbitron';
-            font-size: 0.8rem;
-            min-height: 20px;
-            text-shadow: 0 0 5px var(--pink);
-        }
-
-        /* ================= 4. 主页板块 (角色卡片特效升级) ================= */
-        nav {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            height: 70px;
-            padding: 0 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000;
-            background: rgba(5, 1, 10, 0.85);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-        }
-
-        .brand {
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            font-size: 1.5rem;
-            color: white;
-            text-shadow: 0 0 10px var(--cyan), 0 0 20px var(--purple);
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-        }
-
-        .nav-item {
-            margin-left: 30px;
-            color: #aaa;
-            text-decoration: none;
-            font-family: 'Orbitron';
-            font-size: 0.9rem;
-            transition: 0.3s;
-            position: relative;
-            padding: 5px 0;
-            cursor: pointer;
-        }
-
-        .nav-item:after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--cyan);
-            transition: width 0.3s;
-        }
-
-        .nav-item:hover {
-            color: var(--cyan);
-            text-shadow: 0 0 8px var(--cyan);
-        }
-
-        .nav-item:hover:after {
-            width: 100%;
-        }
-
-        .user-badge {
-            border: 2px solid var(--gold);
-            padding: 5px 15px;
-            color: var(--gold);
-            border-radius: 4px;
-            font-family: 'Orbitron';
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            transition: 0.3s;
-            text-shadow: 0 0 8px var(--gold);
-            cursor: pointer;
-        }
-
-        .user-badge:hover {
-            background: rgba(255, 215, 0, 0.1);
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
-            transform: scale(1.05);
-        }
-
-        section {
-            padding: 120px 40px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-
-        h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 6rem;
-            margin-bottom: 20px;
-            text-shadow: 0 0 25px var(--pink), 0 0 40px var(--purple);
-            animation: glitch 3s infinite alternate;
-        }
-
-        @keyframes glitch {
-            0%, 100% {
-                text-shadow: 0 0 25px var(--pink), 0 0 40px var(--purple);
-            }
-            50% {
-                transform: skew(-0.5deg);
-                text-shadow: 2px 2px 0 var(--cyan), -2px -2px 0 var(--pink);
-            }
-            51% {
-                transform: skew(0.5deg);
-                text-shadow: -2px 2px 0 var(--cyan), 2px -2px 0 var(--pink);
-            }
-        }
-
-        /* 角色卡片特效：扑克牌翻转 + 漂浮 */
-        .char-gallery {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            flex-wrap: wrap;
-        }
-
-        .char {
-            width: 260px;
-            height: 380px;
-            perspective: 1600px;
-            transform-style: preserve-3d;
-            animation: cardFloat 4s ease-in-out infinite;
-        }
-
-        .char:nth-child(2n) {
-            animation-delay: 0.5s;
-        }
-
-        .char:nth-child(3n) {
-            animation-delay: 0.9s;
-        }
-
-        @keyframes cardFloat {
-            0%, 100% {
-                transform: translateY(0px);
-            }
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-
-        .char-inner {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            transform-style: preserve-3d;
-            transition: transform 0.9s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.5s;
-        }
-
-        .char:hover .char-inner {
-            transform: rotateY(180deg) rotateZ(1deg) scale(1.03);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
-        }
-
-        .char-face {
-            position: absolute;
-            inset: 0;
-            border-radius: 14px;
-            overflow: hidden;
-            backface-visibility: hidden;
-            border: 1px solid var(--border);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
-        }
-
-        .char-front {
-            background: radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.2), transparent 55%),
-                        radial-gradient(circle at 80% 100%, rgba(255, 42, 109, 0.3), transparent 60%),
-                        #07040f;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .char-back {
-            transform: rotateY(180deg);
-            background:
-                radial-gradient(circle at 0 0, rgba(5, 217, 232, 0.2), transparent 65%),
-                radial-gradient(circle at 100% 100%, rgba(217, 5, 232, 0.25), transparent 65%),
-                #050109;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .char-card-frame {
-            position: absolute;
-            inset: 10px;
-            border-radius: 10px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), inset 0 0 40px rgba(5, 217, 232, 0.25);
-            pointer-events: none;
-        }
-
-        .char-suit {
-            position: absolute;
-            top: 8px;
-            left: 10px;
-            font-family: 'Orbitron';
-            font-size: 0.8rem;
-            opacity: 0.8;
-        }
-
-        .char-suit-bottom {
-            position: absolute;
-            bottom: 8px;
-            right: 10px;
-            font-family: 'Orbitron';
-            font-size: 0.8rem;
-            opacity: 0.8;
-            transform: rotate(180deg);
-        }
-
-        .char-front-img {
-            width: 100%;
-            height: 100%;
-            background-position: center;
-            background-size: contain;
-            background-repeat: no-repeat;
-            filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.8));
-        }
-
-        .char-front-info {
-            position: absolute;
-            bottom: 16px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            text-shadow: 0 2px 6px #000;
-        }
-
-        .char-name {
-            font-family: 'Orbitron';
-            font-size: 1.4rem;
-            letter-spacing: 2px;
-        }
-
-        .char-race {
-            color: var(--cyan);
-            font-size: 0.9rem;
-        }
-
-        .char-back-inner {
-            text-align: center;
-            padding: 20px;
-            color: #eee;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-
-        .char-back-title {
-            font-family: 'Orbitron';
-            margin-bottom: 10px;
-            color: var(--gold);
-            text-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
-        }
-
-        /* ================= 5. USER SYSTEM (UI重制 + 居中) ================= */
-        #user-overlay {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .profile-ui {
-            width: 1000px;
-            height: 650px;
-            background-color: #0d0d18;
-            background-image: linear-gradient(45deg, rgba(5, 217, 232, 0.05) 25%, transparent 25%, transparent 75%, rgba(5, 217, 232, 0.05) 75%, rgba(5, 217, 232, 0.05)),
-                              linear-gradient(45deg, rgba(5, 217, 232, 0.05) 25%, transparent 25%, transparent 75%, rgba(5, 217, 232, 0.05) 75%, rgba(5, 217, 232, 0.05));
-            background-size: 60px 60px;
-            background-position: 0 0, 30px 30px;
-            border: 1px solid var(--cyan);
-            display: flex;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 0 50px rgba(5, 217, 232, 0.3);
-            transform: scale(0.9);
-            transition: transform 0.5s;
-            position: relative;
-        }
-
-        #user-overlay.active .profile-ui {
-            transform: scale(1);
-        }
-
-        .profile-ui::before {
-            content: "";
-            position: absolute;
-            inset: -50%;
-            background: conic-gradient(from 120deg, rgba(255, 42, 109, 0.25), transparent, rgba(5, 217, 232, 0.3), transparent, rgba(255, 215, 0, 0.3));
-            animation: rotateAura 16s linear infinite;
-            opacity: 0.3;
-            pointer-events: none;
-        }
-
-        .profile-ui > * {
-            position: relative;
-            z-index: 1;
-        }
-
-        @keyframes rotateAura {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .p-side {
-            width: 300px;
-            background: rgba(0, 0, 0, 0.7);
-            border-right: 1px solid #333;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .p-head {
-            padding: 20px;
-            border-bottom: 1px solid #333;
-            font-family: 'Orbitron';
-            color: var(--pink);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .f-list {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .f-item {
-            padding: 15px 20px;
-            border-bottom: 1px solid #222;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: 0.2s;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .f-item:hover,
-        .f-item.active {
-            background: linear-gradient(90deg, rgba(5, 217, 232, 0.2), transparent);
-            border-right: 3px solid var(--cyan);
-        }
-
-        .f-name {
-            flex: 1;
-        }
-
-        .f-status {
-            font-size: 0.7rem;
-            color: #888;
-        }
-
-        .f-actions {
-            display: flex;
-            gap: 5px;
-        }
-
-        .f-actions .btn {
-            padding: 3px 8px;
-            font-size: 0.7rem;
-            border-width: 1px;
-        }
-
-        .p-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            background: radial-gradient(circle at 0 0, rgba(5, 217, 232, 0.1), transparent 60%),
-                        radial-gradient(circle at 100% 100%, rgba(255, 42, 109, 0.1), transparent 60%);
-        }
-
-        .view {
-            position: absolute;
-            inset: 0;
-            padding: 40px;
-            transition: opacity 0.4s, transform 0.4s;
-        }
-
-        .view.hidden {
-            opacity: 0;
-            pointer-events: none;
-            transform: scale(0.98);
-        }
-
-        .stats-view h2 {
-            font-family: 'Orbitron';
-            font-size: 2.2rem;
-            color: var(--pink);
-            text-shadow: 0 0 10px var(--pink);
-        }
-
-        .stat-grid {
-            margin-top: 30px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .stat-box {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
-            border-radius: 8px;
-            width: 100%;
-            text-align: center;
-            border: 1px solid #333;
-            transition: 0.3s;
-        }
-
-        .stat-box:hover {
-            box-shadow: 0 0 25px rgba(5, 217, 232, 0.3);
-            transform: translateY(-3px);
-        }
-
-        .exp-bar {
-            width: 100%;
-            height: 20px;
-            background: #222;
-            border-radius: 10px;
-            margin: 10px 0;
-            overflow: hidden;
-            border: 1px solid #444;
-            padding: 2px;
-        }
-
-        .exp-fill {
-            height: 100%;
-            border-radius: 8px;
-            background: linear-gradient(90deg, var(--cyan), var(--purple));
-            box-shadow: 0 0 10px var(--cyan);
-            transition: width 0.8s ease-out;
-        }
-
-        .exp-text {
-            font-family: 'Orbitron';
-            color: #ccc;
-            text-align: right;
-        }
-
-        .profile-top-row {
-            display: flex;
-            gap: 30px;
-            align-items: center;
-        }
-
-        .avatar-wrapper {
-            width: 130px;
-            height: 130px;
-            position: relative;
-        }
-
-        .avatar-frame {
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            border: 3px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
-            background: radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.25), transparent 60%),
-                        radial-gradient(circle at 80% 100%, rgba(5, 217, 232, 0.25), transparent 60%),
-                        #050109;
-        }
-
-        .avatar-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .avatar-frame-default {
-            border-color: rgba(255, 255, 255, 0.4);
-        }
-
-        .avatar-frame-elkia {
-            border-color: var(--gold);
-            box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
-            animation: pulseGold 3s ease-in-out infinite;
-        }
-
-        .avatar-frame-flugel {
-            border-image: linear-gradient(135deg, var(--purple), var(--cyan)) 1;
-            border-style: solid;
-            border-width: 3px;
-            animation: rotateFrame 8s linear infinite;
-        }
-
-        .avatar-frame-warabeast {
-            border-color: var(--race-warabeast);
-            box-shadow: 0 0 20px rgba(255, 153, 102, 0.7);
-        }
-
-        @keyframes pulseGold {
-            0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.4); }
-            50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.9); }
-        }
-
-        @keyframes rotateFrame {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .profile-title-badge {
-            margin-top: 8px;
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 999px;
-            font-family: 'Orbitron';
-            font-size: 0.75rem;
-            letter-spacing: 1px;
-            background: linear-gradient(90deg, var(--pink), var(--purple));
-            box-shadow: 0 0 10px rgba(217, 5, 232, 0.8);
-        }
-
-        .profile-signature {
-            margin-top: 10px;
-            color: #aaa;
-            min-height: 20px;
-        }
-
-        .profile-edit-area {
-            margin-top: 20px;
-            display: grid;
-            grid-template-columns: 2fr 1.2fr;
-            gap: 20px;
-        }
-
-        .profile-edit-area textarea {
-            resize: vertical;
-            min-height: 80px;
-            text-align: left;
-        }
-
-        .profile-edit-area input[type="file"] {
-            font-family: 'Orbitron';
-            font-size: 0.75rem;
-            color: #aaa;
-        }
-
-        .chat-view {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        .chat-header {
-            padding: 15px;
-            border-bottom: 1px solid #333;
-            font-family: 'Orbitron';
-            font-size: 1.2rem;
-            color: var(--cyan);
-        }
-
-        .chat-box {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .msg {
-            max-width: 70%;
-            padding: 10px 15px;
-            border-radius: 15px;
-            font-size: 0.9rem;
-            line-height: 1.4;
-            position: relative;
-        }
-
-        .msg.me {
-            align-self: flex-end;
-            background: linear-gradient(45deg, var(--cyan), #00b8c5);
-            color: black;
-            border-bottom-right-radius: 3px;
-        }
-
-        .msg.them {
-            align-self: flex-start;
-            background: #333;
-            border: 1px solid #444;
-            border-bottom-left-radius: 3px;
-        }
-
-        .chat-input {
-            padding: 10px 20px 20px;
-            display: flex;
-            gap: 10px;
-        }
-
-        /* mini user 显示（用于评论 / 讨论） */
-        .mini-user {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .mini-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-            background: #111;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .mini-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .mini-frame-elkia { border-color: var(--gold); box-shadow: 0 0 8px rgba(255, 215, 0, 0.8); }
-        .mini-frame-flugel { border-color: var(--purple); box-shadow: 0 0 8px rgba(217, 5, 232, 0.8); }
-        .mini-frame-warabeast { border-color: var(--race-warabeast); box-shadow: 0 0 8px rgba(255, 153, 102, 0.8); }
-
-        .mini-meta {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .mini-name {
-            font-size: 0.8rem;
-            cursor: pointer;
-        }
-
-        .mini-title {
-            font-size: 0.7rem;
-            color: #aaa;
-        }
-
-        /* ================= 6. NOVEL READER (Advanced Features + 背景特效) ================= */
-        .modal-layer {
-            position: fixed;
-            inset: 0;
-            z-index: 9000;
-            background: rgba(5, 5, 10, 0.98);
-            display: flex;
-            flex-direction: column;
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.5s;
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-layer.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        .m-head {
-            height: 60px;
-            background: rgba(0, 0, 0, 0.5);
-            border-bottom: 1px solid #333;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 30px;
-            flex-shrink: 0;
-        }
-
-        .m-title {
-            font-family: 'Orbitron';
-            letter-spacing: 3px;
-        }
-
-        .m-body {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .r-left-panel {
-            width: 280px;
-            background: rgba(0, 0, 0, 0.8);
-            border-right: 1px solid #333;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .r-tabs {
-            display: flex;
-            border-bottom: 1px solid #333;
-        }
-
-        .r-tab {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: #888;
-            padding: 10px;
-            font-family: 'Orbitron';
-            cursor: pointer;
-        }
-
-        .r-tab.active {
-            color: white;
-            background: rgba(255, 255, 255, 0.1);
-            border-bottom: 2px solid var(--cyan);
-        }
-
-        .r-tab-content {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .toc-item,
-        .bm-item {
-            padding: 12px 15px;
-            border-bottom: 1px solid #222;
-            transition: 0.2s;
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
-
-        .toc-item:hover,
-        .bm-item:hover {
-            background: rgba(5, 217, 232, 0.1);
-            color: var(--cyan);
-        }
-
-        .r-main-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-        }
-
-        #reader-bg-canvas {
-            position: absolute;
-            inset: 0;
-            z-index: 1;
-            pointer-events: none;
-            opacity: 0.7;
-        }
-
-        .r-text-area {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px 5%;
-            font-family: 'ZCOOL XiaoWei', serif;
-            font-size: 1.5rem;
-            line-height: 2.4;
-            color: #ddd;
-            position: relative;
-            z-index: 2;
-        }
-
-        .line {
-            position: relative;
-            padding-right: 40px;
-            transition: background-color 0.2s;
-        }
-
-        .line:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .comment-bubble {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 30px;
-            height: 30px;
-            background: rgba(255, 255, 255, 0.12);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-
-        .line:hover .comment-bubble {
-            opacity: 1;
-            transform: translateY(-50%) scale(1.1);
-        }
-
-        .comment-bubble:hover {
-            background: var(--cyan);
-            color: black;
-            transform: translateY(-50%) scale(1.2);
-        }
-
-        .comment-icon {
-            font-family: initial;
-            font-size: 1.2rem;
-        }
-
-        .comment-count {
-            font-family: 'Orbitron';
-            font-size: 0.7rem;
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: var(--pink);
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            line-height: 16px;
-            text-align: center;
-            box-shadow: 0 0 5px var(--pink);
-        }
-
-        .r-footer {
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            border-top: 1px solid #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .r-progress {
-            font-family: 'Orbitron';
-            color: #888;
-        }
-
-        .r-side-r {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 380px;
-            height: 100%;
-            background: #0a0a0a;
-            border-left: 1px solid #333;
-            transform: translateX(100%);
-            transition: transform 0.4s ease-out;
-            display: flex;
-            flex-direction: column;
-            z-index: 10;
-        }
-
-        .r-side-r.open {
-            transform: translateX(0);
-            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
-        }
-
-        .cmt-header {
-            padding: 15px;
-            border-bottom: 1px solid #333;
-            font-family: 'Orbitron';
-            color: var(--pink);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .cmt-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px;
-        }
-
-        .cmt-card {
-            background: #1a1a1a;
-            padding: 12px;
-            margin-bottom: 8px;
-            border-radius: 5px;
-            border-left: 2px solid transparent;
-            transition: border-color 0.3s;
-        }
-
-        .cmt-card:hover {
-            border-color: var(--cyan);
-        }
-
-        .mention-link {
-            color: var(--cyan);
-            text-decoration: none;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .mention-link:hover {
-            text-decoration: underline;
-        }
-
-        .page-transition {
-            animation: pageFlip 0.45s ease-out;
-        }
-
-        @keyframes pageFlip {
-            0% { opacity: 0; transform: translateX(30px) rotateY(-15deg); }
-            100% { opacity: 1; transform: translateX(0) rotateY(0deg); }
-        }
-
-        /* ================= 7. 设定区（Settings Lore） ================= */
-        #setting-layer .m-body {
-            display: grid;
-            grid-template-columns: 1.2fr 1.2fr 1fr;
-            gap: 0;
-            padding: 0;
-            background: radial-gradient(circle at 0 0, rgba(5, 217, 232, 0.25), transparent 60%),
-                        radial-gradient(circle at 100% 100%, rgba(255, 42, 109, 0.3), transparent 60%),
-                        #05030a;
-        }
-
-        .setting-panel {
-            border-right: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 18px 20px 20px 24px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .setting-panel:last-child {
-            border-right: none;
-        }
-
-        .setting-panel::before {
-            content: "";
-            position: absolute;
-            inset: -40%;
-            opacity: 0.2;
-            background: radial-gradient(circle at 0 0, rgba(5, 217, 232, 0.7), transparent 60%);
-            mix-blend-mode: screen;
-            animation: settingGlow 16s ease-in-out infinite;
-        }
-
-        @keyframes settingGlow {
-            0%, 100% { transform: translate(-10%, -10%); }
-            50% { transform: translate(10%, 10%); }
-        }
-
-        .setting-title {
-            font-family: 'Orbitron';
-            margin-bottom: 10px;
-            letter-spacing: 2px;
-        }
-
-        .setting-sub {
-            font-size: 0.9rem;
-            color: #aaa;
-            margin-bottom: 16px;
-        }
-
-        .covenant-item {
-            margin-bottom: 10px;
-            padding-left: 10px;
-            position: relative;
-        }
-
-        .covenant-item::before {
-            content: "◆";
-            position: absolute;
-            left: -2px;
-            top: 2px;
-            color: var(--cyan);
-        }
-
-        .race-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
-        }
-
-        .race-card {
-            padding: 10px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(0, 0, 0, 0.6);
-            position: relative;
-            overflow: hidden;
-            cursor: default;
-        }
-
-        .race-card::before {
-            content: "";
-            position: absolute;
-            inset: -20%;
-            opacity: 0.4;
-            background: radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.35), transparent 60%);
-            mix-blend-mode: screen;
-            transform: translate(-40%, -40%);
-            transition: transform 0.6s;
-        }
-
-        .race-card:hover::before {
-            transform: translate(40%, 40%);
-        }
-
-        .race-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 4px;
-        }
-
-        .race-name {
-            font-family: 'Orbitron';
-            font-size: 0.9rem;
-        }
-
-        .race-piece {
-            font-family: 'Orbitron';
-            font-size: 0.8rem;
-        }
-
-        .race-desc {
-            font-size: 0.8rem;
-            color: #ccc;
-        }
-
-        .race-tag-color {
-            width: 40px;
-            height: 4px;
-            border-radius: 999px;
-            margin-top: 6px;
-        }
-
-        .lore-char-card {
-            margin-bottom: 12px;
-            padding: 10px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(0, 0, 0, 0.6);
-            font-size: 0.85rem;
-        }
-
-        .lore-char-name {
-            font-family: 'Orbitron';
-            margin-bottom: 4px;
-            color: var(--cyan);
-        }
-
-        .lore-scroll {
-            max-height: calc(100vh - 120px);
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-
-        /* ================= 8. DISCUSSION FORUM ================= */
-        #discussion-layer .m-body {
-            padding: 0;
-            display: grid;
-            grid-template-columns: 0.9fr 1.6fr;
-            background: radial-gradient(circle at 0 0, rgba(5, 217, 232, 0.2), transparent 60%),
-                        radial-gradient(circle at 100% 100%, rgba(217, 5, 232, 0.3), transparent 60%),
-                        #05030a;
-        }
-
-        .forum-left {
-            border-right: 1px solid #333;
-            padding: 18px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .forum-right {
-            padding: 18px 20px;
-            overflow-y: auto;
-        }
-
-        #forum-textarea {
-            flex: 1;
-            resize: none;
-            text-align: left;
-        }
-
-        .forum-post {
-            background: #151525;
-            border-radius: 10px;
-            padding: 12px 14px;
-            margin-bottom: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
-        }
-
-        .forum-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-
-        .forum-content {
-            font-size: 0.95rem;
-            white-space: pre-wrap;
-            margin-bottom: 6px;
-        }
-
-        .forum-actions {
-            font-size: 0.8rem;
-            color: #aaa;
-            display: flex;
-            gap: 16px;
-        }
-
-        .forum-action {
-            cursor: pointer;
-        }
-
-        .forum-time {
-            font-size: 0.75rem;
-            color: #777;
-            margin-left: auto;
-        }
-
-        /* ================= 9. 商店系统 ================= */
-        .shop-grid {
-            margin-top: 20px;
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 12px;
-            font-size: 0.8rem;
-        }
-
-        .shop-item {
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            background: rgba(0, 0, 0, 0.55);
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .shop-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .shop-item-title {
-            font-family: 'Orbitron';
-            font-size: 0.85rem;
-        }
-
-        .shop-tag {
-            font-size: 0.7rem;
-            padding: 2px 6px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .shop-price {
-            font-size: 0.8rem;
-            color: var(--gold);
-        }
-
-        .shop-actions {
-            display: flex;
-            gap: 6px;
-        }
-
-        .shop-actions .btn {
-            font-size: 0.7rem;
-            padding: 4px 8px;
-        }
-
-        .shop-owned {
-            color: var(--cyan);
-            font-size: 0.75rem;
-        }
-
-        /* ================= 10. 其他 ================= */
-        footer {
-            text-align: center;
-            padding: 40px;
-            color: #555;
-            font-family: 'Orbitron';
-        }
-
-        @media (max-width: 960px) {
-            nav {
-                padding: 0 15px;
-            }
-            section {
-                padding: 100px 20px;
-            }
-            .profile-ui {
-                width: 95%;
-                height: 90vh;
-            }
-            #setting-layer .m-body {
-                grid-template-columns: 1fr;
-            }
-            #discussion-layer .m-body {
-                grid-template-columns: 1fr;
-            }
+            --pink:#ff2a6d; --cyan:#05d9e8; --purple:#d905e8; --gold:#ffd700;
+            --dark:#05010d; --glass:rgba(20,20,35,0.9); --border:rgba(255,255,255,0.1);
+            --race-olddeus:#ffef5c;
+            --race-phantasma:#e65cff;
+            --race-elemental:#5ce6ff;
+            --race-dragonia:#ff7c5c;
+            --race-flugel:#ffb4ff;
+            --race-demon:#ff6c9c;
+            --race-fairy:#9cffd0;
+            --race-dwarf:#ffc46c;
+            --race-werabeast:#ff7aa8;
+            --race-seiren:#5cd0ff;
+            --race-dhampir:#b35cff;
+            --race-elf:#7affb7;
+            --race-angel:#ffe0ff;
+            --race-goblin:#b5ff5c;
+            --race-automaton:#9ad0ff;
+            --race-imanity:#ffffff;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;cursor:none;outline:none;user-select:none;}
+        html{scroll-behavior:smooth;}
+        body{background-color:var(--dark);color:white;font-family:'Noto Sans SC',sans-serif;height:100vh;overflow-x:hidden;}
+
+        /* ================= 1. 动态光标 ================= */
+        #cursor{width:25px;height:25px;border:2px solid var(--cyan);border-radius:50%;position:fixed;pointer-events:none;z-index:999999;transform:translate(-50%,-50%);transition:all .1s ease-out;mix-blend-mode:difference;}
+        #cursor.hover{width:60px;height:60px;background:rgba(5,217,232,.2);border-color:var(--pink);}
+        #cursor.click{transform:translate(-50%,-50%) scale(.8);border-width:4px;}
+        ::-webkit-scrollbar{width:8px;}
+        ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--pink),var(--purple),var(--cyan));border-radius:4px;}
+        ::-webkit-scrollbar-track{background:transparent;}
+
+        .btn{
+            background:transparent;border:2px solid var(--cyan);color:var(--cyan);
+            padding:10px 25px;font-family:'Orbitron',sans-serif;font-weight:bold;
+            transition:.25s;position:relative;overflow:hidden;text-transform:uppercase;
+            text-shadow:0 0 5px var(--cyan);letter-spacing:1px;
+        }
+        .btn::before{
+            content:"";position:absolute;left:-120%;top:0;width:120%;height:100%;
+            background:linear-gradient(120deg,transparent,rgba(255,255,255,.4),transparent);
+            transform:skewX(-25deg);
+        }
+        .btn:hover::before{left:120%;}
+        .btn:hover{
+            background:var(--cyan);color:black;box-shadow:0 0 25px var(--cyan),inset 0 0 10px rgba(255,255,255,.5);
+            transform:scale(1.05) translateY(-2px);text-shadow:none;
+        }
+        .btn:disabled{border-color:#444;color:#444;cursor:not-allowed;box-shadow:none;transform:none;text-shadow:none;}
+
+        .input{
+            width:100%;padding:10px 14px;background:rgba(0,0,0,.5);
+            border:1px solid #444;color:white;font-family:'Noto Sans SC',sans-serif;
+            transition:.3s;margin-bottom:10px;border-radius:4px;
+        }
+        .input:focus{border-color:var(--cyan);box-shadow:0 0 15px rgba(5,217,232,.3),inset 0 0 10px rgba(5,217,232,.1);}
+        .hidden{display:none!important;}
+        .section-title{font-family:'Orbitron';font-size:2.5rem;text-align:center;margin:60px 0 30px;color:white;text-shadow:0 0 15px var(--cyan);}
+
+        /* ================= 2. 布局与整体背景 ================= */
+        #app-container{transition:filter .5s ease-out,transform .5s ease-out;}
+        body.auth-active #app-container{filter:blur(10px) brightness(.4);transform:scale(.98);pointer-events:none;}
+        .bg-anim{position:fixed;inset:0;z-index:-10;background:radial-gradient(circle at 50% 0,rgba(189,0,255,.18),transparent 60%),url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2305d9e8' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+        #canvas-bg{position:fixed;inset:0;z-index:-5;opacity:.7;}
+
+        /* ================= 3. 登录 / 注册 ================= */
+        #auth-overlay,#profile-viewer-overlay{
+            position:fixed;inset:0;z-index:20000;background:rgba(5,2,10,.82);
+            display:flex;justify-content:center;align-items:center;
+            backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .5s;
+        }
+        #auth-overlay.active,#profile-viewer-overlay.active{opacity:1;pointer-events:all;}
+        .auth-box,.profile-viewer-box{
+            width:420px;padding:40px;background:rgba(0,0,0,.8);
+            border:2px solid var(--pink);box-shadow:0 0 60px rgba(255,42,109,.5),inset 0 0 30px rgba(255,42,109,.3);
+            text-align:center;position:relative;animation:fadeIn .5s ease-out;border-radius:10px;
+        }
+        @keyframes fadeIn{from{opacity:0;transform:scale(.9);}to{opacity:1;transform:scale(1);}}
+        .auth-title{font-family:'Orbitron',sans-serif;font-size:2rem;margin-bottom:30px;color:white;text-shadow:0 0 10px var(--cyan);}
+        .auth-link{font-size:.8rem;color:#888;text-decoration:underline;margin-top:10px;display:inline-block;transition:.2s;}
+        .auth-link:hover{color:var(--cyan);}
+        .err-msg{color:var(--pink);margin-top:15px;font-family:'Orbitron';font-size:.8rem;min-height:20px;text-shadow:0 0 5px var(--pink);}
+
+        /* ================= 4. 顶部导航 + 英雄区 ================= */
+        nav{
+            position:fixed;top:0;width:100%;height:70px;padding:0 40px;
+            display:flex;justify-content:space-between;align-items:center;z-index:1000;
+            background:rgba(5,1,10,.9);border-bottom:1px solid rgba(255,255,255,.1);backdrop-filter:blur(10px);
+        }
+        .brand{font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.6rem;color:white;text-shadow:0 0 10px var(--cyan),0 0 20px var(--purple);}
+        .nav-links{display:flex;align-items:center;gap:20px;}
+        .nav-item{
+            margin-left:10px;color:#aaa;text-decoration:none;font-family:'Orbitron';font-size:.9rem;
+            transition:.3s;position:relative;padding:5px 0;letter-spacing:1px;
+        }
+        .nav-item:after{
+            content:'';position:absolute;bottom:0;left:0;width:0;height:2px;background:var(--cyan);transition:width .3s;
+        }
+        .nav-item:hover{color:var(--cyan);text-shadow:0 0 8px var(--cyan);}
+        .nav-item:hover:after{width:100%;}
+        .user-badge{
+            border:2px solid var(--gold);padding:6px 15px;color:var(--gold);
+            border-radius:999px;font-family:'Orbitron';display:flex;gap:8px;align-items:center;
+            transition:.3s;text-shadow:0 0 8px var(--gold);background:rgba(0,0,0,.5);
+        }
+        .user-badge:hover{background:rgba(255,215,0,.12);box-shadow:0 0 18px rgba(255,215,0,.4);transform:scale(1.05);}
+        section{padding:120px 40px 80px;max-width:1400px;margin:0 auto;}
+        .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;}
+        h1{
+            font-family:'Orbitron',sans-serif;font-size:5.2rem;margin-bottom:20px;
+            text-shadow:0 0 25px var(--pink),0 0 40px var(--purple);animation:glitch 3s infinite alternate;
+        }
+        @keyframes glitch{
+            0%,100%{text-shadow:0 0 25px var(--pink),0 0 40px var(--purple);}
+            50%{transform:skew(-.5deg);text-shadow:2px 2px 0 var(--cyan),-2px -2px 0 var(--pink);}
+            51%{transform:skew(.5deg);text-shadow:-2px 2px 0 var(--cyan),2px -2px 0 var(--pink);}
+        }
+
+        /* ================= 5. 角色卡片（扑克牌翻转） ================= */
+        .char-gallery{display:flex;justify-content:center;gap:30px;flex-wrap:wrap;}
+        .char-card{
+            width:240px;height:360px;perspective:1400px;position:relative;
+        }
+        .char-inner{
+            width:100%;height:100%;position:relative;transform-style:preserve-3d;
+            transition:transform .9s cubic-bezier(.19,1,.22,1),box-shadow .6s;
+        }
+        .char-card:hover .char-inner{
+            transform:rotateY(180deg) rotateZ(2deg) translateY(-6px);
+            box-shadow:0 30px 60px rgba(0,0,0,.8);
+        }
+        .char-face{
+            position:absolute;inset:0;border-radius:18px;overflow:hidden;
+            backface-visibility:hidden;border:1px solid var(--border);
+        }
+        .char-front{
+            background:radial-gradient(circle at 20% 0,var(--cyan),transparent 55%),radial-gradient(circle at 90% 110%,var(--pink),transparent 55%),#05030a;
+            display:flex;flex-direction:column;justify-content:flex-end;align-items:center;
+        }
+        .char-front img{
+            width:110%;height:auto;object-fit:cover;transform:translateY(-8px);
+            filter:drop-shadow(0 0 26px rgba(0,0,0,.8));
+            transition:transform .4s;
+        }
+        .char-card:hover .char-front img{transform:translateY(-14px) scale(1.02);}
+        .char-front-info{
+            width:100%;padding:10px 15px 14px;background:linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.9));
+            text-align:center;
+        }
+        .char-name{font-family:'Orbitron';font-size:1.4rem;letter-spacing:2px;}
+        .char-race{font-size:.8rem;color:var(--cyan);}
+        .char-back{
+            background:radial-gradient(circle at 50% 0,var(--purple),transparent 55%),radial-gradient(circle at 0 100%,var(--cyan),transparent 55%),#05010e;
+            transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+        }
+        .card-symbol{
+            width:70px;height:70px;border-radius:14px;border:2px solid var(--gold);
+            display:flex;align-items:center;justify-content:center;
+            font-size:2.2rem;box-shadow:0 0 18px rgba(255,215,0,.6),0 0 40px rgba(255,42,109,.5);
+        }
+        .char-desc{padding:0 18px;font-size:.85rem;color:#eee;text-align:center;line-height:1.5;}
+
+        /* ================= 6. 用户系统 MODAL + 设定为居中 ================= */
+        #user-overlay.modal-layer{
+            display:flex;align-items:center;justify-content:center;
+        }
+        .modal-layer{
+            position:fixed;inset:0;z-index:9000;background:rgba(5,5,10,.96);
+            display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:all .5s;backdrop-filter:blur(6px);
+        }
+        .modal-layer.active{opacity:1;pointer-events:all;}
+        .profile-ui{
+            width:1000px;height:640px;margin:auto;background-color:#050713;
+            background-image:radial-gradient(circle at 0 0,rgba(5,217,232,.2),transparent 55%),radial-gradient(circle at 100% 100%,rgba(217,5,232,.25),transparent 55%);
+            border:1px solid var(--cyan);display:flex;border-radius:16px;overflow:hidden;box-shadow:0 0 50px rgba(5,217,232,.35);transform:scale(.98);transition:transform .5s;
+        }
+        #user-overlay.active .profile-ui{transform:scale(1);}
+        .p-side{width:260px;background:rgba(0,0,0,.75);border-right:1px solid #222;display:flex;flex-direction:column;}
+        .p-head{padding:16px 18px;border-bottom:1px solid #333;font-family:'Orbitron';color:var(--pink);display:flex;justify-content:space-between;align-items:center;}
+        .f-list{flex:1;overflow-y:auto;}
+        .f-item{padding:10px 16px;border-bottom:1px solid #222;display:flex;align-items:center;gap:8px;transition:.2s;position:relative;font-size:.9rem;}
+        .f-item:hover,.f-item.active{background:linear-gradient(90deg,rgba(5,217,232,.25),transparent);border-right:3px solid var(--cyan);}
+        .f-name{flex:1;cursor:pointer;}
+        .f-status{font-size:.7rem;color:#888;}
+        .f-actions{display:flex;gap:4px;}
+        .f-actions .btn{padding:2px 6px;font-size:.65rem;border-width:1px;}
+        .p-content{flex:1;display:flex;flex-direction:column;position:relative;background:radial-gradient(circle at 50% 0,rgba(5,217,232,.2),transparent 60%);}
+        .p-tabs{height:46px;border-bottom:1px solid #333;display:flex;}
+        .p-tab{flex:1;background:transparent;border:none;color:#777;font-family:'Orbitron';font-size:.75rem;letter-spacing:1px;}
+        .p-tab.active{color:#fff;background:rgba(255,255,255,.05);border-bottom:2px solid var(--cyan);}
+        .view{position:absolute;inset:46px 0 0;padding:24px 32px;transition:opacity .3s,transform .3s;}
+        .view.hidden{opacity:0;pointer-events:none;transform:scale(.98);}
+        .stat-grid{margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+        .stat-box{background:rgba(255,255,255,.04);padding:16px;border-radius:10px;border:1px solid #333;text-align:center;transition:.3s;}
+        .stat-box:hover{box-shadow:0 0 18px rgba(5,217,232,.35);transform:translateY(-3px);}
+        .exp-bar{width:100%;height:18px;background:#111;border-radius:9px;margin:8px 0;overflow:hidden;border:1px solid #444;padding:2px;}
+        .exp-fill{height:100%;border-radius:7px;background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 0 10px var(--cyan);transition:width .8s ease-out;}
+        .exp-text{font-family:'Orbitron';color:#ccc;text-align:right;font-size:.8rem;}
+        .chat-view{display:flex;flex-direction:column;height:100%;}
+        .chat-header{padding:10px 18px;border-bottom:1px solid #333;font-family:'Orbitron';font-size:1rem;color:var(--cyan);}
+        .chat-box{flex:1;padding:16px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+        .msg{max-width:70%;padding:8px 12px;border-radius:14px;font-size:.85rem;line-height:1.4;position:relative;}
+        .msg.me{align-self:flex-end;background:linear-gradient(45deg,var(--cyan),#00b8c5);color:black;border-bottom-right-radius:4px;}
+        .msg.them{align-self:flex-start;background:#262626;border:1px solid #444;border-bottom-left-radius:4px;}
+        .chat-input{padding:8px 16px;border-top:1px solid #333;display:flex;gap:8px;align-items:center;}
+
+        /* Settings view */
+        .settings-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:18px;margin-top:10px;}
+        .settings-card{background:rgba(255,255,255,.04);border-radius:10px;border:1px solid #333;padding:14px 16px;}
+        .settings-card h3{font-family:'Orbitron';font-size:.9rem;margin-bottom:8px;color:var(--cyan);}
+        .textarea{width:100%;height:90px;background:rgba(0,0,0,.45);border:1px solid #444;color:#fff;border-radius:6px;padding:8px;font-size:.85rem;resize:vertical;}
+        .settings-row{display:flex;gap:8px;margin-top:6px;align-items:center;}
+        .settings-row label{font-size:.8rem;color:#aaa;min-width:80px;}
+
+        /* Shop modal */
+        #shop-layer .m-body{display:flex;flex-direction:column;padding:20px 30px;gap:20px;}
+        .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px;}
+        .shop-card{
+            background:rgba(4,6,20,.9);border-radius:12px;border:1px solid #333;
+            padding:14px 16px;position:relative;overflow:hidden;
+        }
+        .shop-card::before{
+            content:"";position:absolute;inset:-40%;background:conic-gradient(from 0deg,var(--cyan),var(--purple),var(--pink),var(--cyan));
+            opacity:.15;filter:blur(18px);animation:spinGlow 10s linear infinite;
+        }
+        @keyframes spinGlow{from{transform:rotate(0);}to{transform:rotate(360deg);}}
+        .shop-inner{position:relative;z-index:1;}
+        .shop-tag{font-size:.7rem;color:#aaa;margin-bottom:2px;}
+        .shop-name{font-family:'Orbitron';font-size:.95rem;margin-bottom:4px;}
+        .shop-price{font-size:.8rem;color:var(--gold);margin-bottom:6px;}
+        .shop-desc{font-size:.8rem;color:#ccc;margin-bottom:10px;min-height:32px;}
+        .shop-owned{font-size:.75rem;color:var(--cyan);margin-bottom:4px;}
+
+        /* ================= 7. NOVEL READER ================= */
+        .m-head{
+            height:60px;background:rgba(0,0,0,.7);border-bottom:1px solid #333;
+            display:flex;justify-content:space-between;align-items:center;padding:0 30px;flex-shrink:0;
+        }
+        .m-title{font-family:'Orbitron';letter-spacing:2px;}
+        .m-body{flex:1;display:flex;overflow:hidden;position:relative;}
+        .r-left-panel{width:260px;background:rgba(0,0,0,.7);border-right:1px solid #333;display:flex;flex-direction:column;}
+        .r-tabs{display:flex;border-bottom:1px solid #333;}
+        .r-tab{flex:1;background:transparent;border:none;color:#888;padding:10px;font-family:'Orbitron';font-size:.8rem;}
+        .r-tab.active{color:#fff;background:rgba(255,255,255,.06);border-bottom:2px solid var(--cyan);}
+        .r-tab-content{flex:1;overflow-y:auto;}
+        .toc-item,.bm-item{
+            padding:10px 14px;border-bottom:1px solid #222;transition:.2s;font-size:.9rem;cursor:pointer;
+        }
+        .toc-item:hover,.bm-item:hover{background:rgba(5,217,232,.18);color:var(--cyan);}
+        .toc-item small{display:block;color:#888;font-size:.7rem;margin-top:2px;}
+
+        .r-main-panel{flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden;}
+        #reader-bg-canvas{
+            position:absolute;inset:0;z-index:0;opacity:.7;
+        }
+        .r-text-area{
+            position:relative;z-index:1;flex:1;overflow-y:auto;
+            padding:26px 6%;font-family:'ZCOOL XiaoWei',serif;font-size:1.5rem;line-height:2.2;color:#f1f1f1;
+        }
+        .line{position:relative;padding-right:40px;transition:background-color .2s;}
+        .line:hover{background:rgba(255,255,255,.04);}
+        .comment-bubble{
+            position:absolute;right:10px;top:50%;transform:translateY(-50%) scale(.8);
+            width:30px;height:30px;background:rgba(255,255,255,.12);border-radius:50%;
+            display:flex;align-items:center;justify-content:center;opacity:0;transition:all .25s;box-shadow:0 0 0 0 rgba(5,217,232,.4);
+        }
+        .line:hover .comment-bubble{opacity:1;transform:translateY(-50%) scale(1);box-shadow:0 0 12px 2px rgba(5,217,232,.55);}
+        .comment-icon{font-size:1.1rem;}
+        .comment-count{
+            font-family:'Orbitron';font-size:.7rem;position:absolute;top:-5px;right:-5px;
+            background:var(--pink);border-radius:50%;width:16px;height:16px;line-height:16px;text-align:center;box-shadow:0 0 5px var(--pink);
+        }
+        .r-footer{
+            padding:10px 10px;background:rgba(0,0,0,.8);border-top:1px solid #333;
+            display:flex;justify-content:center;align-items:center;gap:16px;z-index:2;
+        }
+        .r-progress{font-family:'Orbitron';color:#aaa;font-size:.85rem;}
+        .r-side-r{
+            position:absolute;top:0;right:0;width:380px;height:100%;background:#05050a;
+            border-left:1px solid #333;transform:translateX(100%);transition:transform .35s ease-out;
+            display:flex;flex-direction:column;z-index:5;
+        }
+        .r-side-r.open{transform:translateX(0);box-shadow:-10px 0 30px rgba(0,0,0,.7);}
+        .cmt-header{
+            padding:12px 16px;border-bottom:1px solid #333;font-family:'Orbitron';
+            color:var(--pink);display:flex;justify-content:space-between;align-items:center;
+        }
+        .cmt-list{flex:1;overflow-y:auto;padding:10px;}
+        .cmt-card{
+            background:#151515;padding:10px 12px;margin-bottom:8px;border-radius:6px;
+            border-left:2px solid transparent;transition:border-color .25s,transform .25s;
+        }
+        .cmt-card:hover{border-color:var(--cyan);transform:translateX(-2px);}
+        .mention-link{color:var(--cyan);text-decoration:none;font-weight:bold;}
+        .mention-link:hover{text-decoration:underline;}
+        .cmt-user{display:flex;align-items:center;gap:6px;font-size:.85rem;}
+        .mini-avatar{
+            width:22px;height:22px;border-radius:50%;background:#333;overflow:hidden;border:1px solid rgba(255,255,255,.2);
+        }
+        .mini-avatar img{width:100%;height:100%;object-fit:cover;}
+        .avatar-frame{
+            box-shadow:0 0 8px rgba(255,215,0,.6);
+        }
+        .cmt-meta{font-size:.7rem;color:#777;margin-top:2px;}
+        .cmt-content{margin-top:4px;white-space:pre-wrap;font-size:.85rem;}
+        .cmt-actions{font-size:.78rem;color:#888;display:flex;gap:10px;margin-top:4px;}
+        .cmt-actions span{cursor:pointer;}
+
+        .cmt-input-box{padding:8px 10px;border-top:1px solid #333;z-index:10;}
+        .cmt-input-box .input{margin-bottom:6px;}
+
+        /* ================= 8. 讨论区 ================= */
+        #discussion-layer .m-body{padding:16px 26px;display:flex;gap:20px;}
+        .forum-left{flex:2;display:flex;flex-direction:column;height:100%;}
+        .forum-list{flex:1;overflow-y:auto;margin-top:10px;}
+        .post-card{
+            background:rgba(0,0,0,.7);border-radius:10px;border:1px solid #333;
+            padding:10px 14px;margin-bottom:10px;display:flex;gap:10px;align-items:flex-start;
+            transition:.25s;
+        }
+        .post-card:hover{box-shadow:0 0 18px rgba(5,217,232,.35);transform:translateY(-2px);}
+        .post-main{flex:1;}
+        .post-header{display:flex;align-items:center;gap:6px;font-size:.85rem;}
+        .post-content{margin-top:4px;font-size:.9rem;white-space:pre-wrap;}
+        .post-meta{margin-top:4px;font-size:.75rem;color:#777;}
+        .post-actions{margin-top:4px;font-size:.78rem;color:#888;display:flex;gap:12px;}
+        .post-actions span{cursor:pointer;}
+        .forum-right{flex:1;background:rgba(0,0,0,.7);border-radius:10px;border:1px solid #333;padding:12px 14px;display:flex;flex-direction:column;}
+        .forum-right h3{font-family:'Orbitron';font-size:.9rem;margin-bottom:6px;color:var(--cyan);}
+        .forum-right textarea{flex:1;margin:6px 0 10px;}
+
+        /* ================= 9. 设定区（十条盟约 + 十六种族） ================= */
+        #codex{position:relative;}
+        .codex-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:26px;}
+        .codex-card{
+            background:radial-gradient(circle at 0 0,rgba(5,217,232,.25),transparent 55%),radial-gradient(circle at 100% 100%,rgba(217,5,232,.25),transparent 55%),rgba(0,0,0,.8);
+            border-radius:16px;border:1px solid rgba(255,255,255,.15);padding:18px 20px;position:relative;overflow:hidden;
+        }
+        .codex-card::before{
+            content:"";position:absolute;inset:-30%;background:conic-gradient(from 140deg,rgba(5,217,232,.6),rgba(217,5,232,.2),rgba(255,42,109,.5),rgba(5,217,232,.6));
+            opacity:.15;filter:blur(20px);animation:codexSpin 14s linear infinite;
+        }
+        @keyframes codexSpin{from{transform:rotate(0);}to{transform:rotate(360deg);}}
+        .codex-inner{position:relative;z-index:1;}
+        .codex-card h3{font-family:'Orbitron';font-size:1.1rem;margin-bottom:8px;}
+        .pledge-list{list-style:none;font-size:.9rem;line-height:1.7;margin-top:6px;}
+        .pledge-list li{margin-bottom:4px;position:relative;padding-left:20px;}
+        .pledge-list li::before{
+            content:"♜";position:absolute;left:0;top:0;color:var(--cyan);font-size:.8rem;
+        }
+        .race-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px;font-size:.85rem;}
+        .race-chip{
+            border-radius:10px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;
+            background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.09);position:relative;overflow:hidden;
+        }
+        .race-chip span{position:relative;z-index:1;}
+        .race-piece{font-family:'Orbitron';font-size:.75rem;opacity:.9;}
+        .race-bg{
+            position:absolute;inset:-40%;opacity:.28;filter:blur(10px);z-index:0;
+        }
+        .race-chip strong{font-size:.9rem;}
+        .codex-meta{margin-top:10px;font-size:.85rem;color:#ccc;line-height:1.7;}
+
+        /* ================= 10. 其它 ================= */
+        footer{text-align:center;padding:40px;color:#555;font-family:'Orbitron';font-size:.8rem;}
+        @media(max-width:1024px){
+            nav{padding:0 18px;}
+            section{padding:110px 18px 60px;}
+            .profile-ui{width:95%;height:640px;}
+            .codex-grid{grid-template-columns:1fr;}
+        }
+        @media(max-width:768px){
+            h1{font-size:3.4rem;}
+            .char-gallery{gap:18px;}
+            .char-card{width:200px;height:300px;}
+            .r-left-panel{display:none;}
         }
     </style>
 </head>
 <body id="body">
 <div id="cursor"></div>
 
-<!-- 1. AUTH OVERLAY -->
+<!-- ============= 1. AUTH OVERLAY ============= -->
 <div id="auth-overlay">
     <div class="auth-box">
         <h2 id="auth-head" class="auth-title">SYSTEM LOGIN</h2>
@@ -1500,7 +407,7 @@
             <div class="auth-link" onclick="ui.switchAuth('login')">Already a Player? Login</div>
         </div>
         <div id="form-confirm" class="hidden">
-            <p style="color:#888; font-size:0.8rem; margin-bottom:10px;">Code sent. (Test code: 123456)</p>
+            <p style="color:#888;font-size:.8rem;margin-bottom:10px;">Code sent. (Test code: 123456)</p>
             <input id="reg-code" class="input" placeholder="VERIFICATION CODE">
             <button class="btn" style="width:100%" onclick="auth.register()">CONFIRM</button>
             <div class="auth-link" onclick="ui.switchAuth('register')">Back</div>
@@ -1509,17 +416,19 @@
     </div>
 </div>
 
-<!-- 2. MAIN APP CONTAINER -->
+<!-- ============= 2. MAIN APP ============= -->
 <div id="app-container">
     <div class="bg-anim"></div>
     <canvas id="canvas-bg"></canvas>
+
     <nav>
         <div class="brand">DISBOARD</div>
         <div class="nav-links">
             <a href="#hero" class="nav-item">HOME</a>
-            <a class="nav-item" onclick="ui.showModal('reader-layer'); return false;">ARCHIVE</a>
-            <a class="nav-item" onclick="ui.showModal('discussion-layer'); return false;">FORUM</a>
-            <a class="nav-item" onclick="ui.showModal('setting-layer'); return false;">SETTINGS</a>
+            <a href="#" class="nav-item" onclick="ui.showModal('reader-layer');reader.ensureReady();return false;">ARCHIVE</a>
+            <a href="#codex" class="nav-item">CODEX</a>
+            <a href="#" class="nav-item" onclick="ui.showModal('discussion-layer');forum.init();return false;">FORUM</a>
+            <a href="#" class="nav-item" onclick="ui.showModal('shop-layer');shop.init();return false;">SHOP</a>
         </div>
         <div class="user-badge" onclick="ui.showModal('user-overlay')">
             <span id="hud-username">GUEST</span>
@@ -1529,8 +438,8 @@
 
     <header id="hero" class="hero">
         <h1>NO GAME NO LIFE</h1>
-        <p style="color:#aaa; letter-spacing:2px; margin-bottom:40px;">『さあ、ゲームを始めよう』</p>
-        <button class="btn" onclick="ui.showModal('reader-layer')">READ NOVEL</button>
+        <p style="color:#aaa;letter-spacing:2px;margin-bottom:40px;">『さあ、ゲームを始めよう』</p>
+        <button class="btn" onclick="ui.showModal('reader-layer');reader.ensureReady();">READ NOVEL</button>
     </header>
 
     <section id="players">
@@ -1538,79 +447,129 @@
         <div class="char-gallery" id="char-grid"></div>
     </section>
 
-    <footer><p>DISBOARD SYSTEM v40.0</p></footer>
+    <!-- CODEX SECTION -->
+    <section id="codex">
+        <h2 class="section-title">DISBOARD CODEX</h2>
+        <div class="codex-grid">
+            <div class="codex-card">
+                <div class="codex-inner">
+                    <h3>十条盟约 Ten Pledges</h3>
+                    <ul class="pledge-list">
+                        <li>一、杀戮战争一概禁止。</li>
+                        <li>二、以游戏来决定一切争端。</li>
+                        <li>三、游戏中赌上的物品须为双方同意之物。</li>
+                        <li>四、只要不违反第三条，若对赌品有异议可追加赌注作为谈判筹码。</li>
+                        <li>五、被挑战者有权决定游戏内容。</li>
+                        <li>六、赌约若违反则视同败北，依据结果服从处分。</li>
+                        <li>七、在神见证之下的争端绝对服从游戏结果。</li>
+                        <li>八、在游戏中作弊未被发现即视为正当手段。</li>
+                        <li>九、在遵守前八条的前提下，个人之间、国与国之间皆一视同仁。</li>
+                        <li>十、以上各条，皆由唯一神特图所保障。</li>
+                    </ul>
+                    <div class="codex-meta">
+                        <strong>小说简介：</strong>在被称为『　　』的最强 NEET 游戏玩家兄妹，被召唤到由游戏支配的一切——异世界「迪斯博德」，向十六种族与游戏之神发起挑战。<br>
+                        <strong>作者：</strong>榎宫祐（榎宮 祐），以高饱和度的色彩与超高速对话著称。
+                    </div>
+                </div>
+            </div>
+            <div class="codex-card">
+                <div class="codex-inner">
+                    <h3>棋盘上的十六族 Exceed x Chess</h3>
+                    <div class="race-grid" id="race-grid"></div>
+                    <div class="codex-meta">
+                        每个种族都被视作棋盘上的一枚棋子：<br>
+                        王(♔)象征旧神、皇族的绝对支配；后(♕)代表支配战场的究极力量；车(♖)是轰然推进的军势；象(♗)是诡谲的魔法与谋略；马(♘)是不可预知的跃进；兵(♙)则是看似渺小却能翻盘的人类。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer><p>DISBOARD SYSTEM v40.0 — 『It’s checkmate from move zero.』</p></footer>
 </div>
 
-<!-- 3. USER PROFILE MODAL -->
+<!-- ============= 3. USER PROFILE MODAL ============= -->
 <div id="user-overlay" class="modal-layer">
     <div class="profile-ui">
         <div class="p-side">
-            <div class="p-head">
-                <span>SOCIAL</span>
-                <button class="btn" onclick="social.addFriend()">+</button>
-            </div>
+            <div class="p-head"><span>SOCIAL</span><button class="btn" onclick="social.addFriend()">+</button></div>
             <div id="friend-list" class="f-list"></div>
-            <div style="padding: 10px; border-top: 1px solid #333;">
-                <button class="btn" style="width: 100%; border-color:var(--pink); color:var(--pink)" onclick="auth.logout()">LOGOUT</button>
+            <div style="padding:10px;border-top:1px solid #333;">
+                <button class="btn" style="width:100%;border-color:var(--pink);color:var(--pink)" onclick="auth.logout()">LOGOUT</button>
             </div>
         </div>
         <div class="p-content">
-            <div id="view-stats" class="view stats-view">
-                <div class="profile-top-row">
-                    <div class="avatar-wrapper">
-                        <div id="profile-avatar-frame" class="avatar-frame avatar-frame-default">
-                            <img id="profile-avatar-img" class="avatar-image" src="" alt="">
-                        </div>
+            <div class="p-tabs">
+                <button id="tab-stats" class="p-tab active" onclick="ui.switchProfileTab('stats')">PROFILE</button>
+                <button id="tab-chat" class="p-tab" onclick="ui.switchProfileTab('chat')">CHAT</button>
+                <button id="tab-settings" class="p-tab" onclick="ui.switchProfileTab('settings')">SETTINGS</button>
+            </div>
+            <div id="view-stats" class="view">
+                <div style="display:flex;align-items:center;gap:16px;">
+                    <div class="mini-avatar avatar-frame" style="width:56px;height:56px;border-radius:50%;overflow:hidden;border-width:2px;" id="profile-avatar-frame">
+                        <img id="profile-avatar" src="" alt="avatar" style="width:100%;height:100%;object-fit:cover;">
                     </div>
                     <div>
-                        <h2 id="profile-name"></h2>
-                        <div id="profile-title" class="profile-title-badge hidden"></div>
-                        <div id="profile-signature" class="profile-signature"></div>
-                        <button class="btn" style="margin-top:10px; padding:6px 12px; font-size:0.8rem;" onclick="profileSystem.changeName()">CHANGE NAME (-100🪙)</button>
+                        <h2 id="profile-name" style="font-family:'Orbitron';font-size:1.4rem;"></h2>
+                        <div id="profile-title" style="font-size:.75rem;color:var(--gold);margin-top:2px;"></div>
+                        <p id="profile-bio" style="color:#aaa;margin-top:6px;min-height:36px;font-size:.85rem;"></p>
+                        <div id="profile-signature" style="color:#ccc;font-size:.8rem;margin-top:4px;"></div>
                     </div>
                 </div>
-                <p style="color:#aaa; margin-top:10px; min-height: 40px;" id="profile-bio"></p>
-
-                <div class="profile-edit-area">
-                    <div>
-                        <div style="font-family:'Orbitron'; font-size:0.8rem; margin-bottom:5px;">EDIT BIO</div>
-                        <textarea id="profile-bio-edit" class="input" style="text-align:left; height:90px;"></textarea>
-                        <div style="font-family:'Orbitron'; font-size:0.8rem; margin-bottom:5px; margin-top:10px;">SIGNATURE</div>
-                        <input id="profile-signature-input" class="input" placeholder="一句话签名，会显示在你的名字下方">
-                        <button class="btn" style="margin-top:5px;" onclick="profileSystem.saveProfile()">SAVE PROFILE</button>
-                    </div>
-                    <div>
-                        <div style="font-family:'Orbitron'; font-size:0.8rem; margin-bottom:5px;">AVATAR</div>
-                        <input id="avatar-file" type="file" accept="image/*">
-                        <button class="btn" style="margin-top:8px;" onclick="profileSystem.uploadAvatar()">UPLOAD AVATAR</button>
-                        <div style="margin-top:18px; font-family:'Orbitron'; font-size:0.8rem;">SHOP</div>
-                        <div id="shop-grid" class="shop-grid"></div>
-                    </div>
-                </div>
-
                 <div class="stat-grid">
                     <div class="stat-box">
-                        <div>RANK</div>
-                        <div id="profile-rank" style="font-size: 2rem;"></div>
+                        <div style="font-size:.8rem;color:#aaa;">RANK</div>
+                        <div id="profile-rank" style="font-size:2rem;">16</div>
                     </div>
                     <div class="stat-box">
-                        <div>COINS</div>
-                        <div id="profile-coins" style="font-size: 2rem;"></div>
+                        <div style="font-size:.8rem;color:#aaa;">COINS</div>
+                        <div id="profile-coins" style="font-size:1.8rem;">🪙 0</div>
                     </div>
                 </div>
-                <div style="margin-top: 20px;">
+                <div style="margin-top:20px;">
                     <div class="exp-text">EXP</div>
                     <div class="exp-bar"><div id="profile-exp-fill" class="exp-fill"></div></div>
                     <div id="profile-exp-text" class="exp-text"></div>
                 </div>
-                <button class="btn" style="position:absolute; bottom:20px; left: 50%; transform: translateX(-50%);" onclick="ui.hideAllModals()">CLOSE</button>
+                <button class="btn" style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);" onclick="ui.hideAllModals()">CLOSE</button>
             </div>
+
             <div id="view-chat" class="view hidden">
                 <div id="chat-header" class="chat-header"></div>
                 <div id="chat-box" class="chat-box"></div>
                 <div class="chat-input">
-                    <input id="msg-input" class="input" style="text-align:left; margin:0;" placeholder="Message..." onkeydown="if(event.key==='Enter')social.sendMessage()">
+                    <input id="msg-input" class="input" style="text-align:left;margin:0;" placeholder="Message..." onkeydown="if(event.key==='Enter')social.sendMessage()">
                     <button class="btn" onclick="social.sendMessage()">SEND</button>
+                </div>
+            </div>
+
+            <div id="view-settings" class="view hidden">
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h3>PROFILE TEXT</h3>
+                        <label style="font-size:.8rem;color:#aaa;">Bio / 自我介绍</label>
+                        <textarea id="settings-bio" class="textarea" placeholder="告诉世界你是谁。"></textarea>
+                        <div class="settings-row" style="margin-top:10px;">
+                            <label>Signature</label>
+                            <input id="settings-signature" class="input" placeholder="个性签名（也会在讨论区显示）">
+                        </div>
+                        <button class="btn" style="margin-top:10px;" onclick="settings.saveProfile()">SAVE PROFILE</button>
+                    </div>
+                    <div class="settings-card">
+                        <h3>AVATAR & NAME</h3>
+                        <div class="settings-row">
+                            <label>Avatar URL</label>
+                            <input id="settings-avatar" class="input" placeholder="粘贴一张图片链接" />
+                        </div>
+                        <button class="btn" style="margin-bottom:8px;" onclick="settings.saveAvatar()">SAVE AVATAR</button>
+                        <div style="border-top:1px dashed #444;margin:6px 0 8px;"></div>
+                        <div class="settings-row">
+                            <label>New Name</label>
+                            <input id="settings-newname" class="input" placeholder="改名需要 100🪙">
+                        </div>
+                        <button class="btn" style="border-color:var(--gold);color:var(--gold);" onclick="settings.changeName()">CHANGE NAME (100 COINS)</button>
+                        <p style="font-size:.75rem;color:#888;margin-top:4px;">改名会同步更新评论区、讨论区和好友列表中的名字。</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1621,7 +580,7 @@
 <div id="reader-layer" class="modal-layer">
     <div class="m-head">
         <span class="m-title">ARCHIVE</span>
-        <button class="btn" style="border-color:var(--pink); color:var(--pink);" onclick="ui.hideAllModals()">EXIT</button>
+        <button class="btn" style="border-color:var(--pink);color:var(--pink);" onclick="ui.hideAllModals()">EXIT</button>
     </div>
     <div class="m-body">
         <div class="r-left-panel">
@@ -1635,34 +594,34 @@
         <div class="r-main-panel">
             <canvas id="reader-bg-canvas"></canvas>
             <div id="reader-text-area" class="r-text-area">
-                <p style="text-align:center; color: #888; margin-top: 50px;">Loading novel...</p>
+                <p style="text-align:center;color:#888;margin-top:50px;">Loading novel...</p>
             </div>
             <div class="r-footer">
                 <button class="btn" onclick="reader.goToPage(state.novel.currentPage - 1)">PREV</button>
                 <span id="reader-progress" class="r-progress">0 / 0</span>
                 <button class="btn" onclick="reader.goToPage(state.novel.currentPage + 1)">NEXT</button>
-                <button class="btn" style="border-color:var(--gold); color:var(--gold);" onclick="reader.addBookmark()">BOOKMARK</button>
+                <button class="btn" style="border-color:var(--gold);color:var(--gold);" onclick="reader.addBookmark()">BOOKMARK</button>
             </div>
         </div>
         <div id="reader-comment-sidebar" class="r-side-r">
             <div class="cmt-header">
                 <span id="cmt-header-title">COMMENTS</span>
-                <button onclick="reader.closeCommentSidebar()" style="background:none; border:none; color:white; font-size:1.2rem;">×</button>
+                <button onclick="reader.closeCommentSidebar()" style="background:none;border:none;color:white;font-size:1.2rem;">×</button>
             </div>
             <div id="cmt-list" class="cmt-list"></div>
-            <div class="cmt-input-box" style="padding:10px; border-top:1px solid #333;">
+            <div class="cmt-input-box">
                 <textarea id="cmt-input" class="input" rows="3" placeholder="Add a comment..."></textarea>
-                <button class="btn" style="width:100%; margin-top:5px;" onclick="reader.postComment()">POST</button>
+                <button class="btn" style="width:100%;margin-top:4px;" onclick="reader.postComment()">POST</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- 5. OTHER USER PROFILE VIEWER -->
+<!-- 5. OTHER PROFILE VIEWER -->
 <div id="profile-viewer-overlay" class="modal-layer">
     <div class="profile-viewer-box">
         <div id="profile-viewer-content"></div>
-        <button class="btn" style="margin-top: 20px;" onclick="document.getElementById('profile-viewer-overlay').classList.remove('active')">CLOSE</button>
+        <button class="btn" style="margin-top:20px;" onclick="document.getElementById('profile-viewer-overlay').classList.remove('active')">CLOSE</button>
     </div>
 </div>
 
@@ -1670,1178 +629,859 @@
 <div id="discussion-layer" class="modal-layer">
     <div class="m-head">
         <span class="m-title">FORUM</span>
-        <button class="btn" style="border-color:var(--pink); color:var(--pink);" onclick="ui.hideAllModals()">CLOSE</button>
+        <button class="btn" style="border-color:var(--pink);color:var(--pink);" onclick="ui.hideAllModals()">CLOSE</button>
     </div>
     <div class="m-body">
         <div class="forum-left">
-            <div style="font-family:'Orbitron'; font-size:0.9rem;">NEW POST</div>
-            <textarea id="forum-textarea" class="input" placeholder="Share your strategy, scream 'Ciallo～(≧ω≦)～' or @someone..." ></textarea>
-            <button class="btn" onclick="forum.post()">POST</button>
-            <div style="font-size:0.75rem; color:#888; margin-top:6px;">Tip: Use @username to mention others.</div>
+            <h3 style="font-family:'Orbitron';font-size:1rem;">LATEST THREADS</h3>
+            <div id="forum-list" class="forum-list"></div>
         </div>
         <div class="forum-right">
-            <div id="forum-list"></div>
+            <h3>NEW POST</h3>
+            <textarea id="forum-input" class="textarea" placeholder="在这里输入你的想法，支持 @用户名。"></textarea>
+            <button class="btn" onclick="forum.post()">POST</button>
         </div>
     </div>
 </div>
 
-<!-- 7. SETTING / LORE MODAL -->
-<div id="setting-layer" class="modal-layer">
+<!-- 7. SHOP MODAL -->
+<div id="shop-layer" class="modal-layer">
     <div class="m-head">
-        <span class="m-title">SETTINGS & LORE</span>
-        <button class="btn" style="border-color:var(--pink); color:var(--pink);" onclick="ui.hideAllModals()">CLOSE</button>
+        <span class="m-title">NGNL SHOP</span>
+        <button class="btn" style="border-color:var(--pink);color:var(--pink);" onclick="ui.hideAllModals()">CLOSE</button>
     </div>
     <div class="m-body">
-        <div class="setting-panel">
-            <div class="setting-title">TEN COVENANTS</div>
-            <div class="setting-sub">十条盟约 —— 约束了迪斯博德的一切「游戏」与「战争」。</div>
-            <div id="covenant-list" class="lore-scroll"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-family:'Orbitron';font-size:.9rem;color:#ccc;">
+                Purchase avatar frames, titles and signatures that will appear everywhere.
+            </div>
+            <div style="font-family:'Orbitron';color:var(--gold);">Balance: <span id="shop-coins">0</span> 🪙</div>
         </div>
-        <div class="setting-panel">
-            <div class="setting-title">SIXTEEN RACES</div>
-            <div class="setting-sub">十六种族与对应的国际象棋棋子与色彩。</div>
-            <div id="race-list" class="lore-scroll race-grid"></div>
-        </div>
-        <div class="setting-panel">
-            <div class="setting-title">NOVEL & CHARACTERS</div>
-            <div class="setting-sub">《NO GAME NO LIFE》世界观简介、主角与作者。</div>
-            <div id="lore-extra" class="lore-scroll"></div>
-        </div>
+        <div id="shop-grid" class="shop-grid"></div>
     </div>
 </div>
 
 <script>
     // ==========================================================
-    // NGNL SYSTEM FRONTEND v40.0 (ULTIMATE & UNABRIDGED)
+    // NGNL SYSTEM FRONTEND v40.0
     // ==========================================================
 
     const API_URL = "https://script.google.com/macros/s/AKfycbxJBrAx1_jzwNCO6kCSVyJsNANGE4ibdXy5SXva_p54B4Zot8OaJeCm3PdQsIVhdU4v/exec";
 
-    const SHOP_ITEMS = {
-        frames: [
-            { key: "frame-elkia", name: "Elkia Crown Frame", price: 80, desc: "金色王都风格头像框。", type: "frame" },
-            { key: "frame-flugel", name: "Flügel Halo Frame", price: 120, desc: "天翼种光环式头像框。", type: "frame" },
-            { key: "frame-warabeast", name: "Warbeast Pulse Frame", price: 90, desc: "兽人种式脉冲光效头像框。", type: "frame" }
-        ],
-        titles: [
-            { key: "title-blank", name: "『　　』", price: 50, desc: "空白双人组专属称号。", type: "title" },
-            { key: "title-king", name: "Elkia King", price: 70, desc: "人类种国王称号。", type: "title" },
-            { key: "title-gamer", name: "God of Games", price: 100, desc: "向游戏之神致敬。", type: "title" }
-        ],
-        signatures: [
-            { key: "sig-ciallo", name: "Ciallo~ (≧ω≦)~", price: 20, desc: "自动填充签名为 Ciallo~", type: "signature", value: "Ciallo~ (≧ω≦)~" },
-            { key: "sig-blank", name: "We are 『　　』", price: 25, desc: "自动填充签名为 We are 『　　』", type: "signature", value: "We are 『　　』." }
-        ],
-        extras: [
-            { key: "extra-bonus", name: "Bonus Coins +20", price: 0, desc: "调试用：不在前端显示。", type: "extra" }
-        ]
-    };
-
-    const loreData = {
-        covenants: [
-            "所有杀戮、战争和掠夺一律被禁止。",
-            "所有纠纷要通过游戏解决。",
-            "游戏中所赌上的物品，必须是双方都承认具有等价价值的东西。",
-            "游戏规则由挑战方提出，被挑战方必须在不违背前条的原则下尽可能予以优先尊重。",
-            "游戏中的赌注，在不影响第三者的情况下，必须得到双方当事人的认可。",
-            "只要不违反前述条款，游戏的内容和赌注便不受任何限制，也不受任何质疑。",
-            "赌上国家纲领、民族尊严、乃至一切一切时，必须由该方的全权代表出面。",
-            "在遵循游戏内容的前提下，游戏中所发生的一切将由神明作证并给予绝对的保障。",
-            "在游戏中作弊者将被视为败北。",
-            "以上。"
-        ],
-        races: [
-            { name: "Imanity（人类种）", piece: "Pawn（兵）", colorVar: "--race-imanity", desc: "最弱的人类种，却拥有无限可能。" },
-            { name: "Flügel（天翼种）", piece: "Bishop（象）", colorVar: "--race-flugel", desc: "以知识为食的战争天使。" },
-            { name: "Warbeast（兽人种）", piece: "Knight（马）", colorVar: "--race-warabeast", desc: "嗅觉与直觉出众的战斗民族。" },
-            { name: "Elves（森林精灵种）", piece: "Rook（车）", colorVar: "--race-flugel", desc: "操纵灵力的魔法专家。" },
-            { name: "Dhampir（吸血鬼种）", piece: "Queen（后，暗色）", colorVar: "--race-dhampir", desc: "以梦境为食、依附他族的种族。" },
-            { name: "Seiren（海栖种）", piece: "Queen（后，亮色）", colorVar: "--race-seiren", desc: "生活在海中的魅惑之民。" },
-            { name: "Ex-Machina（机凯种）", piece: "Rook（机械变体）", colorVar: "--race-exmachina", desc: "追求「心」的逻辑机器。" },
-            { name: "Old Deus（神灵种）", piece: "King（王）", colorVar: "--gold", desc: "曾经的神灵，如今被锚定在棋盘之上。" },
-            { name: "Dwarf（矮人种）", piece: "Rook（坚盾）", colorVar: "--race-goblin", desc: "炼金与机关的专家。" },
-            { name: "Fairy（幻妖种）", piece: "Knight（幻象）", colorVar: "--race-dhampir", desc: "操纵心象与幻境的种族。" },
-            { name: "Dragonia（龙精种）", piece: "Queen（龙后）", colorVar: "--race-warabeast", desc: "守护旧世界的龙之精灵。" },
-            { name: "Gigant（巨人种）", piece: "Rook（巨塔）", colorVar: "--race-goblin", desc: "如山岳般的巨人。" },
-            { name: "Fairy Dragon（幻龙种）", piece: "Knight（龙骑）", colorVar: "--race-exmachina", desc: "游走在梦与现实之间的龙。" },
-            { name: "Werebeast（兽人变种）", piece: "Knight+", colorVar: "--race-warabeast", desc: "持有血坏的战士。" },
-            { name: "Spirit（精灵回路）", piece: "Bishop+", colorVar: "--race-flugel", desc: "回路化的精灵集合体。" },
-            { name: "Phantasma（幻神种）", piece: "？？", colorVar: "--purple", desc: "连神灵种都畏惧的存在。" }
-        ],
-        novelIntro: "在被称为『　　』的传说玩家兄妹——空与白——眼中，现实是一个极其糟糕的游戏。他们被召唤到棋盘般的世界「迪斯博德」，在「十条盟约」的约束下，一切纷争都以游戏决胜胜负。",
-        chars: [
-            { name: "空（Sora）", desc: "『　　』中的哥哥，善于心理战与博弈，对人类有着绝对的信赖与执着。" },
-            { name: "白（Shiro）", desc: "妹妹，拥有绝对记忆与计算能力的天才 gamer，与空组合后战力爆表。" },
-            { name: "史蒂芬（Steph）", desc: "艾尔奇亚前国王的孙女，看似笨拙，却以执着与温柔守护着人类国度。" },
-            { name: "吉普莉尔（Jibril）", desc: "天翼种，狂热求知者，对「知识」与「书」有着近乎病态的爱。" },
-            { name: "初濑伊纲（Izuna）", desc: "东部联合的兽人少女，拥有「血坏」能力，直觉极其敏锐。" },
-            { name: "特图（Tet）", desc: "唯一的神灵种，游戏之神，支配着这个以棋盘为蓝图的世界。" }
-        ],
-        author: "作者：榎宫祐（Yuu Kamiya）。兼任轻小说原作、插画与概念设计，是少见的多栖作者。"
-    };
-
     const state = {
-        user: {
-            name: "Guest",
-            rank: 16,
-            exp: 0,
-            coins: 0,
-            bio: "",
-            avatar: "",
-            frameKey: "",
-            signature: "",
-            title: "",
-            ownedItems: []
-        },
-        isLoggedIn: false,
-        activeChat: null,
-        novel: {
-            lines: [],
-            comments: {},
-            activeCommentLine: -1,
-            toc: [],
-            bookmarks: [],
-            linesPerPage: 30,
-            currentPage: 0,
-            totalPages: 0,
-            pages: [] // {start,end}
+        user:{name:"Guest",rank:16,exp:0,coins:0,bio:"",avatar:"",frameKey:"",signature:"",title:"",ownedItems:[]},
+        isLoggedIn:false,
+        activeChat:null,
+        novel:{
+            lines:[],
+            comments:{},
+            activeCommentLine:-1,
+            toc:[],
+            bookmarks:[],
+            linesPerPage:24,
+            pages:[],
+            currentPage:0,
+            totalPages:0,
+            initialized:false
         }
     };
 
-    let readerBg = {
-        init: false,
-        cvs: null,
-        ctx: null,
-        particles: [],
-        height: 0,
-        width: 0
-    };
-
-    async function apiRequest(payload) {
-        if (!API_URL || !API_URL.startsWith('https')) {
-            const errorTarget = document.getElementById('auth-msg');
-            if (errorTarget && !state.isLoggedIn) {
-                errorTarget.innerText = "API URL is not configured in the script.";
+    async function apiRequest(payload){
+        if(!API_URL.startsWith('https')){
+            const errorTarget=document.getElementById('auth-msg');
+            if(errorTarget && !state.isLoggedIn){
+                errorTarget.innerText="API URL is not configured.";
             }
             console.error("API URL is not configured.");
-            return { status: 'error', message: 'API URL not configured.' };
+            return {status:'error',message:'API URL not configured.'};
         }
-        if (state.isLoggedIn) {
-            payload.username = state.user.name;
+        if(state.isLoggedIn){
+            payload.username=state.user.name;
         }
-        try {
-            console.log("TX:", payload);
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                mode: 'cors',
-                cache: 'no-cache',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(payload),
-                redirect: 'follow'
+        try{
+            const response=await fetch(API_URL,{
+                method:'POST',
+                mode:'cors',
+                cache:'no-cache',
+                headers:{'Content-Type':'text/plain;charset=utf-8'},
+                body:JSON.stringify(payload),
+                redirect:'follow'
             });
-            const result = await response.json();
-            console.log("RX:", result);
-            return result;
-        } catch (error) {
-            console.error("API Error:", error);
-            return { status: 'error', message: 'Network or server error.' };
+            return await response.json();
+        }catch(e){
+            console.error("API Error:",e);
+            return {status:'error',message:'Network or server error.'};
         }
     }
 
-    const ui = {
-        elements: {
-            authOverlay: document.getElementById('auth-overlay'),
-            body: document.getElementById('body'),
-            authMsg: document.getElementById('auth-msg'),
-            hudUsername: document.getElementById('hud-username'),
-            hudCoins: document.getElementById('hud-coins')
+    const ui={
+        elements:{
+            authOverlay:document.getElementById('auth-overlay'),
+            body:document.getElementById('body'),
+            authMsg:document.getElementById('auth-msg'),
+            hudUsername:document.getElementById('hud-username'),
+            hudCoins:document.getElementById('hud-coins'),
         },
-        showModal(modalId) {
-            if (!state.isLoggedIn && !['auth-overlay', 'profile-viewer-overlay'].includes(modalId)) {
+        showModal(id){
+            if(!state.isLoggedIn && !['auth-overlay','profile-viewer-overlay'].includes(id)){
                 alert("Please log in to access this feature.");
                 this.elements.body.classList.add('auth-active');
                 this.elements.authOverlay.classList.add('active');
                 return;
             }
             this.hideAllModals();
-            const modal = document.getElementById(modalId);
-            if (modal) modal.classList.add('active');
-
-            if (modalId === 'user-overlay') {
-                social.init();
-            }
-            if (modalId === 'reader-layer') {
-                visuals.ensureReaderBg();
-            }
-            if (modalId === 'discussion-layer') {
-                forum.init();
-            }
-            if (modalId === 'setting-layer') {
-                loreRenderer.init();
-            }
+            const m=document.getElementById(id);
+            if(m) m.classList.add('active');
+            if(id==='user-overlay') social.init();
         },
-        hideAllModals() {
-            document.querySelectorAll('.modal-layer').forEach(m => m.classList.remove('active'));
+        hideAllModals(){
+            document.querySelectorAll('.modal-layer').forEach(m=>m.classList.remove('active'));
         },
-        switchAuth(view) {
-            ['login', 'register', 'confirm'].forEach(id => document.getElementById('form-' + id).classList.add('hidden'));
-            document.getElementById('form-' + view).classList.remove('hidden');
-            document.getElementById('auth-head').innerText = view === 'login' ? 'SYSTEM LOGIN' : (view === 'register' ? 'PLAYER REGISTRATION' : 'VERIFY CODE');
-            this.elements.authMsg.innerText = '';
+        switchAuth(view){
+            ['login','register','confirm'].forEach(id=>document.getElementById('form-'+id).classList.add('hidden'));
+            document.getElementById('form-'+view).classList.remove('hidden');
+            document.getElementById('auth-head').innerText=view==='login'?'SYSTEM LOGIN':'PLAYER REGISTRATION';
+            this.elements.authMsg.innerText='';
         },
-        showAuthError(msg) {
-            this.elements.authMsg.innerText = msg;
+        showAuthError(msg){this.elements.authMsg.innerText=msg;},
+        updateHUD(){
+            this.elements.hudUsername.innerText=state.user.name.toUpperCase();
+            this.elements.hudCoins.innerText=`🪙 ${state.user.coins}`;
+            document.getElementById('shop-coins').innerText=state.user.coins;
         },
-        updateHUD() {
-            this.elements.hudUsername.innerText = state.user.name.toUpperCase();
-            this.elements.hudCoins.innerText = `🪙 ${state.user.coins}`;
+        updateProfileView(){
+            document.getElementById('profile-name').innerText=state.user.name;
+            document.getElementById('profile-rank').innerText=state.user.rank;
+            document.getElementById('profile-coins').innerText=`🪙 ${state.user.coins}`;
+            document.getElementById('profile-bio').innerText=state.user.bio||"This player is lazy.";
+            document.getElementById('profile-signature').innerText=state.user.signature||"";
+            document.getElementById('profile-exp-fill').style.width=`${state.user.exp}%`;
+            document.getElementById('profile-exp-text').innerText=`${state.user.exp} / 100`;
+            document.getElementById('profile-title').innerText=state.user.title||"";
+            const avImg=document.getElementById('profile-avatar');
+            if(state.user.avatar) avImg.src=state.user.avatar; else avImg.src="sora.png";
+            const frameEl=document.getElementById('profile-avatar-frame');
+            frameEl.classList.toggle('avatar-frame',!!state.user.frameKey);
+            document.getElementById('settings-bio').value=state.user.bio||"";
+            document.getElementById('settings-avatar').value=state.user.avatar||"";
+            document.getElementById('settings-signature').value=state.user.signature||"";
         },
-        updateProfileView() {
-            document.getElementById('profile-name').innerText = state.user.name;
-            document.getElementById('profile-rank').innerText = state.user.rank;
-            document.getElementById('profile-coins').innerText = `🪙 ${state.user.coins}`;
-            document.getElementById('profile-bio').innerText = state.user.bio || "This player is lazy.";
-            document.getElementById('profile-bio-edit').value = state.user.bio || "";
-            document.getElementById('profile-signature').innerText = state.user.signature || "";
-            document.getElementById('profile-signature-input').value = state.user.signature || "";
-
-            const expPercent = state.user.exp;
-            document.getElementById('profile-exp-fill').style.width = `${expPercent}%`;
-            document.getElementById('profile-exp-text').innerText = `${state.user.exp} / 100`;
-
-            // avatar + frame
-            const avatarImg = document.getElementById('profile-avatar-img');
-            if (state.user.avatar) {
-                avatarImg.src = state.user.avatar;
-            } else {
-                avatarImg.src = "https://dummyimage.com/256x256/111/ffffff&text=NGNL";
-            }
-            const frameEl = document.getElementById('profile-avatar-frame');
-            frameEl.className = "avatar-frame";
-            const key = state.user.frameKey || "";
-            if (key === "frame-elkia") frameEl.classList.add('avatar-frame-elkia');
-            else if (key === "frame-flugel") frameEl.classList.add('avatar-frame-flugel');
-            else if (key === "frame-warabeast") frameEl.classList.add('avatar-frame-warabeast');
-            else frameEl.classList.add('avatar-frame-default');
-
-            const titleEl = document.getElementById('profile-title');
-            if (state.user.title) {
-                titleEl.classList.remove('hidden');
-                titleEl.innerText = formatters.titleDisplay(state.user.title);
-            } else {
-                titleEl.classList.add('hidden');
-                titleEl.innerText = "";
-            }
-
-            shopRenderer.render();
-        },
-        showOtherUserProfile(username) {
-            if (!username) return;
-            if (username === state.user.name) {
+        showOtherUserProfile(username){
+            if(username===state.user.name){
                 ui.showModal('user-overlay');
                 return;
             }
-            const container = document.getElementById('profile-viewer-content');
-            container.innerHTML = `<p>Loading ${username}'s profile...</p>`;
+            const container=document.getElementById('profile-viewer-content');
+            container.innerHTML=`<p>Loading ${username}'s profile...</p>`;
             document.getElementById('profile-viewer-overlay').classList.add('active');
-            apiRequest({ action: 'get_profile', target_user: username }).then(res => {
-                if (res.status === 'success') {
-                    const p = res.profile;
-                    const frameClass = formatters.frameClass(p.frameKey, true);
-                    const titleText = p.title ? formatters.titleDisplay(p.title) : "";
-                    container.innerHTML = `
-                        <div class="mini-user" style="margin-bottom:10px;">
-                            <div class="mini-avatar ${frameClass}">
-                                ${p.avatar ? `<img src="${p.avatar}" />` : `<span>${p.username.charAt(0).toUpperCase()}</span>`}
-                            </div>
-                            <div class="mini-meta">
-                                <div class="mini-name">${p.username}</div>
-                                <div class="mini-title">${titleText}</div>
+            apiRequest({action:'get_profile',target_user:username}).then(res=>{
+                if(res.status==='success'){
+                    const p=res.profile;
+                    container.innerHTML=`
+                        <h2 style="color:var(--cyan);font-family:'Orbitron'">${p.username}</h2>
+                        <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+                            <div class="mini-avatar avatar-frame" style="width:48px;height:48px;">${p.avatar?`<img src="${p.avatar}">`:""}</div>
+                            <div>
+                                <div style="color:var(--gold);font-size:.8rem;">${p.title||""}</div>
+                                <div style="color:#aaa;font-size:.85rem;margin-top:2px;">${p.bio||""}</div>
                             </div>
                         </div>
-                        <p style="color:#aaa; margin-bottom:10px;">${p.bio || "This player is lazy."}</p>
-                        <div class="stat-grid" style="margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                        <div class="stat-grid" style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:15px;">
                             <div class="stat-box"><div>RANK</div><div style="font-size:1.5rem">${p.rank}</div></div>
                             <div class="stat-box"><div>COINS</div><div style="font-size:1.5rem">🪙 ${p.coins}</div></div>
-                        </div>
-                    `;
-                } else {
-                    container.innerHTML = `<p style="color:var(--pink);">${res.message}</p>`;
+                        </div>`;
+                }else{
+                    container.innerHTML=`<p style="color:var(--pink);">${res.message}</p>`;
                 }
             });
-        }
-    };
-
-    const formatters = {
-        titleDisplay(key) {
-            const all = [...SHOP_ITEMS.titles];
-            const found = all.find(i => i.key === key);
-            return found ? found.name : key || "";
         },
-        frameClass(key, mini = false) {
-            if (!key) return mini ? "" : "avatar-frame-default";
-            if (mini) {
-                if (key === "frame-elkia") return "mini-frame-elkia";
-                if (key === "frame-flugel") return "mini-frame-flugel";
-                if (key === "frame-warabeast") return "mini-frame-warabeast";
-                return "";
-            } else {
-                if (key === "frame-elkia") return "avatar-frame-elkia";
-                if (key === "frame-flugel") return "avatar-frame-flugel";
-                if (key === "frame-warabeast") return "avatar-frame-warabeast";
-                return "avatar-frame-default";
-            }
+        switchProfileTab(tab){
+            ['stats','chat','settings'].forEach(t=>{
+                document.getElementById('view-'+t).classList.add('hidden');
+                document.getElementById('tab-'+t).classList.remove('active');
+            });
+            document.getElementById('view-'+tab).classList.remove('hidden');
+            document.getElementById('tab-'+tab).classList.add('active');
         }
     };
 
-    const auth = {
-        tempRegData: {},
-        async login() {
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-pass').value;
-            if (!email || !password) return ui.showAuthError("Email and password are required.");
-
+    const auth={
+        tempRegData:{},
+        async login(){
+            const email=document.getElementById('login-email').value.trim();
+            const password=document.getElementById('login-pass').value;
+            if(!email||!password) return ui.showAuthError("Email and password are required.");
             ui.showAuthError("Connecting...");
-            const res = await apiRequest({ action: 'login', email: email, password: password });
-            if (res.status === 'success') {
-                state.user = {
-                    name: res.username,
-                    rank: res.rank,
-                    exp: res.exp,
-                    coins: res.coins,
-                    bio: res.bio,
-                    avatar: res.avatar,
-                    frameKey: res.frameKey || "",
-                    signature: res.signature || "",
-                    title: res.title || "",
-                    ownedItems: []
+            const res=await apiRequest({action:'login',email,password});
+            if(res.status==='success'){
+                state.user={
+                    name:res.username,rank:res.rank,exp:res.exp,coins:res.coins,
+                    bio:res.bio,avatar:res.avatar,frameKey:res.frameKey||"",
+                    signature:res.signature||"",title:res.title||"",ownedItems:JSON.parse(res.ownedItems||"[]")
                 };
-                try {
-                    state.user.ownedItems = res.ownedItems ? JSON.parse(res.ownedItems) : [];
-                } catch (e) {
-                    state.user.ownedItems = [];
-                }
-                state.isLoggedIn = true;
-                sessionStorage.setItem('ngnlUser', JSON.stringify(state.user));
+                state.isLoggedIn=true;
+                sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
                 ui.elements.authOverlay.classList.remove('active');
                 ui.elements.body.classList.remove('auth-active');
                 ui.updateHUD();
                 ui.updateProfileView();
                 ui.showAuthError("");
-            } else {
-                ui.showAuthError(res.message);
-            }
+            }else ui.showAuthError(res.message);
         },
-        async requestCode() {
-            const user = document.getElementById('reg-user').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
-            const pass = document.getElementById('reg-pass').value;
-            if (!user || !email || !pass) return ui.showAuthError("All fields are required.");
-
-            const codeBtn = document.getElementById('reg-code-btn');
-            codeBtn.disabled = true;
-            codeBtn.innerText = "REQUESTING...";
+        async requestCode(){
+            const user=document.getElementById('reg-user').value.trim();
+            const email=document.getElementById('reg-email').value.trim();
+            const pass=document.getElementById('reg-pass').value;
+            if(!user||!email||!pass) return ui.showAuthError("All fields are required.");
+            const btn=document.getElementById('reg-code-btn');
+            btn.disabled=true;btn.innerText="REQUESTING...";
             ui.showAuthError("Requesting code...");
-
-            const res = await apiRequest({ action: 'request_code', email: email });
-
-            codeBtn.disabled = false;
-            codeBtn.innerText = "GET CODE";
-
-            if (res.status === 'success') {
-                this.tempRegData = { user: user, email: email, pass: pass };
+            const res=await apiRequest({action:'request_code',email});
+            btn.disabled=false;btn.innerText="GET CODE";
+            if(res.status==='success'){
+                this.tempRegData={user,email,pass};
                 ui.switchAuth('confirm');
                 alert(res.message);
-            } else {
-                ui.showAuthError(res.message);
-            }
+            }else ui.showAuthError(res.message);
         },
-        async register() {
-            const code = document.getElementById('reg-code').value.trim();
-            if (!code) return ui.showAuthError("Verification code is required.");
-
+        async register(){
+            const code=document.getElementById('reg-code').value.trim();
+            if(!code) return ui.showAuthError("Verification code is required.");
             ui.showAuthError("Registering...");
-            const payload = {
-                action: 'register',
-                username: this.tempRegData.user,
-                email: this.tempRegData.email,
-                password: this.tempRegData.pass,
-                code: code
+            const payload={
+                action:'register',
+                username:this.tempRegData.user,
+                email:this.tempRegData.email,
+                password:this.tempRegData.pass,
+                code
             };
-            const res = await apiRequest(payload);
-            if (res.status === 'success') {
+            const res=await apiRequest(payload);
+            if(res.status==='success'){
                 alert("Registration successful! Please log in.");
                 ui.switchAuth('login');
-            } else {
-                ui.showAuthError(res.message);
-            }
+            }else ui.showAuthError(res.message);
         },
-        logout() {
-            if (confirm("Are you sure you want to log out?")) {
+        logout(){
+            if(confirm("Are you sure you want to log out?")){
                 sessionStorage.removeItem('ngnlUser');
                 window.location.reload();
             }
         }
     };
 
-    const social = {
-        init() {
+    const social={
+        init(){
             this.loadFriends();
             ui.updateProfileView();
-            document.getElementById('view-stats').classList.remove('hidden');
-            document.getElementById('view-chat').classList.add('hidden');
+            ui.switchProfileTab('stats');
         },
-        async loadFriends() {
-            const listEl = document.getElementById('friend-list');
-            listEl.innerHTML = `<div class="f-item active" onclick="social.showMyStats(event)"><span class="f-name">MY PROFILE</span></div>`;
-            const res = await apiRequest({ action: 'get_friends' });
-            let html = listEl.innerHTML;
-            if (res.status === 'success' && res.data) {
-                res.data.forEach(f => {
-                    html += `<div class="f-item" data-name="${f.name}">
-                        <span class="f-name" onclick="social.startChat('${f.name}', event)">${f.name}</span>
-                        ${this.getFriendStatusUI(f)}
+        async loadFriends(){
+            const list=document.getElementById('friend-list');
+            list.innerHTML=`<div class="f-item">Loading friends...</div>`;
+            const res=await apiRequest({action:'get_friends'});
+            let html=`<div class="f-item active" onclick="social.showMyStats(event)"><span class="f-name">MY PROFILE</span></div>`;
+            if(res.status==='success' && res.data){
+                res.data.forEach(f=>{
+                    html+=`<div class="f-item" data-name="${f.name}">
+                        <span class="f-name" onclick="social.startChat('${f.name}',event)">${f.name}</span>
+                        ${social.getFriendStatusUI(f)}
                     </div>`;
                 });
             }
-            listEl.innerHTML = html;
+            list.innerHTML=html;
         },
-        getFriendStatusUI(friend) {
-            if (friend.status === 'Accepted') return `<span class="f-status" style="color:var(--cyan)">FRIEND</span>`;
-            if (friend.status === 'Sent') return `<span class="f-status">SENT</span>`;
-            if (friend.status === 'Received') {
+        getFriendStatusUI(friend){
+            if(friend.status==='Accepted') return `<span class="f-status" style="color:var(--cyan)">FRIEND</span>`;
+            if(friend.status==='Sent') return `<span class="f-status">SENT</span>`;
+            if(friend.status==='Received'){
                 return `<div class="f-actions">
-                    <button class="btn" onclick="social.handleFriendRequest('${friend.name}', 'Accepted')">✓</button>
-                    <button class="btn" style="border-color:var(--pink); color:var(--pink)" onclick="social.handleFriendRequest('${friend.name}', 'Declined')">×</button>
+                    <button class="btn" onclick="social.handleFriendRequest('${friend.name}','Accepted')">✓</button>
+                    <button class="btn" style="border-color:var(--pink);color:var(--pink)" onclick="social.handleFriendRequest('${friend.name}','Declined')">×</button>
                 </div>`;
             }
             return '';
         },
-        async handleFriendRequest(targetUser, status) {
-            const res = await apiRequest({ action: 'update_friend_status', target_user: targetUser, new_status: status });
+        async handleFriendRequest(target,status){
+            const res=await apiRequest({action:'update_friend_status',target_user:target,new_status:status});
             alert(res.message);
-            if (res.status === 'success') this.loadFriends();
+            if(res.status==='success') this.loadFriends();
         },
-        showMyStats(event) {
-            document.getElementById('view-stats').classList.remove('hidden');
-            document.getElementById('view-chat').classList.add('hidden');
-            document.querySelectorAll('#friend-list .f-item').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+        showMyStats(e){
+            ui.switchProfileTab('stats');
+            document.querySelectorAll('#friend-list .f-item').forEach(el=>el.classList.remove('active'));
+            e.currentTarget.classList.add('active');
         },
-        async addFriend() {
-            const name = prompt("Enter the player's name to send a friend request:");
-            if (name && name.trim()) {
-                const res = await apiRequest({ action: 'add_friend', target_user: name.trim() });
+        async addFriend(){
+            const name=prompt("Enter the player's name to send a friend request:");
+            if(name && name.trim()){
+                const res=await apiRequest({action:'add_friend',target_user:name.trim()});
                 alert(res.message);
-                if (res.status === 'success') this.loadFriends();
+                if(res.status==='success') this.loadFriends();
             }
         },
-        startChat(target, event) {
-            state.activeChat = target;
-            document.getElementById('view-stats').classList.add('hidden');
-            document.getElementById('view-chat').classList.remove('hidden');
-            document.getElementById('chat-header').innerText = `Chat with ${target}`;
-            document.querySelectorAll('#friend-list .f-item').forEach(el => el.classList.remove('active'));
-            event.currentTarget.closest('.f-item').classList.add('active');
+        startChat(target,e){
+            state.activeChat=target;
+            ui.switchProfileTab('chat');
+            document.getElementById('chat-header').innerText=`Chat with ${target}`;
+            document.querySelectorAll('#friend-list .f-item').forEach(el=>el.classList.remove('active'));
+            e.currentTarget.closest('.f-item').classList.add('active');
             this.loadMessages();
         },
-        async loadMessages() {
-            if (!state.activeChat) return;
-            const box = document.getElementById('chat-box');
-            box.innerHTML = "Loading messages...";
-            const res = await apiRequest({ action: 'get_messages', target_user: state.activeChat });
-            if (res.status === 'success' && res.data) {
-                box.innerHTML = res.data.map(m => `<div class="msg ${m.sender === state.user.name ? 'me' : 'them'}">${m.content}</div>`).join('') || "No messages yet. Say hi!";
-                box.scrollTop = box.scrollHeight;
+        async loadMessages(){
+            if(!state.activeChat) return;
+            const box=document.getElementById('chat-box');
+            box.innerHTML="Loading messages...";
+            const res=await apiRequest({action:'get_messages',target_user:state.activeChat});
+            if(res.status==='success' && res.data){
+                box.innerHTML=res.data.map(m=>`<div class="msg ${m.sender===state.user.name?'me':'them'}">${m.content}</div>`).join('')||"No messages yet. Say hi!";
+                box.scrollTop=box.scrollHeight;
             }
         },
-        async sendMessage() {
-            const input = document.getElementById('msg-input');
-            const content = input.value.trim();
-            if (!content || !state.activeChat) return;
-            const box = document.getElementById('chat-box');
-            box.innerHTML += `<div class="msg me">${content}</div>`;
-            box.scrollTop = box.scrollHeight;
-            input.value = "";
-            await apiRequest({ action: 'send_message', target_user: state.activeChat, content: content });
+        async sendMessage(){
+            const input=document.getElementById('msg-input');
+            const content=input.value.trim();
+            if(!content || !state.activeChat) return;
+            const box=document.getElementById('chat-box');
+            box.innerHTML+=`<div class="msg me">${content}</div>`;
+            box.scrollTop=box.scrollHeight;
+            input.value="";
+            await apiRequest({action:'send_message',target_user:state.activeChat,content});
         }
     };
 
-    const profileSystem = {
-        pendingAvatarData: null,
-        async saveProfile() {
-            const newBio = document.getElementById('profile-bio-edit').value.trim();
-            const newSig = document.getElementById('profile-signature-input').value.trim();
-            const payload = { action: 'update_profile' };
-            if (newBio !== state.user.bio) payload.bio = newBio;
-            if (newSig !== state.user.signature) payload.signature = newSig;
-            if (this.pendingAvatarData) payload.avatar = this.pendingAvatarData;
-
-            if (Object.keys(payload).length === 1) {
-                alert("Nothing to update.");
-                return;
-            }
-            const res = await apiRequest(payload);
-            if (res.status === 'success') {
-                if (payload.bio !== undefined) state.user.bio = newBio;
-                if (payload.signature !== undefined) state.user.signature = newSig;
-                if (payload.avatar) state.user.avatar = this.pendingAvatarData;
-                sessionStorage.setItem('ngnlUser', JSON.stringify(state.user));
-                ui.updateHUD();
+    const settings={
+        async saveProfile(){
+            const bio=document.getElementById('settings-bio').value.trim();
+            const signature=document.getElementById('settings-signature').value.trim();
+            const res=await apiRequest({action:'update_profile',bio,signature});
+            if(res.status==='success'){
+                state.user.bio=bio;
+                state.user.signature=signature;
+                sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
                 ui.updateProfileView();
-                this.pendingAvatarData = null;
                 alert("Profile updated.");
-            } else {
-                alert(res.message);
-            }
+            }else alert(res.message);
         },
-        uploadAvatar() {
-            const fileInput = document.getElementById('avatar-file');
-            const file = fileInput.files[0];
-            if (!file) {
-                alert("Please choose an image file.");
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = () => {
-                this.pendingAvatarData = reader.result;
-                document.getElementById('profile-avatar-img').src = this.pendingAvatarData;
-                alert("Avatar loaded locally. Click SAVE PROFILE to upload.");
-            };
-            reader.readAsDataURL(file);
+        async saveAvatar(){
+            const avatar=document.getElementById('settings-avatar').value.trim();
+            const res=await apiRequest({action:'update_profile',avatar});
+            if(res.status==='success'){
+                state.user.avatar=avatar;
+                sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
+                ui.updateProfileView();
+                alert("Avatar updated.");
+            }else alert(res.message);
         },
-        async changeName() {
-            if (state.user.coins < 100) {
-                alert("Not enough coins. Need 100.");
-                return;
-            }
-            const newName = prompt("Enter your new name (cost 100 coins):", state.user.name);
-            if (!newName || newName.trim() === "" || newName === state.user.name) return;
-            const res = await apiRequest({ action: 'change_name', new_name: newName.trim() });
-            if (res.status === 'success') {
-                state.user.name = res.new_name;
-                state.user.coins = res.new_balance;
-                sessionStorage.setItem('ngnlUser', JSON.stringify(state.user));
+        async changeName(){
+            const newName=document.getElementById('settings-newname').value.trim();
+            if(!newName) return alert("请输入新名字。");
+            if(!confirm("改名将消耗 100 🪙，确定吗？")) return;
+            const res=await apiRequest({action:'change_name',new_name:newName});
+            if(res.status==='success'){
+                state.user.name=res.new_name;
+                state.user.coins=res.new_balance;
+                sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
                 ui.updateHUD();
                 ui.updateProfileView();
                 alert("Name changed successfully.");
-            } else {
-                alert(res.message);
-            }
+            }else alert(res.message);
         }
     };
 
-    const reader = {
-        async init() {
-            const textArea = document.getElementById('reader-text-area');
-            try {
-                const [novelResponse, commentRes] = await Promise.all([
-                    fetch('novel.txt'),
-                    apiRequest({ action: 'get_all_comments' })
-                ]);
-                if (!novelResponse.ok) throw new Error('novel.txt not found. Please upload it to your GitHub repository.');
-                const text = await novelResponse.text();
-                state.novel.lines = text.split('\n');
-
-                if (commentRes.status === 'success') {
-                    state.novel.comments = commentRes.data || {};
-                } else {
-                    state.novel.comments = {};
-                }
-                this.parseAndPaginate();
-            } catch (error) {
-                textArea.innerHTML = `<p style="text-align:center; color:var(--pink);">${error.message}</p>`;
+    const reader={
+        async ensureReady(){
+            if(!state.novel.initialized){
+                await this.init();
+                state.novel.initialized=true;
             }
         },
-        parseAndPaginate() {
-            const textArea = document.getElementById('reader-text-area');
-            const style = window.getComputedStyle(textArea);
-            const lineHeight = parseFloat(style.lineHeight);
-            const containerHeight = textArea.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
-            const baseLinesPerPage = Math.max(20, Math.floor(containerHeight / lineHeight));
-            state.novel.linesPerPage = baseLinesPerPage;
+        async init(){
+            const textArea=document.getElementById('reader-text-area');
+            try{
+                const [novelResponse,commentRes]=await Promise.all([
+                    fetch('novel.txt'),
+                    apiRequest({action:'get_all_comments'})
+                ]);
+                if(!novelResponse.ok) throw new Error('novel.txt not found in your repo.');
+                const text=await novelResponse.text();
+                // 统一行尾
+                state.novel.lines=text.replace(/\r\n/g,"\n").split('\n');
+                if(commentRes.status==='success') state.novel.comments=commentRes.data||{};
+                this.parseAndPaginate();
+                visuals.initReaderBG();
+            }catch(err){
+                console.error(err);
+                textArea.innerHTML=`<p style="text-align:center;color:var(--pink);">${err.message}</p>`;
+            }
+        },
+        parseAndPaginate(){
+            const lines=state.novel.lines;
+            const chapterRegex=/第.{0,12}章|序章|终章|Prologue|Epilogue|Chapter\s+\d+/i;
+            const pages=[];
+            const toc=[];
+            let currentStart=0;
+            let buffer=[];
+            const LPP=state.novel.linesPerPage;
 
-            // Build TOC
-            const chapterRegex = /^(第[一二三四五六七八九十百千零〇0-9]+章|序章|终章|Prologue|Epilogue|Chapter\s+\d+)/;
-            state.novel.toc = [];
-            state.novel.lines.forEach((line, index) => {
-                if (chapterRegex.test(line.trim())) {
-                    state.novel.toc.push({ title: line.trim(), lineIndex: index });
+            for(let i=0;i<lines.length;i++){
+                let line=lines[i];
+                const pure=line.replace(/\s/g,'');
+                const isChapter=chapterRegex.test(pure);
+                if(isChapter && buffer.length>0){
+                    pages.push({start:currentStart,end:i});
+                    currentStart=i;
+                    buffer=[];
                 }
-            });
-
-            // Build pages so that each chapter title一定在一页开头
-            const pages = [];
-            let currentStart = 0;
-            const totalLines = state.novel.lines.length;
-            const chapterLineSet = new Set(state.novel.toc.map(c => c.lineIndex));
-
-            for (let i = 0; i < totalLines; i++) {
-                // 如果这一行是新章节开头而且不是当前页第一页，先结束上一页
-                if (chapterLineSet.has(i) && i !== currentStart) {
-                    pages.push({ start: currentStart, end: i });
-                    currentStart = i;
+                if(isChapter){
+                    toc.push({title:line.trim()||`Chapter @${i+1}`,lineIndex:i,pageIndex:pages.length});
                 }
-                const currentCount = i - currentStart + 1;
-                if (currentCount >= baseLinesPerPage) {
-                    pages.push({ start: currentStart, end: i + 1 });
-                    currentStart = i + 1;
+                buffer.push(line);
+                if(buffer.length>=LPP){
+                    pages.push({start:currentStart,end:i+1});
+                    currentStart=i+1;
+                    buffer=[];
                 }
             }
-            if (currentStart < totalLines) {
-                pages.push({ start: currentStart, end: totalLines });
+            if(buffer.length>0){
+                pages.push({start:currentStart,end:lines.length});
             }
-
-            state.novel.pages = pages;
-            state.novel.totalPages = pages.length;
+            state.novel.pages=pages;
+            state.novel.totalPages=pages.length;
+            state.novel.toc=toc;
 
             this.renderTOC();
             this.loadBookmarks();
             this.renderBookmarks();
             this.goToPage(0);
         },
-        goToPage(page) {
-            if (page < 0 || page >= state.novel.totalPages) return;
-            const textArea = document.getElementById('reader-text-area');
-
-            const pageInfo = state.novel.pages[page];
-            if (!pageInfo) return;
-            state.novel.currentPage = page;
-
-            const startLine = pageInfo.start;
-            const endLine = pageInfo.end;
-            const pageLines = state.novel.lines.slice(startLine, endLine);
-
-            textArea.classList.remove('page-transition');
-            void textArea.offsetWidth;
-            textArea.classList.add('page-transition');
-
-            textArea.innerHTML = pageLines.map((line, i) => {
-                const globalLineIndex = startLine + i;
-                if (!line.trim()) return '<br>';
-                const commentArr = state.novel.comments[globalLineIndex] || [];
-                const commentCount = commentArr.length;
-                return `<div class="line" data-line-index="${globalLineIndex}">
-                        ${line}
-                        <div class="comment-bubble" onclick="reader.openCommentSidebar(${globalLineIndex})">
-                            <span class="comment-icon">♟</span>
-                            ${commentCount > 0 ? `<span class="comment-count">${commentCount}</span>` : ''}
-                        </div>
-                    </div>`;
+        goToPage(page){
+            if(page<0 || page>=state.novel.totalPages) return;
+            state.novel.currentPage=page;
+            const seg=state.novel.pages[page];
+            const start=seg.start,end=seg.end;
+            const textArea=document.getElementById('reader-text-area');
+            const html=state.novel.lines.slice(start,end).map((line,i)=>{
+                const idx=start+i;
+                if(!line.trim()) return '<br>';
+                const cnt=state.novel.comments[idx]?state.novel.comments[idx].length:0;
+                return `<div class="line" data-line-index="${idx}">
+                    ${line}
+                    <div class="comment-bubble" onclick="reader.openCommentSidebar(${idx})">
+                        <span class="comment-icon">♟</span>
+                        ${cnt>0?`<span class="comment-count">${cnt}</span>`:""}
+                    </div>
+                </div>`;
             }).join('');
-            textArea.scrollTop = 0;
-
-            document.getElementById('reader-progress').innerText = `${page + 1} / ${state.novel.totalPages}`;
+            textArea.innerHTML=html;
+            textArea.scrollTop=0;
+            document.getElementById('reader-progress').innerText=`${page+1} / ${state.novel.totalPages}`;
         },
-        goToChapter(lineIndex) {
-            const pages = state.novel.pages;
-            let targetPage = 0;
-            for (let i = 0; i < pages.length; i++) {
-                if (pages[i].start === lineIndex) {
-                    targetPage = i;
-                    break;
-                }
-            }
-            this.goToPage(targetPage);
+        goToChapter(lineIndex){
+            const pageIdx=state.novel.pages.findIndex(p=>lineIndex>=p.start && lineIndex<p.end);
+            if(pageIdx>=0) this.goToPage(pageIdx);
         },
-        switchTab(tabName) {
-            document.getElementById('tab-toc').classList.toggle('active', tabName === 'toc');
-            document.getElementById('content-toc').classList.toggle('hidden', tabName !== 'toc');
-            document.getElementById('tab-bm').classList.toggle('active', tabName === 'bm');
-            document.getElementById('content-bm').classList.toggle('hidden', tabName !== 'bm');
+        switchTab(tab){
+            document.getElementById('tab-toc').classList.toggle('active',tab==='toc');
+            document.getElementById('content-toc').classList.toggle('hidden',tab!=='toc');
+            document.getElementById('tab-bm').classList.toggle('active',tab==='bm');
+            document.getElementById('content-bm').classList.toggle('hidden',tab!=='bm');
         },
-        renderTOC() {
-            const tocContainer = document.getElementById('content-toc');
-            if (state.novel.toc.length === 0) {
-                tocContainer.innerHTML = `<p style="padding:15px; color:#888;">No chapter titles detected.</p>`;
+        renderTOC(){
+            const c=document.getElementById('content-toc');
+            if(state.novel.toc.length===0){
+                c.innerHTML=`<p style="padding:12px;color:#888;">No chapter titles detected.</p>`;
                 return;
             }
-            tocContainer.innerHTML = state.novel.toc.map(chapter => {
-                const pages = state.novel.pages;
-                let pageIndex = 0;
-                for (let i = 0; i < pages.length; i++) {
-                    if (pages[i].start === chapter.lineIndex) {
-                        pageIndex = i;
-                        break;
-                    }
-                }
-                return `<div class="toc-item" onclick="reader.goToPage(${pageIndex})">${chapter.title}</div>`;
-            }).join('');
+            c.innerHTML=state.novel.toc.map(ch=>`
+                <div class="toc-item" onclick="reader.goToChapter(${ch.lineIndex})">
+                    <strong>${ch.title}</strong>
+                    <small>Page ${ch.pageIndex+1}</small>
+                </div>`).join('');
         },
-        loadBookmarks() {
-            state.novel.bookmarks = JSON.parse(localStorage.getItem('ngnl_bookmarks') || '[]');
+        loadBookmarks(){
+            state.novel.bookmarks=JSON.parse(localStorage.getItem('ngnl_bookmarks')||'[]');
         },
-        renderBookmarks() {
-            const bmContainer = document.getElementById('content-bm');
-            if (state.novel.bookmarks.length === 0) {
-                bmContainer.innerHTML = `<p style="padding: 15px; color: #888;">No bookmarks yet.</p>`;
+        renderBookmarks(){
+            const c=document.getElementById('content-bm');
+            if(state.novel.bookmarks.length===0){
+                c.innerHTML=`<p style="padding:12px;color:#888;">No bookmarks yet.</p>`;
                 return;
             }
-            bmContainer.innerHTML = state.novel.bookmarks.map((bm, index) =>
-                `<div class="bm-item" onclick="reader.goToPage(${bm.page})">
-                    Page ${bm.page + 1} - ${bm.line.substring(0, 20)}...
-                    <button onclick="reader.removeBookmark(${index}, event)" style="float: right; background:none; border:none; color: var(--pink); cursor:pointer;">X</button>
-                </div>`
-            ).join('');
+            c.innerHTML=state.novel.bookmarks.map((bm,idx)=>`
+                <div class="bm-item" onclick="reader.goToPage(${bm.page})">
+                    Page ${bm.page+1} - ${bm.line.substring(0,20)}...
+                    <button onclick="reader.removeBookmark(${idx},event)" style="float:right;background:none;border:none;color:var(--pink);font-size:.8rem;">X</button>
+                </div>`).join('');
         },
-        addBookmark() {
-            const currentPage = state.novel.currentPage;
-            if (state.novel.bookmarks.some(bm => bm.page === currentPage)) {
-                alert("This page is already bookmarked.");
-                return;
-            }
-            const pageInfo = state.novel.pages[currentPage];
-            const firstLineIndex = pageInfo.start;
-            const firstLine = state.novel.lines[firstLineIndex] || "Empty Page";
-            state.novel.bookmarks.push({ page: currentPage, line: firstLine });
-            localStorage.setItem('ngnl_bookmarks', JSON.stringify(state.novel.bookmarks));
+        addBookmark(){
+            const p=state.novel.currentPage;
+            if(state.novel.bookmarks.some(b=>b.page===p)) return alert("This page is already bookmarked.");
+            const seg=state.novel.pages[p];
+            const firstLine=state.novel.lines[seg.start]||"Empty Page";
+            state.novel.bookmarks.push({page:p,line:firstLine});
+            localStorage.setItem('ngnl_bookmarks',JSON.stringify(state.novel.bookmarks));
             this.renderBookmarks();
-            alert(`Page ${currentPage + 1} bookmarked!`);
+            alert(`Page ${p+1} bookmarked!`);
         },
-        removeBookmark(index, event) {
-            event.stopPropagation();
-            if (confirm("Remove this bookmark?")) {
-                state.novel.bookmarks.splice(index, 1);
-                localStorage.setItem('ngnl_bookmarks', JSON.stringify(state.novel.bookmarks));
-                this.renderBookmarks();
+        removeBookmark(i,e){
+            e.stopPropagation();
+            if(!confirm("Remove this bookmark?")) return;
+            state.novel.bookmarks.splice(i,1);
+            localStorage.setItem('ngnl_bookmarks',JSON.stringify(state.novel.bookmarks));
+            this.renderBookmarks();
+        },
+        openCommentSidebar(lineIndex){
+            state.novel.activeCommentLine=lineIndex;
+            document.getElementById('cmt-header-title').innerText=`Line ${lineIndex+1}`;
+            const cList=document.getElementById('cmt-list');
+            const arr=state.novel.comments[lineIndex]||[];
+            if(arr.length===0){
+                cList.innerHTML=`<p style="text-align:center;color:#888;padding:20px;">No comments yet. Be the first!</p>`;
+            }else{
+                cList.innerHTML=arr.map(this.formatComment).join('');
             }
-        },
-        openCommentSidebar(lineIndex) {
-            state.novel.activeCommentLine = lineIndex;
-            document.getElementById('cmt-header-title').innerText = `Comments for Line ${lineIndex + 1}`;
-            const comments = state.novel.comments[lineIndex] || [];
-            document.getElementById('cmt-list').innerHTML = comments.length > 0
-                ? comments.map(c => this.formatComment(c)).join('')
-                : `<p style="text-align:center; color:#888; padding:20px;">No comments yet. Be the first!</p>`;
             document.getElementById('reader-comment-sidebar').classList.add('open');
         },
-        closeCommentSidebar() {
+        closeCommentSidebar(){
             document.getElementById('reader-comment-sidebar').classList.remove('open');
         },
-        formatComment(comment) {
-            const formattedContent = (comment.content || "").replace(/@(\w+)/g, `<span class="mention-link" onclick="ui.showOtherUserProfile('$1')">@$1</span>`);
-            const frameClassMini = formatters.frameClass(comment.frameKey, true);
-            const titleText = comment.title ? formatters.titleDisplay(comment.title) : "";
+        formatComment(c){
+            const content=c.content.replace(/@(\w+)/g,`<span class="mention-link" onclick="ui.showOtherUserProfile('$1')">@$1</span>`);
+            const avatarHtml=c.avatar?`<img src="${c.avatar}">`:"";
+            const frameCls=c.frameKey?"avatar-frame":"";
             return `<div class="cmt-card">
-                <div class="mini-user" style="margin-bottom:4px;">
-                    <div class="mini-avatar ${frameClassMini}">
-                        ${comment.avatar ? `<img src="${comment.avatar}" />` : `<span>${comment.user.charAt(0).toUpperCase()}</span>`}
-                    </div>
-                    <div class="mini-meta">
-                        <div class="mini-name" onclick="ui.showOtherUserProfile('${comment.user}')">${comment.user}</div>
-                        <div class="mini-title">${titleText}</div>
-                    </div>
+                <div class="cmt-user" onclick="ui.showOtherUserProfile('${c.user}')">
+                    <div class="mini-avatar ${frameCls}">${avatarHtml}</div>
+                    <span>${c.user}</span>
+                    ${c.title?`<span style="color:var(--gold);font-size:.7rem;">${c.title}</span>`:""}
                 </div>
-                <div class="cmt-content" style="margin: 5px 0; white-space: pre-wrap;">${formattedContent}</div>
-                <div class="cmt-actions" style="font-size:0.8rem; color:#888; display:flex; gap:15px; margin-top:5px; align-items:center;">
-                    <span style="cursor:pointer" onclick="community.interact('like', '${comment.id}', 'comment')">♥ ${comment.likes}</span>
-                    <span style="cursor:pointer" onclick="community.interact('tip', '${comment.id}', 'comment')">🪙 ${comment.coins || 0}</span>
+                <div class="cmt-content">${content}</div>
+                <div class="cmt-actions">
+                    <span onclick="community.interact('like','${c.id}','comment')">♥ ${c.likes}</span>
+                    <span onclick="community.interact('tip','${c.id}','comment')">🪙 ${c.coins||0}</span>
                 </div>
             </div>`;
         },
-        async postComment() {
-            const input = document.getElementById('cmt-input');
-            const content = input.value.trim();
-            if (!content || state.novel.activeCommentLine < 0) return;
-            if (!state.isLoggedIn) return alert("You must be logged in to comment.");
-
-            input.disabled = true;
-            await apiRequest({
-                action: 'post_line_comment',
-                line_index: state.novel.activeCommentLine,
-                content: content
-            });
-            input.value = '';
-            input.disabled = false;
-
-            const commentRes = await apiRequest({ action: 'get_all_comments' });
-            if (commentRes.status === 'success') {
-                state.novel.comments = commentRes.data || {};
+        async postComment(){
+            const input=document.getElementById('cmt-input');
+            const content=input.value.trim();
+            if(!content || state.novel.activeCommentLine<0) return;
+            if(!state.isLoggedIn) return alert("You must be logged in to comment.");
+            input.disabled=true;
+            await apiRequest({action:'post_line_comment',line_index:state.novel.activeCommentLine,content});
+            input.value="";input.disabled=false;
+            const res=await apiRequest({action:'get_all_comments'});
+            if(res.status==='success'){
+                state.novel.comments=res.data||{};
                 this.goToPage(state.novel.currentPage);
                 this.openCommentSidebar(state.novel.activeCommentLine);
             }
         }
     };
 
-    const community = {
-        async interact(subAction, id, type) {
-            if (!state.isLoggedIn) return alert("Login required to interact.");
-            if (subAction === 'tip' && !confirm("Spend 1 coin?")) return;
-
-            const res = await apiRequest({ action: 'interact', sub_action: subAction, type: type, id: id });
-
-            if (res.status === 'success') {
-                if (subAction === 'tip' && typeof res.new_balance === 'number') {
-                    state.user.coins = res.new_balance;
-                    sessionStorage.setItem('ngnlUser', JSON.stringify(state.user));
+    const community={
+        async interact(subAction,id,type){
+            if(!state.isLoggedIn) return alert("Login required.");
+            if(subAction==='tip' && !confirm("Spend 1 coin?")) return;
+            const res=await apiRequest({action:'interact',sub_action:subAction,type,id});
+            if(res.status==='success'){
+                if(subAction==='tip' && typeof res.new_balance!=='undefined'){
+                    state.user.coins=res.new_balance;
+                    sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
                     ui.updateHUD();
                 }
-                if (type === 'comment') {
-                    const commentRes = await apiRequest({ action: 'get_all_comments' });
-                    if (commentRes.status === 'success') {
-                        state.novel.comments = commentRes.data || {};
+                if(type==='comment' || type==='discussion'){
+                    const [cRes,dRes]=await Promise.all([
+                        apiRequest({action:'get_all_comments'}),
+                        apiRequest({action:'get_discussions'})
+                    ]);
+                    if(cRes.status==='success'){
+                        state.novel.comments=cRes.data||{};
                         reader.goToPage(state.novel.currentPage);
-                        if (state.novel.activeCommentLine >= 0) {
-                            reader.openCommentSidebar(state.novel.activeCommentLine);
-                        }
+                        if(state.novel.activeCommentLine>=0) reader.openCommentSidebar(state.novel.activeCommentLine);
                     }
+                    if(dRes.status==='success') forum.render(dRes.data);
                 }
-                if (type === 'discussion') {
-                    forum.load();
-                }
-            } else {
-                alert(res.message);
-            }
+            }else alert(res.message);
         }
     };
 
-    const forum = {
-        async init() {
-            await this.load();
+    const forum={
+        async init(){
+            const res=await apiRequest({action:'get_discussions'});
+            if(res.status==='success') this.render(res.data);
         },
-        async load() {
-            const listEl = document.getElementById('forum-list');
-            listEl.innerHTML = "Loading discussions...";
-            const res = await apiRequest({ action: 'get_discussions' });
-            if (res.status !== 'success') {
-                listEl.innerHTML = `<p style="color:var(--pink);">${res.message}</p>`;
+        render(list){
+            const box=document.getElementById('forum-list');
+            if(!list || list.length===0){
+                box.innerHTML=`<p style="color:#888;padding:10px;">No posts yet. Be the first challenger.</p>`;
                 return;
             }
-            const posts = res.data || [];
-            if (!posts.length) {
-                listEl.innerHTML = `<p style="color:#888;">No posts yet. Be the first!</p>`;
-                return;
-            }
-            listEl.innerHTML = posts.map(p => this.renderPost(p)).join('');
-        },
-        renderPost(p) {
-            const frameClass = formatters.frameClass(p.frameKey, true);
-            const titleText = p.title ? formatters.titleDisplay(p.title) : "";
-            const content = (p.content || "").replace(/@(\w+)/g, `<span class="mention-link" onclick="ui.showOtherUserProfile('$1')">@$1</span>`);
-            return `<div class="forum-post">
-                <div class="forum-header">
-                    <div class="mini-user">
-                        <div class="mini-avatar ${frameClass}">
-                            ${p.avatar ? `<img src="${p.avatar}" />` : `<span>${p.user.charAt(0).toUpperCase()}</span>`}
+            box.innerHTML=list.map(p=>{
+                const avatarHtml=p.avatar?`<img src="${p.avatar}">`:"";
+                const frameCls=p.frameKey?"avatar-frame":"";
+                const content=p.content.replace(/@(\w+)/g,`<span class="mention-link" onclick="ui.showOtherUserProfile('$1')">@$1</span>`);
+                return `<div class="post-card">
+                    <div class="mini-avatar ${frameCls}">${avatarHtml}</div>
+                    <div class="post-main">
+                        <div class="post-header" onclick="ui.showOtherUserProfile('${p.user}')">
+                            <span>${p.user}</span>${p.title?`<span style="color:var(--gold);font-size:.7rem;">${p.title}</span>`:""}
                         </div>
-                        <div class="mini-meta">
-                            <div class="mini-name" onclick="ui.showOtherUserProfile('${p.user}')">${p.user}</div>
-                            <div class="mini-title">${titleText}</div>
+                        <div class="post-content">${content}</div>
+                        <div class="post-meta">${p.time}</div>
+                        <div class="post-actions">
+                            <span onclick="community.interact('like','${p.id}','discussion')">♥ ${p.likes}</span>
+                            <span onclick="community.interact('tip','${p.id}','discussion')">🪙 ${p.coins||0}</span>
                         </div>
-                    </div>
-                    <div class="forum-time">${p.time}</div>
-                </div>
-                <div class="forum-content">${content}</div>
-                <div class="forum-actions">
-                    <span class="forum-action" onclick="community.interact('like','${p.id}','discussion')">♥ ${p.likes}</span>
-                    <span class="forum-action" onclick="community.interact('tip','${p.id}','discussion')">🪙 ${p.coins}</span>
-                </div>
-            </div>`;
-        },
-        async post() {
-            const ta = document.getElementById('forum-textarea');
-            const content = ta.value.trim();
-            if (!content) return;
-            if (!state.isLoggedIn) {
-                alert("Login required.");
-                return;
-            }
-            ta.disabled = true;
-            const res = await apiRequest({ action: 'post_discussion', content });
-            ta.disabled = false;
-            if (res.status === 'success') {
-                ta.value = "";
-                await this.load();
-            } else {
-                alert(res.message);
-            }
-        }
-    };
-
-    const shopRenderer = {
-        render() {
-            const grid = document.getElementById('shop-grid');
-            if (!grid) return;
-            const owned = state.user.ownedItems || [];
-            const allItems = [...SHOP_ITEMS.frames, ...SHOP_ITEMS.titles, ...SHOP_ITEMS.signatures];
-            grid.innerHTML = allItems.map(item => {
-                const ownedFlag = owned.includes(item.key);
-                const tag = item.type.toUpperCase();
-                const price = item.price;
-                return `<div class="shop-item">
-                    <div class="shop-item-header">
-                        <div class="shop-item-title">${item.name}</div>
-                        <span class="shop-tag">${tag}</span>
-                    </div>
-                    <div>${item.desc}</div>
-                    <div class="shop-price">🪙 ${price}</div>
-                    <div class="shop-actions">
-                        ${ownedFlag ? `<span class="shop-owned">OWNED</span>
-                            <button class="btn" onclick="shopRenderer.equip('${item.key}')">EQUIP</button>` :
-                            `<button class="btn" onclick="shopRenderer.buy('${item.key}')">BUY</button>`}
                     </div>
                 </div>`;
             }).join('');
         },
-        async buy(key) {
-            if (!state.isLoggedIn) {
-                alert("Login first.");
-                return;
-            }
-            const res = await apiRequest({ action: 'shop', sub_action: 'purchase', item_key: key });
-            if (res.status === 'success') {
-                state.user.coins = res.new_balance;
-                try {
-                    state.user.ownedItems = JSON.parse(res.owned_items || "[]");
-                } catch (e) { state.user.ownedItems = []; }
-                state.user.frameKey = res.frameKey || state.user.frameKey;
-                state.user.signature = res.signature || state.user.signature;
-                state.user.title = res.title || state.user.title;
-                sessionStorage.setItem('ngnlUser', JSON.stringify(state.user));
-                ui.updateHUD();
-                ui.updateProfileView();
-                alert("Purchased!");
-            } else {
-                alert(res.message);
-            }
-        },
-        async equip(key) {
-            const res = await apiRequest({ action: 'shop', sub_action: 'equip', item_key: key });
-            if (res.status === 'success') {
-                state.user.frameKey = res.frameKey || state.user.frameKey;
-                state.user.signature = res.signature || state.user.signature;
-                state.user.title = res.title || state.user.title;
-                sessionStorage.setItem('ngnlUser', JSON.stringify(state.user));
-                ui.updateHUD();
-                ui.updateProfileView();
-            } else {
-                alert(res.message);
-            }
+        async post(){
+            const input=document.getElementById('forum-input');
+            const content=input.value.trim();
+            if(!content) return;
+            if(!state.isLoggedIn) return alert("Login required.");
+            input.disabled=true;
+            const res=await apiRequest({action:'post_discussion',content});
+            input.disabled=false;
+            if(res.status==='success'){
+                input.value="";
+                this.init();
+            }else alert(res.message);
         }
     };
 
-    const loreRenderer = {
-        inited: false,
-        init() {
-            if (this.inited) return;
-            this.inited = true;
-            const covEl = document.getElementById('covenant-list');
-            covEl.innerHTML = loreData.covenants.map((txt, idx) =>
-                `<div class="covenant-item"><strong>${idx + 1}.</strong> ${txt}</div>`
-            ).join('');
-
-            const raceEl = document.getElementById('race-list');
-            raceEl.innerHTML = loreData.races.map(r => {
-                const color = getComputedStyle(document.documentElement).getPropertyValue(r.colorVar) || "#fff";
-                return `<div class="race-card">
-                    <div class="race-header">
-                        <div class="race-name">${r.name}</div>
-                        <div class="race-piece">${r.piece}</div>
+    const shop={
+        items:[
+            {key:'frame-elkia',price:80,type:'frame',name:'Elkia Frame',desc:'艾尔奇亚国徽风格的金色头像框。'},
+            {key:'frame-flugel',price:120,type:'frame',name:'Flügel Halo',desc:'天翼种羽翼与光环样式的头像框。'},
+            {key:'frame-warabeast',price:90,type:'frame',name:'Warbeast Neon',desc:'兽人种风格的粉蓝霓虹轮廓。'},
+            {key:'title-blank',price:50,type:'title',name:'Title: 『　　』',desc:'在名字下方显示传说中的空白称号。'},
+            {key:'title-king',price:70,type:'title',name:'Title: KING OF GAMES',desc:'只属于真正的游戏王。'},
+            {key:'title-gamer',price:100,type:'title',name:'Title: HARDCORE GAMER',desc:'把游戏当成生命的证明。'},
+            {key:'sig-ciallo',price:20,type:'signature',name:'Signature: Ciallo~',desc:'自动设置个性签名为 “Ciallo~ (≧ω≦)~”。'},
+            {key:'sig-blank',price:25,type:'signature',name:'Signature: BLANK',desc:'签名改为 “We are 『　　』.”。'}
+        ],
+        init(){
+            const grid=document.getElementById('shop-grid');
+            const owned=state.user.ownedItems||[];
+            ui.updateHUD();
+            grid.innerHTML=this.items.map(it=>{
+                const isOwned=owned.includes(it.key);
+                const canAfford=state.user.coins>=it.price;
+                const actionBtn=isOwned
+                    ? `<button class="btn" onclick="shop.equip('${it.key}')" style="width:100%;margin-top:6px;">EQUIP</button>`
+                    : `<button class="btn" onclick="shop.buy('${it.key}')" style="width:100%;margin-top:6px;" ${canAfford?'':"disabled"}>BUY</button>`;
+                return `<div class="shop-card">
+                    <div class="shop-inner">
+                        <div class="shop-tag">${it.type.toUpperCase()}</div>
+                        <div class="shop-name">${it.name}</div>
+                        <div class="shop-price">Price: ${it.price} 🪙</div>
+                        <div class="shop-desc">${it.desc}</div>
+                        ${isOwned?`<div class="shop-owned">OWNED</div>`:""}
+                        ${actionBtn}
                     </div>
-                    <div class="race-desc">${r.desc}</div>
-                    <div class="race-tag-color" style="background:${color};"></div>
                 </div>`;
             }).join('');
-
-            const extraEl = document.getElementById('lore-extra');
-            const charsHtml = loreData.chars.map(c =>
-                `<div class="lore-char-card">
-                    <div class="lore-char-name">${c.name}</div>
-                    <div>${c.desc}</div>
-                </div>`
-            ).join('');
-            extraEl.innerHTML = `
-                <div class="lore-char-card">
-                    <div class="lore-char-name">NOVEL INTRO</div>
-                    <div style="margin-bottom:8px;">${loreData.novelIntro}</div>
-                </div>
-                ${charsHtml}
-                <div class="lore-char-card">
-                    <div class="lore-char-name">AUTHOR</div>
-                    <div>${loreData.author}</div>
-                </div>
-            `;
+        },
+        async buy(key){
+            const item=this.items.find(i=>i.key===key);
+            if(!item) return;
+            if(state.user.coins<item.price) return alert("Insufficient coins.");
+            if(!confirm(`Buy ${item.name} for ${item.price} coins?`)) return;
+            const res=await apiRequest({action:'shop',sub_action:'purchase',item_key:key});
+            if(res.status==='success'){
+                state.user.coins=res.new_balance;
+                state.user.frameKey=res.frameKey||state.user.frameKey;
+                state.user.signature=res.signature||state.user.signature;
+                state.user.title=res.title||state.user.title;
+                state.user.ownedItems=JSON.parse(res.owned_items||"[]");
+                sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
+                ui.updateHUD();
+                ui.updateProfileView();
+                this.init();
+            }else alert(res.message);
+        },
+        async equip(key){
+            const res=await apiRequest({action:'shop',sub_action:'equip',item_key:key});
+            if(res.status==='success'){
+                state.user.frameKey=res.frameKey||state.user.frameKey;
+                state.user.signature=res.signature||state.user.signature;
+                state.user.title=res.title||state.user.title;
+                sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
+                ui.updateProfileView();
+                this.init();
+            }else alert(res.message);
         }
     };
 
-    const visuals = {
-        init() {
+    const visuals={
+        init(){
             this.initPlayers();
             this.initCursor();
             this.initCanvas();
+            this.initRaces();
         },
-        initPlayers() {
-            const players = [
-                { n: 'IZUNA', r: 'Warbeast', i: 'izuna.png', suit: '♥', d: '东部联合的兽人少女，拥有血坏能力，战斗本能异常敏锐。' },
-                { n: 'JIBRIL', r: 'Flügel', i: 'jibril.png', suit: '♝', d: '天翼种书痴，收集知识胜过一切，实力与危险度都爆表。' },
-                { n: 'SHIRO', r: 'Imanity', i: 'shiro.png', suit: '♙', d: '拥有绝对记忆与计算能力的天才 gamer。' },
-                { n: 'SORA', r: 'Imanity', i: 'sora.png', suit: '♛', d: '『　　』的哥哥，善于心理博弈与整体布局。' },
-                { n: 'STEPH', r: 'Imanity', i: 'steph.png', suit: '♦', d: '艾尔奇亚公主，赌运堪忧却用诚意守护人类国度。' },
-                { n: 'TET', r: 'Old Deus', i: 'tet.png', suit: '♚', d: '唯一的神灵种，支配棋盘世界的游戏之神。' }
+        initPlayers(){
+            const players=[
+                {n:'IZUNA',r:'Warbeast / Knight',img:'izuna.png',d:'拥有“血坏”的兽人少女，瞬间读取场上的一切信息。'},
+                {n:'JIBRIL',r:'Flügel / Bishop',img:'jibril.png',d:'狂热的知识收集狂，掌握毁灭级魔法的天翼种。'},
+                {n:'SHIRO',r:'Imanity / Queen',img:'shiro.png',d:'计算力超越人类极限的天才少女，是『　　』的头脑。'},
+                {n:'SORA',r:'Imanity / King',img:'sora.png',d:'读心级心理战高手，相信“人类的可能性”胜过一切。'},
+                {n:'STEPH',r:'Imanity / Pawn',img:'steph.png',d:'艾尔奇亚公主，虽不擅游戏，却用执着与温柔支撑王国。'},
+                {n:'TET',r:'OldDeus / Joker',img:'tet.png',d:'唯一神，支配棋盘的观战者与发起者。'}
             ];
-            document.getElementById('char-grid').innerHTML = players.map(p => `
-                <div class="char" onmousemove="visuals.moveCard(event)" onmouseleave="visuals.resetCard(event)">
+            document.getElementById('char-grid').innerHTML=players.map(p=>`
+                <div class="char-card">
                     <div class="char-inner">
                         <div class="char-face char-front">
-                            <div class="char-card-frame"></div>
-                            <div class="char-suit">${p.suit}</div>
-                            <div class="char-suit-bottom">${p.suit}</div>
-                            <div class="char-front-img" style="background-image:url(${p.i})"></div>
+                            <img src="${p.img}" alt="${p.n}">
                             <div class="char-front-info">
                                 <div class="char-name">${p.n}</div>
                                 <div class="char-race">${p.r}</div>
                             </div>
                         </div>
                         <div class="char-face char-back">
-                            <div class="char-card-frame"></div>
-                            <div class="char-back-inner">
-                                <div class="char-back-title">${p.n}</div>
-                                <div class="char-desc">${p.d}</div>
-                            </div>
+                            <div class="card-symbol">♜</div>
+                            <p class="char-desc">${p.d}</p>
                         </div>
                     </div>
                 </div>`).join('');
         },
-        moveCard(e) {
-            const card = e.currentTarget;
-            const inner = card.querySelector('.char-inner');
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const rotateX = -8 * ((y - rect.height / 2) / rect.height);
-            const rotateY = 8 * ((x - rect.width / 2) / rect.width);
-            inner.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-        },
-        resetCard(e) {
-            const inner = e.currentTarget.querySelector('.char-inner');
-            inner.style.transform = `rotateX(0) rotateY(0)`;
-        },
-        initCursor() {
-            const cursor = document.getElementById('cursor');
-            document.addEventListener('mousemove', e => {
-                cursor.style.left = e.clientX + 'px';
-                cursor.style.top = e.clientY + 'px';
+        initCursor(){
+            const cursor=document.getElementById('cursor');
+            document.addEventListener('mousemove',e=>{
+                cursor.style.left=e.clientX+'px';
+                cursor.style.top=e.clientY+'px';
             });
-            document.body.addEventListener('mouseover', e => {
-                if (e.target.closest('a, button, .btn, .card, .piece, .char, .f-item, .auth-link, [onclick], textarea, input')) {
-                    cursor.classList.add('hover');
-                } else {
-                    cursor.classList.remove('hover');
-                }
+            document.body.addEventListener('mouseover',e=>{
+                if(e.target.closest('a,button,.btn,.char-card,.f-item,.auth-link,[onclick]')) cursor.classList.add('hover');
+                else cursor.classList.remove('hover');
             });
-            document.addEventListener('mousedown', () => cursor.classList.add('click'));
-            document.addEventListener('mouseup', () => cursor.classList.remove('click'));
+            document.addEventListener('mousedown',()=>cursor.classList.add('click'));
+            document.addEventListener('mouseup',()=>cursor.classList.remove('click'));
         },
-        initCanvas() {
-            const cvs = document.getElementById('canvas-bg'), ctx = cvs.getContext('2d');
-            let w = window.innerWidth, h = window.innerHeight;
-            cvs.width = w; cvs.height = h;
-            const particles = Array.from({ length: 70 }, () => ({
-                x: Math.random() * w,
-                y: Math.random() * h,
-                s: Math.random() * 0.6 + 0.2,
-                char: ['♔', '♕', '♖', '♗', '♘', '♙'][Math.floor(Math.random() * 6)],
-                opacity: Math.random() * 0.35 + 0.1
+        initCanvas(){
+            const cvs=document.getElementById('canvas-bg'),ctx=cvs.getContext('2d');
+            let w=window.innerWidth,h=window.innerHeight;
+            cvs.width=w;cvs.height=h;
+            const particles=Array.from({length:60},()=>({
+                x:Math.random()*w,
+                y:Math.random()*h,
+                s:Math.random()*0.6+0.2,
+                char:['♔','♕','♖','♗','♘','♙'][Math.floor(Math.random()*6)],
+                opacity:Math.random()*0.4+0.2
             }));
-            function loop() {
-                ctx.clearRect(0, 0, w, h);
-                particles.forEach(p => {
-                    p.y -= p.s;
-                    if (p.y < -30) {
-                        p.y = h + 30;
-                        p.x = Math.random() * w;
-                    }
-                    ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
-                    ctx.font = '24px Orbitron';
-                    ctx.fillText(p.char, p.x, p.y);
+            function loop(){
+                ctx.clearRect(0,0,w,h);
+                particles.forEach(p=>{
+                    p.y-=p.s;
+                    if(p.y<-40){p.y=h+40;p.x=Math.random()*w;}
+                    ctx.fillStyle=`rgba(255,255,255,${p.opacity})`;
+                    ctx.font='22px Orbitron';
+                    ctx.fillText(p.char,p.x,p.y);
                 });
                 requestAnimationFrame(loop);
             }
             requestAnimationFrame(loop);
-            window.addEventListener('resize', () => {
-                w = window.innerWidth;
-                h = window.innerHeight;
-                cvs.width = w;
-                cvs.height = h;
+            window.addEventListener('resize',()=>{
+                w=window.innerWidth;h=window.innerHeight;
+                cvs.width=w;cvs.height=h;
             });
         },
-        ensureReaderBg() {
-            if (readerBg.init) return;
-            readerBg.cvs = document.getElementById('reader-bg-canvas');
-            if (!readerBg.cvs) return;
-            readerBg.ctx = readerBg.cvs.getContext('2d');
-            const resize = () => {
-                readerBg.width = readerBg.cvs.clientWidth || readerBg.cvs.parentElement.clientWidth;
-                readerBg.height = readerBg.cvs.clientHeight || readerBg.cvs.parentElement.clientHeight;
-                readerBg.cvs.width = readerBg.width;
-                readerBg.cvs.height = readerBg.height;
-            };
+        initReaderBG(){
+            const cvs=document.getElementById('reader-bg-canvas');
+            if(!cvs.getContext) return;
+            const ctx=cvs.getContext('2d');
+            function resize(){
+                const panel=document.querySelector('.r-main-panel');
+                if(!panel) return;
+                cvs.width=panel.clientWidth;
+                cvs.height=panel.clientHeight;
+            }
             resize();
-            window.addEventListener('resize', resize);
-            readerBg.particles = Array.from({ length: 80 }, () => ({
-                x: Math.random() * readerBg.width,
-                y: Math.random() * readerBg.height,
-                vx: (Math.random() - 0.5) * 0.3,
-                vy: (Math.random() - 0.5) * 0.3,
-                r: Math.random() * 1.8 + 0.7,
-                hue: 280 + Math.random() * 80
+            const dots=Array.from({length:80},()=>({
+                x:Math.random()*cvs.width,
+                y:Math.random()*cvs.height,
+                r:Math.random()*2+1,
+                vy:Math.random()*0.4+0.2
             }));
-            const textArea = document.getElementById('reader-text-area');
-            textArea.addEventListener('scroll', () => {
-                const factor = textArea.scrollTop / 400;
-                readerBg.particles.forEach(p => {
-                    p.vy = (Math.random() - 0.5) * 0.3 + factor * 0.2;
-                });
-            });
-            function loop() {
-                const ctx = readerBg.ctx;
-                ctx.clearRect(0, 0, readerBg.width, readerBg.height);
-                ctx.fillStyle = "rgba(5,5,20,0.6)";
-                ctx.fillRect(0, 0, readerBg.width, readerBg.height);
-                readerBg.particles.forEach(p => {
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    if (p.x < 0) p.x += readerBg.width;
-                    if (p.x > readerBg.width) p.x -= readerBg.width;
-                    if (p.y < 0) p.y += readerBg.height;
-                    if (p.y > readerBg.height) p.y -= readerBg.height;
+            function draw(){
+                ctx.clearRect(0,0,cvs.width,cvs.height);
+                const gradient=ctx.createRadialGradient(cvs.width/2,cvs.height/2,0,cvs.width/2,cvs.height/2,cvs.width/1.2);
+                gradient.addColorStop(0,'rgba(5,217,232,0.35)');
+                gradient.addColorStop(0.5,'rgba(217,5,232,0.15)');
+                gradient.addColorStop(1,'rgba(0,0,0,0)');
+                ctx.fillStyle=gradient;
+                ctx.fillRect(0,0,cvs.width,cvs.height);
+                dots.forEach(d=>{
+                    d.y-=d.vy+scrollFactor*0.3;
+                    if(d.y<-10){d.y=cvs.height+10;d.x=Math.random()*cvs.width;}
                     ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                    ctx.fillStyle = `hsla(${p.hue},80%,60%,0.7)`;
+                    ctx.fillStyle='rgba(255,255,255,0.7)';
+                    ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
                     ctx.fill();
                 });
-                requestAnimationFrame(loop);
+                requestAnimationFrame(draw);
             }
-            requestAnimationFrame(loop);
-            readerBg.init = true;
+            let scrollFactor=0;
+            const textArea=document.getElementById('reader-text-area');
+            textArea.addEventListener('scroll',()=>{
+                scrollFactor=textArea.scrollTop/200;
+            });
+            window.addEventListener('resize',resize);
+            requestAnimationFrame(draw);
+        },
+        initRaces(){
+            const races=[
+                {name:"Old Deus",piece:"King ♔",color:"var(--race-olddeus)"},
+                {name:"Phantasma",piece:"Queen ♕",color:"var(--race-phantasma)"},
+                {name:"Elemental",piece:"Queen ♕",color:"var(--race-elemental)"},
+                {name:"Dragonoia",piece:"Rook ♖",color:"var(--race-dragonia)"},
+                {name:"Flügel",piece:"Bishop ♗",color:"var(--race-flugel)"},
+                {name:"Demonia",piece:"Bishop ♗",color:"var(--race-demon)"},
+                {name:"Fairy",piece:"Bishop ♗",color:"var(--race-fairy)"},
+                {name:"Dwarf",piece:"Rook ♖",color:"var(--race-dwarf)"},
+                {name:"Warbeast",piece:"Knight ♘",color:"var(--race-werabeast)"},
+                {name:"Seiren",piece:"Pawn ♙",color:"var(--race-seiren)"},
+                {name:"Dhampir",piece:"Knight ♘",color:"var(--race-dhampir)"},
+                {name:"Elf",piece:"Bishop ♗",color:"var(--race-elf)"},
+                {name:"Angel (Ex-Machina)",piece:"Rook ♖",color:"var(--race-angel)"},
+                {name:"Goblin",piece:"Pawn ♙",color:"var(--race-goblin)"},
+                {name:"Automaton",piece:"Knight ♘",color:"var(--race-automaton)"},
+                {name:"Imanity",piece:"Pawn ♙",color:"var(--race-imanity)"}
+            ];
+            const grid=document.getElementById('race-grid');
+            grid.innerHTML=races.map(r=>`
+                <div class="race-chip">
+                    <div class="race-bg" style="background:radial-gradient(circle,${r.color},transparent);"></div>
+                    <span><strong>${r.name}</strong></span>
+                    <span class="race-piece">${r.piece}</span>
+                </div>`).join('');
         }
     };
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded',()=>{
         visuals.init();
-        reader.init();
-        const storedUser = sessionStorage.getItem('ngnlUser');
-        if (storedUser) {
-            try {
-                const parsed = JSON.parse(storedUser);
-                state.user = parsed;
-                if (!Array.isArray(state.user.ownedItems)) {
-                    try { state.user.ownedItems = JSON.parse(parsed.ownedItems || "[]"); } catch (e) { state.user.ownedItems = []; }
-                }
-                state.isLoggedIn = true;
-                document.body.classList.remove('auth-active');
-                document.getElementById('auth-overlay').classList.remove('active');
+        const stored=sessionStorage.getItem('ngnlUser');
+        if(stored){
+            try{
+                state.user=JSON.parse(stored);
+                state.isLoggedIn=true;
+                ui.elements.authOverlay.classList.remove('active');
+                ui.elements.body.classList.remove('auth-active');
                 ui.updateHUD();
                 ui.updateProfileView();
-            } catch (e) {
-                console.error("Failed to parse stored user data:", e);
+            }catch(e){
+                console.error(e);
                 sessionStorage.removeItem('ngnlUser');
-                document.body.classList.add('auth-active');
-                document.getElementById('auth-overlay').classList.add('active');
+                ui.elements.body.classList.add('auth-active');
+                ui.elements.authOverlay.classList.add('active');
             }
-        } else {
-            document.body.classList.add('auth-active');
-            document.getElementById('auth-overlay').classList.add('active');
+        }else{
+            ui.elements.body.classList.add('auth-active');
+            ui.elements.authOverlay.classList.add('active');
         }
     });
 </script>
