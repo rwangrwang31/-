@@ -134,7 +134,30 @@
     position:relative;
 }
 
-/* 让图片和下方文字在卡片内均匀分布 */
+/* 内层真正翻转的容器 */
+.char-inner{
+    width:100%;
+    height:100%;
+    position:relative;
+    transform-style:preserve-3d;
+    transition:transform .6s;
+}
+
+/* 悬停时翻转整张卡 */
+.char-card:hover .char-inner{
+    transform:rotateY(180deg);
+}
+
+/* 正反两面公共样式：叠在一起 */
+.char-face{
+    position:absolute;
+    inset:0;
+    border-radius:16px;
+    overflow:hidden;
+    backface-visibility:hidden;
+}
+
+/* 让图片和下方文字在卡片内均匀分布（正面） */
 .char-front{
     background:radial-gradient(circle at 20% 0,var(--cyan),transparent 55%),
                radial-gradient(circle at 90% 110%,var(--pink),transparent 55%),
@@ -161,22 +184,56 @@
     transform:scale(1.03);
 }
 
-        .char-front-info{
-            width:100%;padding:10px 15px 14px;background:linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.9));
-            text-align:center;
-        }
-        .char-name{font-family:'Orbitron';font-size:1.4rem;letter-spacing:2px;}
-        .char-race{font-size:.8rem;color:var(--cyan);}
-        .char-back{
-            background:radial-gradient(circle at 50% 0,var(--purple),transparent 55%),radial-gradient(circle at 0 100%,var(--cyan),transparent 55%),#05010e;
-            transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
-        }
-        .card-symbol{
-            width:70px;height:70px;border-radius:14px;border:2px solid var(--gold);
-            display:flex;align-items:center;justify-content:center;
-            font-size:2.2rem;box-shadow:0 0 18px rgba(255,215,0,.6),0 0 40px rgba(255,42,109,.5);
-        }
-        .char-desc{padding:0 18px;font-size:.85rem;color:#eee;text-align:center;line-height:1.5;}
+.char-front-info{
+    width:100%;
+    padding:10px 15px 14px;
+    background:linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.9));
+    text-align:center;
+}
+.char-name{
+    font-family:'Orbitron';
+    font-size:1.4rem;
+    letter-spacing:2px;
+}
+.char-race{
+    font-size:.8rem;
+    color:var(--cyan);
+}
+
+/* 背面 */
+.char-back{
+    background:
+        radial-gradient(circle at 50% 0,var(--purple),transparent 55%),
+        radial-gradient(circle at 0 100%,var(--cyan),transparent 55%),
+        #05010e;
+    transform:rotateY(180deg);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+}
+
+.card-symbol{
+    width:70px;
+    height:70px;
+    border-radius:14px;
+    border:2px solid var(--gold);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:2.2rem;
+    box-shadow:0 0 18px rgba(255,215,0,.6),
+               0 0 40px rgba(255,42,109,.5);
+}
+.char-desc{
+    padding:0 18px;
+    font-size:.85rem;
+    color:#eee;
+    text-align:center;
+    line-height:1.5;
+}
+
 
         /* ================= 6. 用户系统 MODAL + 设定为居中 ================= */
         #user-overlay.modal-layer{
