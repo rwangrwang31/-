@@ -890,9 +890,13 @@ const state = {
 /* 把后端 profile 对象同步到前端 state 的统一函数 */
 function applyProfileFromServer(p){
     if(!p) return;
+
+    // ✅ 兼容两种返回：{status, username, ...} 或 {status, profile:{...}}
+    if (p.profile) p = p.profile;
+
     state.user.name       = p.username;
     state.user.rank       = p.rank || 16;
-    // ✅ 使用后端返回的 rankRace (兼容旧的 p.race)
+    // 使用后端返回的 rankRace (兼容旧的 p.race)
     state.user.race       = p.rankRace || p.race || "";
     state.user.rankTitle  = p.rankTitle || "";
     state.user.exp        = p.exp  || 0;
@@ -903,6 +907,7 @@ function applyProfileFromServer(p){
     state.user.frameKey   = p.frameKey || "";
     state.user.titleKey   = p.titleKey || "";
     state.user.sigKey     = p.sigKey   || "";
+
     sessionStorage.setItem('ngnlUser',JSON.stringify(state.user));
     ui.updateHUD();
     ui.updateProfileView();
@@ -1319,61 +1324,55 @@ const settings={
         }else alert(res.message);
     },
     async uploadAvatarFile(){
-        const input = document.getElementById('settings-avatar-file');
-        const file = input.files && input.files[0];
-        if(!file) return alert("请选择一张图片。");
+    const input = document.getElementById('settings-avatar-file');
+    const file = input.files && input.files[0];
+    if(!file) return alert("请选择一张图片。");
 
-        // 可选：限制一下大小，比如 12MB
-        const MAX_SIZE = 12 * 1024 * 1024;
-        if(file.size > MAX_SIZE){
-            if(!confirm("图片大于 2MB，仍然继续上传吗？")) return;
+    // 可选：限制一下大小，比如 12MB
+    const MAX_SIZE = 12 * 1024 * 1024;
+    if(file.size > MAX_SIZE){
+        if(!confirm("图片大于 12MB，仍然继续上传吗？")) return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const result = e.target.result; // data:image/png;base64,xxxx
+        const match = /^data:(.*?);base64,(.*)$/.exec(result);
+        if(!match){
+            alert("无法读取这张图片。");
+            return;
         }
+        const mimeType  = match[1];
+        const base64Data= match[2];
 
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const result = e.target.result; // data:image/png;base64,xxxx
-            const match = /^data:(.*?);base64,(.*)$/.exec(result);
-            if(!match){
-                alert("无法读取这张图片。");
-                return;
+        // 调用后端 upload_avatar
+        const res = await apiRequest({
+            action: 'upload_avatar',
+            fileName: file.name,
+            mimeType: mimeType,
+            data: base64Data
+        });
+
+        if(res.status === 'success'){
+            // 1）用统一函数同步所有字段（包括 avatar）
+            applyProfileFromServer(res);
+
+            // 2）把后端返回的直链填回输入框，方便复制
+            if(res.avatarUrl){
+                document.getElementById('settings-avatar').value = res.avatarUrl;
             }
-            const mimeType = match[1];
-            const base64Data = match[2];
 
-            // 调用后端 upload_avatar
-            const res = await apiRequest({
-                action: 'upload_avatar',
-                fileName: file.name,
-                mimeType: mimeType,
-                data: base64Data
-            });
+            alert("Avatar uploaded!");
+        }else{
+            alert(res.message || "Upload failed.");
+        }
+    };
+    reader.onerror = () => {
+        alert("读取图片失败。");
+    };
+    reader.readAsDataURL(file);
+},
 
-            if(res.status === 'success'){
-    // 1）如果后端带了 profile，就整包套进去
-    if(res.profile){
-        applyProfileFromServer(res.profile);
-    }
-
-    // 2）兜底：强制同步 avatarUrl 到本地 state + 输入框
-    if(res.avatarUrl){
-        state.user.avatar = res.avatar || res.avatarUrl;   // res.avatar 一般没有，就用 avatarUrl
-        document.getElementById('settings-avatar').value = res.avatarUrl;
-        sessionStorage.setItem('ngnlUser', JSON.stringify(state.user));
-    }
-
-    // 3）保险再刷新一下 UI
-    ui.updateProfileView();
-    alert("Avatar uploaded!");
-}else{
-    alert(res.message || "Upload failed.");
-}
-      };
-        reader.onerror = () => {
-            alert("读取图片失败。");
-        };
-
-        reader.readAsDataURL(file);
-    },
     async changeName(){
         const newName=document.getElementById('settings-newname').value.trim();
         if(!newName) return alert("请输入新名字。");
