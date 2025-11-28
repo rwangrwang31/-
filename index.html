@@ -1142,24 +1142,34 @@ const ui={
 
 /* ================== 认证 ================== */
 
-const auth={
+const auth = {
     tempRegData:{},
+
     async login(){
-        const email=document.getElementById('login-email').value.trim();
-        const password=document.getElementById('login-pass').value;
-        if(!email||!password) return ui.showAuthError("Email and password are required.");
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-pass').value;
+
+        if(!email || !password){
+            return ui.showAuthError("Email and password are required.");
+        }
+
         ui.showAuthError("Connecting...");
-        const res=await apiRequest({action:'login',email,password});
-        if(res.status==='success'){
-            // ✅ 直接用后端整包数据（包含 rankRace / rankTitle / expToNext）
+
+        const res = await apiRequest({ action:'login', email, password });
+
+        if(res.status === 'success'){
+            // ⬇️ login 直接返回的就是 profile 字段集合（没有 res.profile 这一层）
             applyProfileFromServer(res);
-            state.isLoggedIn=true;
+
+            state.isLoggedIn = true;
             ui.elements.authOverlay.classList.remove('active');
             ui.elements.body.classList.remove('auth-active');
             ui.showAuthError("");
-        }else ui.showAuthError(res.message);
+        }else{
+            ui.showAuthError(res.message || "Login failed.");
+        }
     },
-    async requestCode(){
+   async requestCode(){
         const user=document.getElementById('reg-user').value.trim();
         const email=document.getElementById('reg-email').value.trim();
         const pass=document.getElementById('reg-pass').value;
