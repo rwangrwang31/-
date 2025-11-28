@@ -722,12 +722,21 @@
                     </div>
                     <div class="settings-card">
                         <h3>AVATAR & NAME</h3>
-                        <div class="settings-row">
-                            <label>Avatar URL</label>
-                            <input id="settings-avatar" class="input" placeholder="粘贴一张图片链接" />
-                        </div>
-                        <button class="btn" style="margin-bottom:8px;" onclick="settings.saveAvatar()">SAVE AVATAR</button>
-                        <div style="border-top:1px dashed #444;margin:6px 0 8px;"></div>
+<div class="settings-row">
+    <label>Avatar URL</label>
+    <input id="settings-avatar" class="input" placeholder="粘贴一张图片链接" />
+</div>
+<button class="btn" style="margin-bottom:8px;" onclick="settings.saveAvatar()">SAVE AVATAR</button>
+
+<!-- 新增：本地上传 -->
+<div class="settings-row" style="margin-top:4px;">
+    <label>Upload</label>
+    <input id="settings-avatar-file" type="file" accept="image/*" class="input" style="padding:6px 8px;">
+</div>
+<button class="btn" style="margin-bottom:8px;" onclick="settings.uploadAvatarFile()">UPLOAD FROM DEVICE</button>
+
+<div style="border-top:1px dashed #444;margin:6px 0 8px;"></div>
+
                         <div class="settings-row">
                             <label>New Name</label>
                             <input id="settings-newname" class="input" placeholder="改名需要 100🪙">
@@ -1298,6 +1307,54 @@ const settings={
             applyProfileFromServer(res.profile);
             alert("Avatar updated.");
         }else alert(res.message);
+    },
+    async uploadAvatarFile(){
+        const input = document.getElementById('settings-avatar-file');
+        const file = input.files && input.files[0];
+        if(!file) return alert("请选择一张图片。");
+
+        // 可选：限制一下大小，比如 12MB
+        const MAX_SIZE = 12 * 1024 * 1024;
+        if(file.size > MAX_SIZE){
+            if(!confirm("图片大于 2MB，仍然继续上传吗？")) return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const result = e.target.result; // data:image/png;base64,xxxx
+            const match = /^data:(.*?);base64,(.*)$/.exec(result);
+            if(!match){
+                alert("无法读取这张图片。");
+                return;
+            }
+            const mimeType = match[1];
+            const base64Data = match[2];
+
+            // 调用后端 upload_avatar
+            const res = await apiRequest({
+                action: 'upload_avatar',
+                fileName: file.name,
+                mimeType: mimeType,
+                data: base64Data
+            });
+
+            if(res.status === 'success'){
+                // 用后端返回的最新 profile 刷新前端
+                applyProfileFromServer(res.profile);
+                // 同时把 URL 文本框也更新一下（以后想复制外链就方便）
+                if(res.avatarUrl){
+                    document.getElementById('settings-avatar').value = res.avatarUrl;
+                }
+                alert("Avatar uploaded!");
+            }else{
+                alert(res.message || "Upload failed.");
+            }
+        };
+        reader.onerror = () => {
+            alert("读取图片失败。");
+        };
+
+        reader.readAsDataURL(file);
     },
     async changeName(){
         const newName=document.getElementById('settings-newname').value.trim();
