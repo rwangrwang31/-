@@ -233,6 +233,146 @@
     text-align:center;
     line-height:1.5;
 }
+/* ===== Anime Player Layout ===== */
+.anime-layout{
+    display:flex;
+    gap:18px;
+    margin-top:10px;
+}
+
+/* 左侧：列表 */
+.anime-list{
+    width:260px;
+    max-height:520px;
+    overflow-y:auto;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.08);
+    background:rgba(10,10,25,.9);
+    padding:10px;
+}
+.anime-card{
+    padding:8px 10px;
+    border-radius:10px;
+    margin-bottom:6px;
+    cursor:pointer;
+    transition:background .2s, transform .15s;
+}
+.anime-card:hover{
+    background:rgba(255,255,255,.06);
+    transform:translateY(-1px);
+}
+.anime-card.active{
+    background:linear-gradient(90deg,var(--pink),var(--purple));
+}
+.anime-card-title{
+    font-size:.9rem;
+    font-weight:bold;
+}
+.anime-card-ep{
+    font-size:.78rem;
+    color:#ccc;
+}
+
+/* 右侧：播放器 & 评论 */
+.anime-main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+.anime-video-wrap{
+    position:relative;
+    width:100%;
+    background:#000;
+    border-radius:16px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.12);
+}
+.anime-video{
+    width:100%;
+    max-height:420px;
+    display:block;
+}
+
+/* 弹幕层（覆盖在 video 上） */
+.anime-danmaku-layer{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    overflow:hidden;
+}
+.dm-item{
+    position:absolute;
+    white-space:nowrap;
+    font-size:14px;
+    text-shadow:0 0 3px #000;
+    animation:dm-move 8s linear forwards;
+}
+@keyframes dm-move{
+    from{ transform:translateX(100%); }
+    to{ transform:translateX(-120%); }
+}
+
+/* 工具栏 / 弹幕输入 */
+.anime-toolbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:4px;
+    font-size:.85rem;
+}
+.anime-dm-input{
+    display:flex;
+    gap:8px;
+    margin-top:4px;
+}
+
+/* 评论区 */
+.anime-comments{
+    margin-top:6px;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.08);
+    padding:10px 12px;
+    background:rgba(5,5,20,.9);
+}
+.anime-comment-list{
+    max-height:220px;
+    overflow-y:auto;
+    margin-bottom:8px;
+}
+.anime-comment-card{
+    padding:6px 0;
+    border-bottom:1px dashed rgba(255,255,255,.1);
+}
+.anime-comment-header{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:.8rem;
+    color:#aaa;
+}
+.anime-comment-body{
+    font-size:.9rem;
+    margin:4px 0;
+}
+.anime-comment-actions{
+    font-size:.75rem;
+    color:#888;
+    display:flex;
+    gap:12px;
+}
+.anime-comment-actions span{
+    cursor:pointer;
+}
+.anime-comment-input{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+#anime-fav-btn.fav-on{
+    background:linear-gradient(90deg,var(--gold),var(--pink));
+    color:#000;
+}
 
 
         /* ================= 6. 用户系统 MODAL + 设定为居中 ================= */
@@ -767,6 +907,55 @@
         </div>
     </div>
 </div>
+<!-- ============= ANIME PLAYER ============= -->
+<section id="anime-section" class="panel">
+    <h2 class="panel-title">ANIME PLAYER</h2>
+    <div class="anime-layout">
+        <!-- 左边：番剧 / 电影列表 -->
+        <div class="anime-list" id="anime-list"></div>
+
+        <!-- 右边：播放器 + 弹幕 + 评论 -->
+        <div class="anime-main">
+            <div class="anime-video-wrap">
+                <video id="anime-video" class="anime-video" controls></video>
+                <div id="anime-danmaku-layer" class="anime-danmaku-layer"></div>
+            </div>
+
+            <div class="anime-toolbar">
+                <button id="anime-fav-btn" class="btn">☆ 收藏本集</button>
+
+                <label style="margin-left:10px;">
+                    倍速
+                    <select id="anime-speed" class="input" style="width:auto;display:inline-block;">
+                        <option value="0.5">0.5x</option>
+                        <option value="1" selected>1.0x</option>
+                        <option value="1.5">1.5x</option>
+                        <option value="2">2.0x</option>
+                    </select>
+                </label>
+
+                <label style="margin-left:12px;">
+                    <input type="checkbox" id="anime-dm-toggle" checked>
+                    显示弹幕
+                </label>
+            </div>
+
+            <div class="anime-dm-input">
+                <input id="anime-danmaku-input" class="input" placeholder="发一条弹幕～" />
+                <button class="btn" id="anime-danmaku-send">发送弹幕</button>
+            </div>
+
+            <div class="anime-comments">
+                <h3>评论</h3>
+                <div id="anime-comment-list" class="anime-comment-list"></div>
+                <div class="anime-comment-input">
+                    <textarea id="anime-comment-input" class="textarea" placeholder="说点什么..."></textarea>
+                    <button class="btn" id="anime-comment-send">发送评论</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 <!-- 4. NOVEL READER MODAL -->
 <div id="reader-layer" class="modal-layer">
@@ -873,6 +1062,38 @@ const SHOP_STYLES = {
     sig_ciallo:    { label: "Ciallo～(≧▽≦)～" },
     sig_blank:     { label: "We are 『　』" }
 };
+/* --- 你的番剧 / 电影清单（先写死在前端） --- */
+const ANIME_DATA = [
+    {
+        id: "ngnl_s1",
+        title: "NO GAME NO LIFE 第1季",
+        type: "series",
+        cover: "ngnl_s1_cover.jpg", // 没有就留空字符串
+        episodes: [
+            { no: 1,  title: "第1话 外行人（Beginner）", url: "https://pan.quark.cn/s/f60b2a34c80e" },
+            { no: 2,  title: "第2话 挑战者（Challenger）", url: "https://pan.quark.cn/s/f2d358da63b7" },
+            { no: 3,  title: "第3话 熟练者（Expert）", url: "https://pan.quark.cn/s/9d3defe2165d" },
+            { no: 4,  title: "第4话 国王（Grand Master）", url: "https://pan.quark.cn/s/b6adcd920027" },
+            { no: 5,  title: "第5话 布局（Weak Square）", url: "https://pan.quark.cn/s/a21f96ca2f31" },
+            { no: 6,  title: "第6话 一步（Interesting）", url: "https://pan.quark.cn/s/dbbddce0ecfc" },
+            { no: 7,  title: "第7话 弃子（Sacrifice）", url: "https://pan.quark.cn/s/e48dbae30a3d" },
+            { no: 8,  title: "第8话 起死回生（Fake End）", url: "https://pan.quark.cn/s/c33ad75ae7d2" },
+            { no: 9,  title: "第9话 分离法（Sky Walk）", url: "https://pan.quark.cn/s/2afb0c4846ee" },
+            { no: 10, title: "第10话 指向法（Blue Rose）", url: "https://pan.quark.cn/s/36103d7949a8" },
+            { no: 11, title: "第11话 诱导法（Killing Giant）", url: "https://pan.quark.cn/s/6d0ce1c6a38c" },
+            { no: 12, title: "第12话 收束法（Rule Number 10）", url: "https://pan.quark.cn/s/6055834c0940" }
+        ]
+    },
+    {
+        id: "ngnl_movie",
+        title: "NO GAME NO LIFE ZERO 剧场版",
+        type: "movie",
+        cover: "ngnl_movie_cover.jpg",
+        episodes: [
+            { no: 1, title: "剧场版", url: "https://pan.quark.cn/s/121fcf65a219" }
+        ]
+    }
+];
 
 const state = {
     user:{
