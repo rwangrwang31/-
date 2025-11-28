@@ -475,6 +475,24 @@
     font-size:.75rem;
     color:#aaa;
 }
+/* 让头像图片铺满圆圈（保险起见，虽然你在 HTML 已经写了 inline 样式） */
+#profile-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* 如果未来想做占位图，可以用这个，但现在先隐藏文字 */
+#profile-avatar-frame.has-avatar img {
+    /* 有头像的时候，只显示图片 */
+    opacity: 1;
+}
+
+#profile-avatar-frame:not(.has-avatar) img {
+    /* 没头像的时候，可以让图片透明，只显示你想做的背景，占位先不做就行 */
+    opacity: 0;
+}
 
         .cmt-content{margin-top:4px;white-space:pre-wrap;font-size:.85rem;}
         .cmt-actions{font-size:.78rem;color:#888;display:flex;gap:10px;margin-top:4px;}
@@ -1024,15 +1042,26 @@ const ui={
         }
 
         // 头像 / 框
-        const avImg=document.getElementById('profile-avatar');
-        avImg.src=state.user.avatar || "sora.png";
+const avImg = document.getElementById('profile-avatar');
+const frameEl = document.getElementById('profile-avatar-frame');
 
-        const frameEl=document.getElementById('profile-avatar-frame');
-        frameEl.classList.remove('frame-elkia','frame-flugel','frame-warbeast');
-        const fk=state.user.frameKey;
-        if(fk && SHOP_STYLES[fk] && SHOP_STYLES[fk].class){
-            frameEl.classList.add(SHOP_STYLES[fk].class);
-        }
+// 设置头像地址
+avImg.src = state.user.avatar || "sora.png";
+
+// 根据有没有头像，给外框加 / 去掉 has-avatar
+if (state.user.avatar) {
+    frameEl.classList.add('has-avatar');
+} else {
+    frameEl.classList.remove('has-avatar');
+}
+
+// 头像框样式
+frameEl.classList.remove('frame-elkia','frame-flugel','frame-warbeast');
+const fk = state.user.frameKey;
+if (fk && SHOP_STYLES[fk] && SHOP_STYLES[fk].class) {
+    frameEl.classList.add(SHOP_STYLES[fk].class);
+}
+
 
         document.getElementById('settings-bio').value=state.user.bio||"";
         document.getElementById('settings-avatar').value=state.user.avatar||"";
