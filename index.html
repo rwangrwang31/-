@@ -899,7 +899,7 @@ function applyProfileFromServer(p){
     state.user.expToNext  = p.expToNext || 100;
     state.user.coins      = p.coins|| 0;
     state.user.bio        = p.bio  || "";
-    state.user.avatar     = p.avatar || "";
+    state.user.avatar     = p.avatar || p.avatarUrl || "";
     state.user.frameKey   = p.frameKey || "";
     state.user.titleKey   = p.titleKey || "";
     state.user.sigKey     = p.sigKey   || "";
@@ -1036,7 +1036,7 @@ const ui={
     /* 任何地方显示头像框/称号/签名都用这个统一渲染 */
     renderUserStyle(src){
         const name = src.user || state.user.name;
-        const avatar = src.avatar || "";
+        const avatar = src.avatar || src.avatarUrl || "";
         const frameKey = src.frameKey || "";
         const titleKey = src.titleKey || "";
         const sigKey   = src.sigKey || "";
@@ -1339,17 +1339,25 @@ const settings={
             });
 
             if(res.status === 'success'){
-                // 用后端返回的最新 profile 刷新前端
-                applyProfileFromServer(res.profile);
-                // 同时把 URL 文本框也更新一下（以后想复制外链就方便）
-                if(res.avatarUrl){
-                    document.getElementById('settings-avatar').value = res.avatarUrl;
-                }
-                alert("Avatar uploaded!");
-            }else{
-                alert(res.message || "Upload failed.");
-            }
-        };
+    // 1）如果后端带了 profile，就整包套进去
+    if(res.profile){
+        applyProfileFromServer(res.profile);
+    }
+
+    // 2）兜底：强制同步 avatarUrl 到本地 state + 输入框
+    if(res.avatarUrl){
+        state.user.avatar = res.avatar || res.avatarUrl;   // res.avatar 一般没有，就用 avatarUrl
+        document.getElementById('settings-avatar').value = res.avatarUrl;
+        sessionStorage.setItem('ngnlUser', JSON.stringify(state.user));
+    }
+
+    // 3）保险再刷新一下 UI
+    ui.updateProfileView();
+    alert("Avatar uploaded!");
+}else{
+    alert(res.message || "Upload failed.");
+}
+      };
         reader.onerror = () => {
             alert("读取图片失败。");
         };
@@ -1881,7 +1889,7 @@ const visuals={
         if(!wrapper) return;
         const bar=document.createElement('div');
         bar.className='chat-emoji-bar';
-        const emojis=['(≧▽≦)','(๑•̀ㅂ•́)و✧','orz','😂','❤️'];
+        const emojis=['(≧▽≦)','(๑•̀ㅂ•́)و✧','orz','😂',❤️'];
         emojis.forEach(e=>{
             const span=document.createElement('span');
             span.textContent=e;
