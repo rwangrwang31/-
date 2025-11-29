@@ -1961,9 +1961,9 @@ const animePage = {
         favSet:new Set(),
 
         // 新增：弹幕时间轴
-    danmakuMap:{},   // { epKey: [ {time,text,style}, ... ] }
-    dmCursor:0,      // 当前已播放到的弹幕索引
-    prevTime:0       // 上一帧视频时间，用来判断快进/后退
+        danmakuMap:{},   // { epKey: [ {time,text,style}, ... ] }
+        dmCursor:0,      // 当前已播放到的弹幕索引
+        prevTime:0       // 上一帧视频时间，用来判断快进/后退
     },
     dom:{},
 
@@ -2724,39 +2724,36 @@ const visuals={
 
 /* ================== 启动 ================== */
 
-document.addEventListener('DOMContentLoaded', async ()=>{
+document.addEventListener('DOMContentLoaded',async ()=>{
     visuals.init();
 
-    const stored = sessionStorage.getItem('ngnlUser');
-    if (stored) {
-        try {
-            const obj = JSON.parse(stored);
-            state.user = { ...state.user, ...obj };
-            state.isLoggedIn = true;
+    const stored=sessionStorage.getItem('ngnlUser');
+    if(stored){
+        try{
+            const obj=JSON.parse(stored);
+            state.user={...state.user,...obj};
+            state.isLoggedIn=true;
             ui.elements.authOverlay.classList.remove('active');
             ui.elements.body.classList.remove('auth-active');
             ui.updateHUD();
             ui.updateProfileView();
+            const res=await apiRequest({action:'get_profile'});
+            if(res.status==='success') applyProfileFromServer(res.profile);
 
-            // 用后端数据刷新一次（拿到最新的 race / title / frame 等）
-            const res = await apiRequest({ action: 'get_profile' });
-            if (res.status === 'success') applyProfileFromServer(res.profile);
-
-            // ⭐ 刷新收藏 —— 现在播放器叫 animePage，先判断再调用
-            if (window.animePage && typeof animePage.refreshFavorites === 'function') {
-                animePage.refreshFavorites();
-            }
-        } catch (e) {
+            // 初始化番剧页面
+            animePage.ensureReady();
+        }catch(e){
             console.error(e);
             sessionStorage.removeItem('ngnlUser');
             ui.elements.body.classList.add('auth-active');
             ui.elements.authOverlay.classList.add('active');
         }
-    } else {
+    }else{
         ui.elements.body.classList.add('auth-active');
         ui.elements.authOverlay.classList.add('active');
     }
 });
+
 </script>
 </body>
 </html>
