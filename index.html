@@ -2312,17 +2312,17 @@ const animePage = {
 
         const time = this.dom.video.currentTime;
         const color = this.dom.dmColor.value;
-        const mode = this.dom.dmMode.value; // scroll, top, bottom
+        const mode = this.dom.dmMode.value;
 
-        // 1. 立即上屏 (本地体验)
+        // 本地立即上屏
         this.spawnDanmaku({ text, color, mode, at: time });
         this.dom.dmInput.value = '';
 
-        // 2. 发送到服务器
+        // 发送到服务器
         const res = await apiRequest({
             action: 'post_danmaku',
             animeId: this.state.currentSeriesId,
-            episode: this.state.currentEpIndex,
+            episode: String(this.state.currentEpIndex), // <--- ⭐ 修改这里：加 String()
             text: text,
             at: time,
             color: color,
@@ -2330,10 +2330,7 @@ const animePage = {
         });
 
         if (res.status === 'success') {
-            // 3. 将其加入本地缓存池，防止 seek 回去后消失
-            this.state.danmakuMap.push({
-                text, color, mode, at: time
-            });
+            this.state.danmakuMap.push({ text, color, mode, at: time });
             this.state.danmakuMap.sort((a,b)=>a.at - b.at);
         } else {
             console.error("Danmaku send failed:", res.message);
@@ -2369,12 +2366,11 @@ const animePage = {
         const res = await apiRequest({
             action: 'post_anime_comment',
             animeId: this.state.currentSeriesId,
-            episode: this.state.currentEpIndex,
+            episode: String(this.state.currentEpIndex), // <--- ⭐ 修改这里：加 String()
             content: content
         });
         
         if (res.status === 'success') {
-            // 刷新评论列表
             this.loadRemoteData(this.state.currentSeriesId, this.state.currentEpIndex);
         } else {
             alert(res.message);
@@ -2392,7 +2388,7 @@ const animePage = {
         if (!state.isLoggedIn) return alert("Login required.");
         const key = this.getEpisodeKey(this.state.currentSeriesId, this.state.currentEpIndex);
         
-        // 乐观更新 UI
+        // 乐观更新
         const isFav = this.state.favSet.has(key);
         if (isFav) this.state.favSet.delete(key);
         else this.state.favSet.add(key);
@@ -2402,17 +2398,15 @@ const animePage = {
         const res = await apiRequest({
             action: 'toggle_favorite',
             animeId: this.state.currentSeriesId,
-            episode: this.state.currentEpIndex
+            episode: String(this.state.currentEpIndex) // <--- ⭐ 修改这里：加 String()
         });
 
         if (res.status !== 'success') {
-            // 失败回滚
             alert("Sync failed: " + res.message);
             if (isFav) this.state.favSet.add(key);
             else this.state.favSet.delete(key);
             this.updateFavButton();
         } else {
-            // 同步 localStorage 作为离线缓存
             localStorage.setItem('ngnlAnimeFav', JSON.stringify(Array.from(this.state.favSet)));
         }
     },
