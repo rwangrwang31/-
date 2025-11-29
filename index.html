@@ -306,39 +306,87 @@
     z-index: 10;
 }
 
-/* 单条弹幕 */
+/* ============= B站风格弹幕特效 ============= */
+
+/* 弹幕通用 */
 .dm-item {
     position: absolute;
-    right: -40%;        /* 从画面右侧外起步 */
     white-space: nowrap;
     will-change: transform;
-    animation: dm-move 8s linear forwards, dm-fade 8s linear forwards;
+    font-weight: bold;
+    font-family: "SimHei", "Microsoft YaHei", sans-serif;
+    /* B站风格：强描边，保证在任何背景下清晰可见 */
+    text-shadow: 
+        1px 1px 0 #000, 
+        -1px -1px 0 #000,  
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        1px 1px 2px rgba(0,0,0,0.8);
+    pointer-events: none;
+    line-height: 1.2;
 }
 
-/* 水平移动 */
+/* 模式 1: 滚动 (默认) */
+.dm-scroll {
+    right: -20%; /* 从右侧屏幕外开始 */
+    animation: dm-move 10s linear forwards;
+}
 @keyframes dm-move {
-    from {
-        transform: translateX(0);
-    }
-    to {
-        transform: translateX(-160%);
-    }
+    from { transform: translateX(0); }
+    to { transform: translateX(-200vw); } /* 移动到左侧屏幕外 */
 }
 
-/* 轻微淡出效果 */
-@keyframes dm-fade {
-    0% {
-        opacity: 0;
-    }
-    10% {
-        opacity: 1;
-    }
-    80% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-    }
+/* 模式 2: 顶部固定 */
+.dm-top {
+    left: 50%;
+    transform: translateX(-50%);
+    top: 20px; /* 默认起始位，JS会动态调整避免重叠 */
+    animation: dm-fade-fixed 5s linear forwards;
+    z-index: 20;
+    border-bottom: 2px solid transparent; /* 稍微占位 */
+}
+
+/* 模式 3: 底部固定 */
+.dm-bottom {
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 40px;
+    animation: dm-fade-fixed 5s linear forwards;
+    z-index: 20;
+}
+
+/* 固定弹幕只需淡入淡出，不需要移动 */
+@keyframes dm-fade-fixed {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* 弹幕控制条样式优化 */
+.anime-dm-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,0,0,0.6);
+    padding: 6px 10px;
+    border-radius: 8px;
+    margin-right: 10px;
+}
+.dm-select {
+    background: #222;
+    color: white;
+    border: 1px solid #444;
+    padding: 4px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+input[type="color"] {
+    width: 30px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
 }
 
 /* 工具栏 / 弹幕输入 */
@@ -988,10 +1036,20 @@
                 </div>
 
                 <!-- 弹幕输入 -->
-                <div class="anime-dm-input">
-                    <input id="anime-danmaku-input" class="input" placeholder="发一条弹幕～ (Enter 发送)" />
-                    <button class="btn" id="anime-danmaku-send">发送弹幕</button>
-                </div>
+                <div class="anime-dm-input" style="align-items:center;">
+    <div class="anime-dm-controls">
+        <select id="anime-dm-mode" class="dm-select">
+            <option value="scroll">滚动</option>
+            <option value="top">顶部</option>
+            <option value="bottom">底部</option>
+        </select>
+        
+        <input type="color" id="anime-dm-color" value="#ffffff" title="弹幕颜色">
+    </div>
+
+    <input id="anime-danmaku-input" class="input" style="margin-bottom:0;" placeholder="发一条弹幕～ (Enter 发送)" />
+    <button class="btn" id="anime-danmaku-send" style="padding:6px 16px;">发送</button>
+</div>
 
                 <!-- 评论区 -->
                 <div class="anime-comments">
@@ -1208,9 +1266,9 @@ function applyProfileFromServer(p){
     ui.updateHUD();
     ui.updateProfileView();
 
-    // ⭐ 登录成功 / 刷新 profile 时，同步一下收藏（防守式写法，anime 没定义也不会报错）
-    if (typeof anime !== 'undefined' && anime.refreshFavorites) {
-        anime.refreshFavorites();
+    // ⭐ 登录成功 / 刷新 profile 时，同步一下收藏
+    if (typeof animePage !== 'undefined' && animePage.refreshFavorites) {
+        animePage.refreshFavorites();
     }
 }
 
@@ -1947,71 +2005,433 @@ const community={
         }else alert(res.message);
     }
 };
-/* ================== ANIME 播放器（B 站风格逻辑） ================== */
+/* ================== ANIME 播放器（B站风格 + 服务端同步） ================== */
 
 const animePage = {
-    state:{
-        initialized:false,
-        currentSeriesId:null,
-        currentEpIndex:0,
-        danmakuOn:true,
-        autoNext:true,
-        lastSaveTime:0,
-        comments:{},     // 本地评论
-        favSet:new Set(),
-
-        // 新增：弹幕时间轴
-        danmakuMap:{},   // { epKey: [ {time,text,style}, ... ] }
-        dmCursor:0,      // 当前已播放到的弹幕索引
-        prevTime:0       // 上一帧视频时间，用来判断快进/后退
+    state: {
+        initialized: false,
+        currentSeriesId: null,
+        currentEpIndex: 0,
+        danmakuOn: true,
+        autoNext: true,
+        lastSaveTime: 0,
+        
+        // 弹幕相关
+        danmakuMap: [],   // 当前集的弹幕池 [ {id, text, color, mode, time, ...}, ... ]
+        dmCursor: 0,      // 游标
+        prevTime: 0,      // 上一次时间
+        
+        // 轨道管理（防止重叠）
+        lanes: { scroll: [], top: [], bottom: [] },
+        
+        favSet: new Set() // 收藏 (只存 keys)
     },
-    dom:{},
+    dom: {},
 
-    ensureReady(){
-        if(this.state.initialized) return;
+    ensureReady() {
+        if (this.state.initialized) return;
         this.init();
         this.state.initialized = true;
     },
 
-    init(){
-        // 缓存节点
-        this.dom.list      = document.getElementById('anime-list');
-        this.dom.video     = document.getElementById('anime-video');
-        this.dom.dmLayer   = document.getElementById('anime-danmaku-layer');
-        this.dom.dmInput   = document.getElementById('anime-danmaku-input');
-        this.dom.dmSendBtn = document.getElementById('anime-danmaku-send');
-        this.dom.dmToggle  = document.getElementById('anime-dm-toggle');
-        this.dom.speedSel  = document.getElementById('anime-speed');
-        this.dom.autoNext  = document.getElementById('anime-autonext');
-        this.dom.favBtn    = document.getElementById('anime-fav-btn');
-        this.dom.titleBar  = document.getElementById('anime-current-title');
-        this.dom.cList     = document.getElementById('anime-comment-list');
-        this.dom.cInput    = document.getElementById('anime-comment-input');
-        this.dom.cSendBtn  = document.getElementById('anime-comment-send');
+    init() {
+        // 缓存 DOM
+        this.dom = {
+            list: document.getElementById('anime-list'),
+            video: document.getElementById('anime-video'),
+            dmLayer: document.getElementById('anime-danmaku-layer'),
+            dmInput: document.getElementById('anime-danmaku-input'),
+            dmSendBtn: document.getElementById('anime-danmaku-send'),
+            dmToggle: document.getElementById('anime-dm-toggle'),
+            dmMode: document.getElementById('anime-dm-mode'),   // 新增
+            dmColor: document.getElementById('anime-dm-color'), // 新增
+            speedSel: document.getElementById('anime-speed'),
+            autoNext: document.getElementById('anime-autonext'),
+            favBtn: document.getElementById('anime-fav-btn'),
+            titleBar: document.getElementById('anime-current-title'),
+            cList: document.getElementById('anime-comment-list'),
+            cInput: document.getElementById('anime-comment-input'),
+            cSendBtn: document.getElementById('anime-comment-send')
+        };
 
-        // 渲染左侧番剧列表
         this.renderList();
-
-        // 读取本地状态（上次看到哪一集 / 播放进度 / 倍速 / 收藏 / 评论）
-        this.loadLocalState();
-
-        // 事件绑定
+        this.loadLocalSettings(); // 只加载设置（倍速、开关），不加载弹幕数据
         this.bindEvents();
 
-        // 如果有本地记录就从记录开始，否则播放第一集
-        if(this._saved && this._saved.seriesId){
-            this.playEpisode(this._saved.seriesId, this._saved.epIndex || 0, this._saved.currentTime || 0, true);
-        }else{
-            const firstSeries = ANIME_DATA[0];
-            this.playEpisode(firstSeries.id, 0, 0, false);
+        // 默认播放第一集（暂不自动请求弹幕，等用户点选或自动播放）
+        const first = ANIME_DATA[0];
+        if (first) {
+            // 如果有上次观看记录则恢复
+            try {
+                const saved = JSON.parse(localStorage.getItem('ngnlAnimeLast') || 'null');
+                if (saved && saved.seriesId) {
+                    this.playEpisode(saved.seriesId, saved.epIndex, saved.currentTime, true);
+                } else {
+                    this.playEpisode(first.id, 0, 0, false);
+                }
+            } catch (e) {
+                this.playEpisode(first.id, 0, 0, false);
+            }
         }
     },
 
+    bindEvents() {
+        // 选集
+        this.dom.list.addEventListener('click', e => {
+            const card = e.target.closest('.anime-card');
+            if (!card) return;
+            const sid = card.getAttribute('data-series');
+            const idx = parseInt(card.getAttribute('data-index'), 10);
+            this.playEpisode(sid, idx, 0, false);
+        });
+
+        // 播放器控制
+        this.dom.speedSel.addEventListener('change', () => {
+            this.dom.video.playbackRate = parseFloat(this.dom.speedSel.value);
+        });
+        this.dom.dmToggle.addEventListener('change', () => {
+            this.state.danmakuOn = this.dom.dmToggle.checked;
+            this.dom.dmLayer.style.display = this.state.danmakuOn ? 'block' : 'none';
+        });
+        this.dom.autoNext.addEventListener('change', () => {
+            this.state.autoNext = this.dom.autoNext.checked;
+        });
+
+        // 弹幕发送
+        const sendAction = () => this.sendDanmaku();
+        this.dom.dmSendBtn.addEventListener('click', sendAction);
+        this.dom.dmInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') sendAction();
+        });
+
+        // 评论发送
+        this.dom.cSendBtn.addEventListener('click', () => this.sendComment());
+
+        // 收藏
+        this.dom.favBtn.addEventListener('click', () => this.toggleFav());
+
+        // 视频事件
+        this.dom.video.addEventListener('timeupdate', () => this.handleTimeUpdate());
+        this.dom.video.addEventListener('ended', () => {
+            if (this.state.autoNext) this.playNextEpisode();
+        });
+        
+        // 寻求(Seek)事件：重置弹幕游标
+        this.dom.video.addEventListener('seeking', () => {
+             const t = this.dom.video.currentTime;
+             // 找到时间轴上第一个 > t 的位置的前一个
+             this.state.dmCursor = 0;
+             // 简单遍历找到 cursor 位置
+             while(this.state.dmCursor < this.state.danmakuMap.length && this.state.danmakuMap[this.state.dmCursor].at < t){
+                 this.state.dmCursor++;
+             }
+             // 清空屏幕弹幕
+             this.dom.dmLayer.innerHTML = '';
+             this.state.lanes = { scroll: [], top: [], bottom: [] };
+        });
+    },
+
+    loadLocalSettings() {
+        // 倍速
+        const sp = localStorage.getItem('ngnlAnimeSpeed');
+        if (sp) {
+            this.dom.speedSel.value = sp;
+            this.dom.video.playbackRate = parseFloat(sp);
+        }
+        // 收藏（先加载本地的作为缓存，登录后会合并）
+        try {
+            const f = JSON.parse(localStorage.getItem('ngnlAnimeFav') || '[]');
+            this.state.favSet = new Set(f);
+        } catch(e) {}
+    },
+
+    getEpisodeKey(sid, idx) { return sid + '_' + idx; },
+
+    // ================= 核心播放逻辑 =================
+    async playEpisode(seriesId, index, resumeTime = 0, isRestore = false) {
+        const series = ANIME_DATA.find(s => s.id === seriesId);
+        if (!series) return;
+        const ep = series.episodes[index];
+        if (!ep) return;
+
+        this.state.currentSeriesId = seriesId;
+        this.state.currentEpIndex = index;
+        this.state.dmCursor = 0;
+        this.state.prevTime = 0;
+        this.state.danmakuMap = []; // 清空弹幕池
+        this.dom.dmLayer.innerHTML = ''; // 清空屏幕
+
+        // UI 更新
+        this.highlightCurrentCard();
+        this.dom.titleBar.innerText = `${series.title} - ${ep.title}`;
+        this.updateFavButton();
+
+        // 视频源加载
+        this.dom.video.src = ep.url;
+        this.dom.video.currentTime = resumeTime;
+        
+        // 异步加载数据 (全站弹幕 + 评论)
+        this.loadRemoteData(seriesId, index);
+        
+        // 尝试播放
+        try {
+            await this.dom.video.play();
+        } catch (e) {
+            console.log("Autoplay blocked, waiting for user interaction.");
+        }
+    },
+
+    highlightCurrentCard() {
+        this.dom.list.querySelectorAll('.anime-card').forEach(c => c.classList.remove('active'));
+        const target = this.dom.list.querySelector(`.anime-card[data-series="${this.state.currentSeriesId}"][data-index="${this.state.currentEpIndex}"]`);
+        if (target) {
+            target.classList.add('active');
+            target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+    },
+
+    // ================= 数据同步 (API) =================
+    async loadRemoteData(sid, epIndex) {
+        const epStr = String(epIndex);
+        
+        // 1. 获取弹幕
+        const dRes = await apiRequest({ action: 'get_danmaku', animeId: sid, episode: epStr });
+        if (dRes.status === 'success') {
+            // 按时间排序
+            this.state.danmakuMap = dRes.data.sort((a, b) => a.at - b.at);
+            console.log(`Loaded ${this.state.danmakuMap.length} danmaku.`);
+        }
+
+        // 2. 获取评论
+        const cRes = await apiRequest({ action: 'get_anime_comments', animeId: sid, episode: epStr });
+        if (cRes.status === 'success') {
+            this.renderComments(cRes.data);
+        } else {
+            this.dom.cList.innerHTML = '<p style="color:#666">No comments yet.</p>';
+        }
+    },
+
+    // 登录后被外部调用的函数
+    async refreshFavorites() {
+        if (!state.isLoggedIn) return;
+        const res = await apiRequest({ action: 'get_favorites' });
+        if (res.status === 'success') {
+            // 覆盖本地
+            const keys = res.data.map(f => this.getEpisodeKey(f.animeId, f.episode));
+            this.state.favSet = new Set(keys);
+            localStorage.setItem('ngnlAnimeFav', JSON.stringify(keys));
+            this.updateFavButton();
+        }
+    },
+
+    // ================= 弹幕渲染 (B站逻辑) =================
+    handleTimeUpdate() {
+        const v = this.dom.video;
+        const t = v.currentTime;
+
+        // 保存进度 (每5秒)
+        const now = Date.now();
+        if (now - this.state.lastSaveTime > 5000) {
+            this.state.lastSaveTime = now;
+            localStorage.setItem('ngnlAnimeLast', JSON.stringify({
+                seriesId: this.state.currentSeriesId,
+                epIndex: this.state.currentEpIndex,
+                currentTime: t
+            }));
+        }
+
+        if (!this.state.danmakuOn) return;
+
+        // 检查弹幕队列
+        const list = this.state.danmakuMap;
+        while (this.state.dmCursor < list.length) {
+            const dm = list[this.state.dmCursor];
+            // 允许 0.1s 的误差
+            if (dm.at <= t && dm.at > t - 1.0) {
+                this.spawnDanmaku(dm);
+                this.state.dmCursor++;
+            } else if (dm.at > t) {
+                break; // 还没到时间
+            } else {
+                // dm.at < t - 1.0 (比如卡顿跳过了), 只有 seek 会导致大量跳过
+                // 正常播放这里不会触发太多
+                this.state.dmCursor++; 
+            }
+        }
+    },
+
+    spawnDanmaku(data) {
+        const { text, color, mode, size } = data;
+        if (!text) return;
+
+        const el = document.createElement('div');
+        el.innerText = text;
+        el.className = 'dm-item';
+        
+        // 样式设置
+        el.style.color = color || '#ffffff';
+        if (size === 'small') el.style.fontSize = '18px';
+        else if (size === 'large') el.style.fontSize = '28px';
+        else el.style.fontSize = '22px'; // default
+
+        // 模式处理
+        const containerH = this.dom.dmLayer.clientHeight;
+        const modeType = mode || 'scroll';
+
+        if (modeType === 'top') {
+            el.classList.add('dm-top');
+            this.dom.dmLayer.appendChild(el);
+            // 简单防重叠逻辑
+            const offset = (document.querySelectorAll('.dm-top').length - 1) * 30;
+            el.style.top = (20 + (offset % (containerH/2))) + 'px';
+            
+        } else if (modeType === 'bottom') {
+            el.classList.add('dm-bottom');
+            this.dom.dmLayer.appendChild(el);
+            const offset = (document.querySelectorAll('.dm-bottom').length - 1) * 30;
+            el.style.bottom = (40 + (offset % (containerH/2))) + 'px';
+
+        } else {
+            // 滚动
+            el.classList.add('dm-scroll');
+            this.dom.dmLayer.appendChild(el);
+            // 随机/计算轨道
+            const maxLanes = Math.floor(containerH / 30); 
+            const lane = Math.floor(Math.random() * maxLanes);
+            el.style.top = (lane * 30) + 'px';
+        }
+
+        // 动画结束移除 DOM
+        el.addEventListener('animationend', () => el.remove());
+    },
+
+    async sendDanmaku() {
+        if (!state.isLoggedIn) return alert("Please login to send danmaku.");
+        const text = this.dom.dmInput.value.trim();
+        if (!text) return;
+
+        const time = this.dom.video.currentTime;
+        const color = this.dom.dmColor.value;
+        const mode = this.dom.dmMode.value; // scroll, top, bottom
+
+        // 1. 立即上屏 (本地体验)
+        this.spawnDanmaku({ text, color, mode, at: time });
+        this.dom.dmInput.value = '';
+
+        // 2. 发送到服务器
+        const res = await apiRequest({
+            action: 'post_danmaku',
+            animeId: this.state.currentSeriesId,
+            episode: this.state.currentEpIndex,
+            text: text,
+            at: time,
+            color: color,
+            mode: mode
+        });
+
+        if (res.status === 'success') {
+            // 3. 将其加入本地缓存池，防止 seek 回去后消失
+            this.state.danmakuMap.push({
+                text, color, mode, at: time
+            });
+            this.state.danmakuMap.sort((a,b)=>a.at - b.at);
+        } else {
+            console.error("Danmaku send failed:", res.message);
+        }
+    },
+
+    // ================= 评论 & 收藏 =================
+    renderComments(list) {
+        if (!list || list.length === 0) return;
+        this.dom.cList.innerHTML = list.map(c => {
+             // 利用已有的 renderUserStyle
+             const style = ui.renderUserStyle(c);
+             return `
+             <div class="anime-comment-card">
+                <div class="anime-comment-header">
+                    ${style.avatarHTML}
+                    <div style="margin-left:8px;">
+                        <span style="font-weight:bold;color:#ccc;font-size:0.9rem">${c.user}</span>
+                        <span style="margin-left:8px;font-size:0.7rem;color:#666">${c.time}</span>
+                    </div>
+                </div>
+                <div class="anime-comment-body" style="padding-left:36px;margin-top:2px;">${c.content}</div>
+             </div>`;
+        }).join('');
+    },
+
+    async sendComment() {
+        if (!state.isLoggedIn) return alert("Login required.");
+        const content = this.dom.cInput.value.trim();
+        if (!content) return;
+        
+        this.dom.cInput.value = '';
+        const res = await apiRequest({
+            action: 'post_anime_comment',
+            animeId: this.state.currentSeriesId,
+            episode: this.state.currentEpIndex,
+            content: content
+        });
+        
+        if (res.status === 'success') {
+            // 刷新评论列表
+            this.loadRemoteData(this.state.currentSeriesId, this.state.currentEpIndex);
+        } else {
+            alert(res.message);
+        }
+    },
+
+    updateFavButton() {
+        const key = this.getEpisodeKey(this.state.currentSeriesId, this.state.currentEpIndex);
+        const isFav = this.state.favSet.has(key);
+        this.dom.favBtn.innerText = isFav ? "★ 已收藏" : "☆ 收藏本集";
+        this.dom.favBtn.classList.toggle('fav-on', isFav);
+    },
+
+    async toggleFav() {
+        if (!state.isLoggedIn) return alert("Login required.");
+        const key = this.getEpisodeKey(this.state.currentSeriesId, this.state.currentEpIndex);
+        
+        // 乐观更新 UI
+        const isFav = this.state.favSet.has(key);
+        if (isFav) this.state.favSet.delete(key);
+        else this.state.favSet.add(key);
+        this.updateFavButton();
+
+        // 发送请求
+        const res = await apiRequest({
+            action: 'toggle_favorite',
+            animeId: this.state.currentSeriesId,
+            episode: this.state.currentEpIndex
+        });
+
+        if (res.status !== 'success') {
+            // 失败回滚
+            alert("Sync failed: " + res.message);
+            if (isFav) this.state.favSet.add(key);
+            else this.state.favSet.delete(key);
+            this.updateFavButton();
+        } else {
+            // 同步 localStorage 作为离线缓存
+            localStorage.setItem('ngnlAnimeFav', JSON.stringify(Array.from(this.state.favSet)));
+        }
+    },
+
+    playNextEpisode() {
+        const series = ANIME_DATA.find(s => s.id === this.state.currentSeriesId);
+        if (!series) return;
+        if (this.state.currentEpIndex + 1 < series.episodes.length) {
+            this.playEpisode(this.state.currentSeriesId, this.state.currentEpIndex + 1);
+        } else {
+            alert("Current series finished!");
+        }
+    },
+    
     renderList(){
         const html = ANIME_DATA.map(series=>{
             return `
             <div class="anime-series-block">
-                <div style="font-size:.8rem;color:#999;margin:6px 2px 2px;">${series.title}</div>
+                <div style="font-size:.8rem;color:#999;margin:6px 2px 2px;border-bottom:1px solid #333;padding-bottom:2px;">${series.title}</div>
                 ${series.episodes.map((ep,idx)=>`
                     <div class="anime-card" 
                          data-series="${series.id}" 
@@ -2023,425 +2443,6 @@ const animePage = {
             </div>`;
         }).join('');
         this.dom.list.innerHTML = html;
-    },
-
-    bindEvents(){
-        // 选集点击
-        this.dom.list.addEventListener('click', e=>{
-            const card = e.target.closest('.anime-card');
-            if(!card) return;
-            const sid = card.getAttribute('data-series');
-            const idx = parseInt(card.getAttribute('data-index'),10);
-            this.playEpisode(sid, idx, 0, false);
-        });
-
-        // 倍速
-        this.dom.speedSel.addEventListener('change', ()=>{
-            const v = parseFloat(this.dom.speedSel.value);
-            this.dom.video.playbackRate = v;
-            localStorage.setItem('ngnlAnimeSpeed', String(v));
-        });
-
-        // 弹幕开关
-        this.dom.dmToggle.addEventListener('change', ()=>{
-            this.state.danmakuOn = this.dom.dmToggle.checked;
-            this.dom.dmLayer.style.display = this.state.danmakuOn ? 'block' : 'none';
-        });
-
-        // 自动连播
-        this.dom.autoNext.addEventListener('change', ()=>{
-            this.state.autoNext = this.dom.autoNext.checked;
-            localStorage.setItem('ngnlAnimeAutoNext', this.state.autoNext ? '1' : '0');
-        });
-
-        // 发弹幕（按钮）
-        this.dom.dmSendBtn.addEventListener('click', ()=>this.sendDanmaku());
-        // Enter 发弹幕
-        this.dom.dmInput.addEventListener('keydown', e=>{
-            if(e.key === 'Enter' && !e.shiftKey){
-                e.preventDefault();
-                this.sendDanmaku();
-            }
-        });
-
-        // 评论发送
-        this.dom.cSendBtn.addEventListener('click', ()=>this.sendComment());
-        this.dom.cInput.addEventListener('keydown', e=>{
-            if(e.key === 'Enter' && !e.shiftKey){
-                e.preventDefault();
-                this.sendComment();
-            }
-        });
-
-        // 收藏
-        this.dom.favBtn.addEventListener('click', ()=>this.toggleFav());
-
-       // 视频事件：记忆进度 + 弹幕时间轴
-this.dom.video.addEventListener('timeupdate', ()=>{
-    this.handleTimeUpdate();
-});
-
-
-        this.dom.video.addEventListener('ended', ()=>{
-            if(this.state.autoNext){
-                this.playNextEpisode();
-            }
-        });
-    },
-
-    loadLocalState(){
-        try{
-            this._saved = JSON.parse(localStorage.getItem('ngnlAnimeLast') || 'null');
-        }catch(e){
-            this._saved = null;
-        }
-        // 倍速
-        const sp = parseFloat(localStorage.getItem('ngnlAnimeSpeed') || '1');
-        if(!isNaN(sp)){
-            this.dom.speedSel.value = String(sp);
-            this.dom.video.playbackRate = sp;
-        }
-        // 自动连播
-        const auto = localStorage.getItem('ngnlAnimeAutoNext');
-        if(auto !== null){
-            this.state.autoNext = auto === '1';
-            this.dom.autoNext.checked = this.state.autoNext;
-        }
-
-        // 收藏
-        try{
-            const favArr = JSON.parse(localStorage.getItem('ngnlAnimeFav') || '[]');
-            this.state.favSet = new Set(favArr);
-        }catch(e){
-            this.state.favSet = new Set();
-        }
-
-        // 评论
-        try{
-            this.state.comments = JSON.parse(localStorage.getItem('ngnlAnimeComments') || '{}');
-        }catch(e){
-            this.state.comments = {};
-        }
-        // 弹幕时间轴
-try{
-    this.state.danmakuMap = JSON.parse(localStorage.getItem('ngnlAnimeDanmaku') || '{}');
-}catch(e){
-    this.state.danmakuMap = {};
-}
-
-    },
-
-    getEpisode(seriesId, index){
-        const series = ANIME_DATA.find(s=>s.id === seriesId);
-        if(!series) return {};
-        const ep = series.episodes[index];
-        return { series, ep };
-    },
-
-    getEpisodeKey(seriesId, index){
-        return seriesId + '_' + index;
-    },
-
-    playEpisode(seriesId, index, resumeTime = 0, isRestore = false){
-        const {series, ep} = this.getEpisode(seriesId, index);
-        if(!series || !ep){
-            console.warn('Episode not found', seriesId, index);
-            return;
-        }
-
-        this.state.currentSeriesId = seriesId;
-        this.state.currentEpIndex  = index;
-        // 重置弹幕游标
-this.state.dmCursor = 0;
-this.state.prevTime = 0;
-
-
-        // 更新列表选中态
-        this.highlightCurrentCard();
-
-        // 更新标题栏
-        this.dom.titleBar.textContent = `${series.title} · ${ep.title}`;
-
-        // 更新收藏按钮状态
-        const key = this.getEpisodeKey(seriesId, index);
-        this.updateFavButton(key);
-
-        // 加载评论
-        this.renderComments();
-
-        // 设置视频源（你需要在 ANIME_DATA 里把 url 换成 R2 直链）
-        this.dom.video.src = ep.url;
-        // 先暂停，等 metadata 加载完再跳转时间并播放
-        this.dom.video.pause();
-
-        const savedThis = this.getSavedFor(seriesId, index);
-        const startTime = isRestore ? (resumeTime || (savedThis?.currentTime || 0)) : 0;
-
-        const onLoaded = ()=>{
-            if(startTime > 0 && startTime < this.dom.video.duration){
-                this.dom.video.currentTime = startTime;
-            }
-            this.dom.video.play().catch(()=>{});
-            this.dom.video.removeEventListener('loadedmetadata', onLoaded);
-        };
-        this.dom.video.addEventListener('loadedmetadata', onLoaded);
-
-        // 保存当前集信息（时间后面在 timeupdate 里更新）
-        this.saveProgress(startTime);
-    },
-
-    highlightCurrentCard(){
-        const cards = this.dom.list.querySelectorAll('.anime-card');
-        cards.forEach(c=>c.classList.remove('active'));
-
-        const selector = `.anime-card[data-series="${this.state.currentSeriesId}"][data-index="${this.state.currentEpIndex}"]`;
-        const active = this.dom.list.querySelector(selector);
-        if(active){
-            active.classList.add('active');
-            // 滚动到中间位置，体验像 b 站
-            const rect = active.getBoundingClientRect();
-            const parentRect = this.dom.list.getBoundingClientRect();
-            if(rect.top < parentRect.top || rect.bottom > parentRect.bottom){
-                this.dom.list.scrollTop = active.offsetTop - this.dom.list.clientHeight/2;
-            }
-        }
-    },
-
-    playNextEpisode(){
-        const {series} = this.getEpisode(this.state.currentSeriesId, this.state.currentEpIndex);
-        if(!series) return;
-
-        let sid   = this.state.currentSeriesId;
-        let index = this.state.currentEpIndex + 1;
-
-        // 当前番剧播完，尝试下一部番
-        if(index >= series.episodes.length){
-            const currentSeriesIdx = ANIME_DATA.findIndex(s=>s.id === this.state.currentSeriesId);
-            if(currentSeriesIdx >= 0 && currentSeriesIdx + 1 < ANIME_DATA.length){
-                sid = ANIME_DATA[currentSeriesIdx + 1].id;
-                index = 0;
-            }else{
-                // 全部看完，简单提醒一下
-                alert("本季已经全部看完啦 (´･ω･`)");
-                return;
-            }
-        }
-        this.playEpisode(sid, index, 0, false);
-    },
-
-    getSavedFor(seriesId, index){
-        try{
-            const all = JSON.parse(localStorage.getItem('ngnlAnimeAllProgress') || '{}');
-            return all[this.getEpisodeKey(seriesId, index)] || null;
-        }catch(e){
-            return null;
-        }
-    },
-
-    saveProgress(currentTime){
-        const data = {
-            seriesId:   this.state.currentSeriesId,
-            epIndex:    this.state.currentEpIndex,
-            currentTime: currentTime
-        };
-        localStorage.setItem('ngnlAnimeLast', JSON.stringify(data));
-
-        let all = {};
-        try{
-            all = JSON.parse(localStorage.getItem('ngnlAnimeAllProgress') || '{}');
-        }catch(e){
-            all = {};
-        }
-        all[this.getEpisodeKey(this.state.currentSeriesId, this.state.currentEpIndex)] = data;
-        localStorage.setItem('ngnlAnimeAllProgress', JSON.stringify(all));
-    },
-    
-    handleTimeUpdate(){
-    const v = this.dom.video;
-    if(!v) return;
-
-    const t = v.currentTime || 0;
-    const now = Date.now();
-
-    // 1) 正常保存播放进度（你原来的逻辑）
-    if(now - this.state.lastSaveTime > 3000){ // 3 秒存一次
-        this.state.lastSaveTime = now;
-        this.saveProgress(t);
-    }
-
-    // 2) 按时间轴触发本集弹幕
-    if(!this.state.danmakuOn) {
-        this.state.prevTime = t;
-        return;
-    }
-
-    const epKey = this.getCurrentEpisodeKey();
-    const list = this.state.danmakuMap[epKey] || [];
-
-    // 视频被拖到更早的位置：重算游标
-    if(t < this.state.prevTime - 0.5){
-        this.state.dmCursor = 0;
-        while(this.state.dmCursor < list.length && list[this.state.dmCursor].time < t){
-            this.state.dmCursor++;
-        }
-    }
-
-    // 正常向前播放：把时间 <= 当前 t 的新弹幕全部放出来
-    while(this.state.dmCursor < list.length && list[this.state.dmCursor].time <= t){
-        this.spawnDanmaku(list[this.state.dmCursor]);  // 这里传的是对象
-        this.state.dmCursor++;
-    }
-
-    this.state.prevTime = t;
-},
-makeDanmakuStyle(){
-    // 随机亮色、字号和轻微描边，让效果更像弹幕
-    const hue = Math.floor(Math.random()*360);
-    const fontSize = 18 + Math.floor(Math.random()*10); // 18-28px
-
-    return {
-        color: `hsl(${hue},80%,70%)`,
-        fontSize: fontSize + 'px',
-        shadow: '0 0 4px rgba(0,0,0,0.8)'
-    };
-},
-
-addDanmakuRecord(time, text){
-    const epKey = this.getCurrentEpisodeKey();
-    if(!this.state.danmakuMap[epKey]) this.state.danmakuMap[epKey] = [];
-
-    const style = this.makeDanmakuStyle();
-    this.state.danmakuMap[epKey].push({ time, text, style });
-
-    // 按时间排序，保证时间轴有序
-    this.state.danmakuMap[epKey].sort((a,b)=>a.time - b.time);
-
-    localStorage.setItem('ngnlAnimeDanmaku', JSON.stringify(this.state.danmakuMap));
-},
-
-    /* ---------- 弹幕 ---------- */
-   sendDanmaku(){
-    const txt = this.dom.dmInput.value.trim();
-    if(!txt) return;
-    this.dom.dmInput.value = '';
-
-    const t = this.dom.video ? (this.dom.video.currentTime || 0) : 0;
-
-    // 写入当前集的弹幕时间轴
-    this.addDanmakuRecord(t, txt);
-
-    // 立刻在画面上飘一次（跟 B 站一样：发送即看见）
-    const epKey = this.getCurrentEpisodeKey();
-    const list = this.state.danmakuMap[epKey] || [];
-    const last = list[list.length - 1];
-    this.spawnDanmaku(last);
-},
-
-
-    spawnDanmaku(data){
-    if(!this.state.danmakuOn) return;
-
-    // 兼容：可以传字符串，也可以传 {text,style}
-    const text  = typeof data === 'string' ? data : (data.text || '');
-    const style = typeof data === 'string' ? this.makeDanmakuStyle() : (data.style || this.makeDanmakuStyle());
-    if(!text) return;
-
-    const el = document.createElement('div');
-    el.className = 'dm-item';
-    el.textContent = text;
-
-    // 轨道：防止都挤在一起
-    const lanes = 8;
-    const laneHeight = 26;
-    const lane = Math.floor(Math.random()*lanes);
-    el.style.top = (lane * laneHeight) + 'px';
-
-    // 应用样式
-    el.style.color = style.color;
-    el.style.fontSize = style.fontSize;
-    el.style.textShadow = style.shadow;
-
-    this.dom.dmLayer.appendChild(el);
-    el.addEventListener('animationend', ()=>el.remove());
-},
-
-
-    /* ---------- 评论（本地存储） ---------- */
-    getCurrentEpisodeKey(){
-        return this.getEpisodeKey(this.state.currentSeriesId, this.state.currentEpIndex);
-    },
-
-    renderComments(){
-        const key = this.getCurrentEpisodeKey();
-        const arr = this.state.comments[key] || [];
-        if(arr.length === 0){
-            this.dom.cList.innerHTML = `<p style="color:#888;font-size:.85rem;">还没有评论，来抢个沙发～</p>`;
-            return;
-        }
-        this.dom.cList.innerHTML = arr.map(c=>`
-            <div class="anime-comment-card">
-                <div class="anime-comment-header">
-                    <span>${c.user}</span>
-                    <span style="margin-left:auto;color:#666;">${c.time}</span>
-                </div>
-                <div class="anime-comment-body">${c.content}</div>
-            </div>
-        `).join('');
-    },
-
-    sendComment(){
-        const txt = this.dom.cInput.value.trim();
-        if(!txt) return;
-        this.dom.cInput.value = '';
-
-        const key = this.getCurrentEpisodeKey();
-        if(!this.state.comments[key]) this.state.comments[key] = [];
-
-        const user = state.isLoggedIn ? state.user.name : 'Guest';
-        const now  = new Date();
-        const timeStr = now.toLocaleString();
-
-        this.state.comments[key].push({
-            user,
-            time: timeStr,
-            content: txt
-        });
-
-        localStorage.setItem('ngnlAnimeComments', JSON.stringify(this.state.comments));
-        this.renderComments();
-    },
-
-    /* ---------- 收藏 ---------- */
-    updateFavButton(epKey){
-        const on = this.state.favSet.has(epKey);
-        this.dom.favBtn.classList.toggle('fav-on', on);
-        this.dom.favBtn.textContent = on ? '★ 已收藏' : '☆ 收藏本集';
-    },
-
-    toggleFav(){
-        const epKey = this.getCurrentEpisodeKey();
-        if(this.state.favSet.has(epKey)){
-            this.state.favSet.delete(epKey);
-        }else{
-            this.state.favSet.add(epKey);
-        }
-        localStorage.setItem('ngnlAnimeFav', JSON.stringify(Array.from(this.state.favSet)));
-        this.updateFavButton(epKey);
-    },
-    toggleFav(){
-        const epKey = this.getCurrentEpisodeKey();
-        if(this.state.favSet.has(epKey)){
-            this.state.favSet.delete(epKey);
-        }else{
-            this.state.favSet.add(epKey);
-        }
-        localStorage.setItem('ngnlAnimeFav', JSON.stringify(Array.from(this.state.favSet)));
-        this.updateFavButton(epKey);
-    },
-
-    // 目前先留空，避免报错；以后和后端收藏同步再在这里写逻辑
-    refreshFavorites(){
-        // TODO: 从后端拉取收藏并合并到 this.state.favSet
     }
 };
 
