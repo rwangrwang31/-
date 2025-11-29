@@ -2427,7 +2427,7 @@ addDanmakuRecord(time, text){
         }
         localStorage.setItem('ngnlAnimeFav', JSON.stringify(Array.from(this.state.favSet)));
         this.updateFavButton(epKey);
-    }
+    },
     toggleFav(){
         const epKey = this.getCurrentEpisodeKey();
         if(this.state.favSet.has(epKey)){
