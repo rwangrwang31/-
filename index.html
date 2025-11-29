@@ -778,7 +778,7 @@
             <a href="#hero" class="nav-item">HOME</a>
            <a href="#" class="nav-item" onclick="ui.showModal('reader-layer');reader.ensureReady();return false;">ARCHIVE</a>
            <a href="#codex" class="nav-item">CODEX</a>
-           <a href="#" class="nav-item" onclick="ui.showModal('anime-layer');anime.ensureReady();return false;">ANIME</a>
+           <a href="#" class="nav-item" onclick="ui.showModal('anime-layer');animePage.ensureReady();return false;">ANIME</a>
            <a href="#" class="nav-item" onclick="ui.showModal('discussion-layer');forum.init();return false;">FORUM</a>
            <a href="#" class="nav-item" onclick="ui.showModal('shop-layer');shop.init();return false;">SHOP</a>
         </div>
@@ -2428,7 +2428,23 @@ addDanmakuRecord(time, text){
         localStorage.setItem('ngnlAnimeFav', JSON.stringify(Array.from(this.state.favSet)));
         this.updateFavButton(epKey);
     }
+    toggleFav(){
+        const epKey = this.getCurrentEpisodeKey();
+        if(this.state.favSet.has(epKey)){
+            this.state.favSet.delete(epKey);
+        }else{
+            this.state.favSet.add(epKey);
+        }
+        localStorage.setItem('ngnlAnimeFav', JSON.stringify(Array.from(this.state.favSet)));
+        this.updateFavButton(epKey);
+    },
+
+    // 目前先留空，避免报错；以后和后端收藏同步再在这里写逻辑
+    refreshFavorites(){
+        // TODO: 从后端拉取收藏并合并到 this.state.favSet
+    }
 };
+
 
 /* ================== 讨论区 ================== */
 
@@ -2708,33 +2724,35 @@ const visuals={
 
 /* ================== 启动 ================== */
 
-document.addEventListener('DOMContentLoaded',async ()=>{
+document.addEventListener('DOMContentLoaded', async ()=>{
     visuals.init();
-    anime.init();            // ⭐ 初始化动漫模块
 
-    const stored=sessionStorage.getItem('ngnlUser');
-    if(stored){
-        try{
-            const obj=JSON.parse(stored);
-            state.user={...state.user,...obj};
-            state.isLoggedIn=true;
+    const stored = sessionStorage.getItem('ngnlUser');
+    if (stored) {
+        try {
+            const obj = JSON.parse(stored);
+            state.user = { ...state.user, ...obj };
+            state.isLoggedIn = true;
             ui.elements.authOverlay.classList.remove('active');
             ui.elements.body.classList.remove('auth-active');
             ui.updateHUD();
             ui.updateProfileView();
-            // 用后端数据刷新一次（拿到最新的 race / title / frame 等）
-            const res=await apiRequest({action:'get_profile'});
-            if(res.status==='success') applyProfileFromServer(res.profile);
 
-            // ⭐ 刷新收藏（防止本地缓存旧）
-            anime.refreshFavorites();
-        }catch(e){
+            // 用后端数据刷新一次（拿到最新的 race / title / frame 等）
+            const res = await apiRequest({ action: 'get_profile' });
+            if (res.status === 'success') applyProfileFromServer(res.profile);
+
+            // ⭐ 刷新收藏 —— 现在播放器叫 animePage，先判断再调用
+            if (window.animePage && typeof animePage.refreshFavorites === 'function') {
+                animePage.refreshFavorites();
+            }
+        } catch (e) {
             console.error(e);
             sessionStorage.removeItem('ngnlUser');
             ui.elements.body.classList.add('auth-active');
             ui.elements.authOverlay.classList.add('active');
         }
-    }else{
+    } else {
         ui.elements.body.classList.add('auth-active');
         ui.elements.authOverlay.classList.add('active');
     }
