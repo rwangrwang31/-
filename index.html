@@ -783,7 +783,48 @@ input[type="color"] {
             .char-card{width:200px;height:300px;}
             .r-left-panel{display:none;}
         }
-    </style>
+        /* ================= 消息提醒 Toast ================= */
+#toast-container {
+    position: fixed;
+    top: 80px; /* 避开导航栏 */
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none; /* 让鼠标能穿透空白区域 */
+}
+
+.toast-msg {
+    pointer-events: auto;
+    background: rgba(5, 5, 15, 0.95);
+    border: 1px solid var(--cyan);
+    border-left: 4px solid var(--pink);
+    padding: 12px 18px;
+    border-radius: 4px;
+    color: white;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    box-shadow: 0 0 15px rgba(5, 217, 232, 0.3);
+    min-width: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    animation: slideInRight 0.4s ease-out, fadeOut 0.5s ease-in 4.5s forwards;
+    cursor: pointer;
+}
+
+.toast-sender { color: var(--cyan); font-weight: bold; margin-bottom: 2px; }
+.toast-text { color: #ccc; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+@keyframes fadeOut {
+    to { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+}
+</style>
 </head>
 <body id="body">
 <div id="cursor"></div>
@@ -821,6 +862,7 @@ input[type="color"] {
     <canvas id="canvas-bg"></canvas>
 
     <nav>
+        <div id="toast-container"></div>
         <div class="brand">DISBOARD</div>
         <div class="nav-links">
             <a href="#hero" class="nav-item">HOME</a>
@@ -1270,6 +1312,10 @@ function applyProfileFromServer(p){
     if (typeof animePage !== 'undefined' && animePage.refreshFavorites) {
         animePage.refreshFavorites();
     }
+    // ⭐ 启动消息监听
+    if (social && social.startPolling) {
+        social.startPolling();
+    }
 }
 
 async function apiRequest(payload){
@@ -1588,33 +1634,121 @@ const auth = {
     }
 };
 
-/* ================== 社交 & 好友系统 ================== */
+/* ================== 社交 & 好友系统 (含消息轮询) ================== */
 
-const social={
-    init(){
+const social = {
+    pollingTimer: null,
+    lastCheckTime: Date.now(), // 记录上次检查时间
+
+    init() {
         this.loadFriends();
+        // 如果已经登录，开始轮询消息
+        if (state.isLoggedIn) {
+            this.startPolling();
+        }
         ui.updateProfileView();
         ui.switchProfileTab('stats');
     },
-    async loadFriends(){
-        const list=document.getElementById('friend-list');
-        list.innerHTML=`<div class="f-item">Loading friends...</div>`;
-        const res=await apiRequest({action:'get_friends'});
-        let html=`<div class="f-item active" onclick="social.showMyStats(event)"><span class="f-name">MY PROFILE</span></div>`;
-        if(res.status==='success' && res.data){
-            res.data.forEach(f=>{
-                html+=`<div class="f-item" data-name="${f.name}">
+
+    // --- 轮询核心逻辑 ---
+    startPolling() {
+        if (this.pollingTimer) clearInterval(this.pollingTimer);
+        this.lastCheckTime = Date.now(); // 重置时间，避免把旧消息弹出来
+        
+        // 每 10 秒检查一次 (可根据需要调整，太快容易触发 Google 限制)
+        this.pollingTimer = setInterval(() => {
+            this.checkNotifications();
+        }, 10000);
+    },
+
+    stopPolling() {
+        if (this.pollingTimer) clearInterval(this.pollingTimer);
+        this.pollingTimer = null;
+    },
+
+    async checkNotifications() {
+        if (!state.isLoggedIn) return;
+
+        // 发送上次检查的时间戳
+        const res = await apiRequest({
+            action: 'check_notifications',
+            last_time: this.lastCheckTime
+        });
+
+        if (res.status === 'success' && res.data && res.data.length > 0) {
+            // 更新最后检查时间
+            if (res.server_time) this.lastCheckTime = res.server_time;
+            else this.lastCheckTime = Date.now();
+
+            // 处理每一条新消息
+            res.data.forEach(msg => {
+                this.handleNewMessage(msg);
+            });
+        }
+    },
+
+    handleNewMessage(msg) {
+        // 情况 1: 如果当前正打开着发送者的聊天窗口 -> 直接上屏
+        if (state.activeChat === msg.sender && !document.getElementById('view-chat').classList.contains('hidden')) {
+            const box = document.getElementById('chat-box');
+            // 避免重复 (简单的防重检查)
+            const lastMsg = box.lastElementChild;
+            if (!lastMsg || lastMsg.innerText !== msg.content) {
+                box.innerHTML += `<div class="msg them">${msg.content}</div>`;
+                box.scrollTop = box.scrollHeight;
+            }
+        } 
+        // 情况 2: 其他情况 -> 弹窗提醒
+        else {
+            this.showToast(msg.sender, msg.content);
+            // 这里也可以给头像加个红点 (可选)
+        }
+    },
+
+    showToast(sender, content) {
+        const container = document.getElementById('toast-container');
+        const el = document.createElement('div');
+        el.className = 'toast-msg';
+        el.innerHTML = `
+            <div>
+                <div class="toast-sender">✉️ ${sender}</div>
+                <div class="toast-text">${content}</div>
+            </div>
+        `;
+        // 点击弹窗直接打开聊天
+        el.onclick = () => {
+            ui.showModal('user-overlay');
+            this.startChat(sender, { currentTarget: null }); // 模拟点击
+            el.remove();
+        };
+        // 动画结束后自动移除 DOM
+        el.addEventListener('animationend', (e) => {
+            if (e.animationName === 'fadeOut') el.remove();
+        });
+        container.appendChild(el);
+    },
+
+    // --- 原有功能保持不变 ---
+
+    async loadFriends() {
+        const list = document.getElementById('friend-list');
+        list.innerHTML = `<div class="f-item">Loading friends...</div>`;
+        const res = await apiRequest({ action: 'get_friends' });
+        let html = `<div class="f-item active" onclick="social.showMyStats(event)"><span class="f-name">MY PROFILE</span></div>`;
+        if (res.status === 'success' && res.data) {
+            res.data.forEach(f => {
+                html += `<div class="f-item" data-name="${f.name}">
                     <span class="f-name" onclick="social.startChat('${f.name}',event)">${f.name}</span>
                     ${social.getFriendStatusUI(f)}
                 </div>`;
             });
         }
-        list.innerHTML=html;
+        list.innerHTML = html;
     },
-    getFriendStatusUI(friend){
-        if(friend.status==='Accepted') return `<span class="f-status" style="color:var(--cyan)">FRIEND</span>`;
-        if(friend.status==='Sent') return `<span class="f-status">SENT</span>`;
-        if(friend.status==='Received'){
+    getFriendStatusUI(friend) {
+        if (friend.status === 'Accepted') return `<span class="f-status" style="color:var(--cyan)">FRIEND</span>`;
+        if (friend.status === 'Sent') return `<span class="f-status">SENT</span>`;
+        if (friend.status === 'Received') {
             return `<div class="f-actions">
                 <button class="btn" onclick="social.handleFriendRequest('${friend.name}','Accepted')">✓</button>
                 <button class="btn" style="border-color:var(--pink);color:var(--pink)" onclick="social.handleFriendRequest('${friend.name}','Declined')">×</button>
@@ -1622,139 +1756,73 @@ const social={
         }
         return '';
     },
-    async handleFriendRequest(target,status){
-        const res=await apiRequest({action:'update_friend_status',target_user:target,new_status:status});
+    async handleFriendRequest(target, status) {
+        const res = await apiRequest({ action: 'update_friend_status', target_user: target, new_status: status });
         alert(res.message);
-        if(res.status==='success') this.loadFriends();
+        if (res.status === 'success') this.loadFriends();
     },
-    showMyStats(e){
+    showMyStats(e) {
         ui.switchProfileTab('stats');
-        document.querySelectorAll('#friend-list .f-item').forEach(el=>el.classList.remove('active'));
-        e.currentTarget.classList.add('active');
+        document.querySelectorAll('#friend-list .f-item').forEach(el => el.classList.remove('active'));
+        if (e && e.currentTarget) e.currentTarget.classList.add('active');
+        state.activeChat = null; // 清除当前聊天对象
     },
-    async addFriend(){
-        const name=prompt("Enter the player's name to send a friend request:");
-        if(name && name.trim()){
-            const res=await apiRequest({action:'add_friend',target_user:name.trim()});
+    async addFriend() {
+        const name = prompt("Enter the player's name to send a friend request:");
+        if (name && name.trim()) {
+            const res = await apiRequest({ action: 'add_friend', target_user: name.trim() });
             alert(res.message);
-            if(res.status==='success') this.loadFriends();
+            if (res.status === 'success') this.loadFriends();
         }
     },
-    startChat(target,e){
-        state.activeChat=target;
+    startChat(target, e) {
+        state.activeChat = target;
         ui.switchProfileTab('chat');
-        document.getElementById('chat-header').innerText=`Chat with ${target}`;
-        document.querySelectorAll('#friend-list .f-item').forEach(el=>el.classList.remove('active'));
-        e.currentTarget.closest('.f-item').classList.add('active');
+        document.getElementById('chat-header').innerText = `Chat with ${target}`;
+        
+        // UI 选中状态更新
+        document.querySelectorAll('#friend-list .f-item').forEach(el => el.classList.remove('active'));
+        // 如果是从弹窗调用的，可能没有 event，需要手动查找 DOM
+        if (e && e.currentTarget) {
+            e.currentTarget.closest('.f-item').classList.add('active');
+        } else {
+            const item = document.querySelector(`.f-item[data-name="${target}"]`);
+            if (item) item.classList.add('active');
+        }
+        
         this.loadMessages();
     },
-    async loadMessages(){
-        if(!state.activeChat) return;
-        const box=document.getElementById('chat-box');
-        box.innerHTML="Loading messages...";
-        const res=await apiRequest({action:'get_messages',target_user:state.activeChat});
-        if(res.status==='success' && res.data){
-            box.innerHTML=res.data.map(m=>`<div class="msg ${m.sender===state.user.name?'me':'them'}">${m.content}</div>`).join('')||"No messages yet. Say hi!";
-            box.scrollTop=box.scrollHeight;
+    async loadMessages() {
+        if (!state.activeChat) return;
+        const box = document.getElementById('chat-box');
+        box.innerHTML = "Loading messages...";
+        const res = await apiRequest({ action: 'get_messages', target_user: state.activeChat });
+        if (res.status === 'success' && res.data) {
+            box.innerHTML = res.data.map(m => `<div class="msg ${m.sender === state.user.name ? 'me' : 'them'}">${m.content}</div>`).join('') || "No messages yet. Say hi!";
+            box.scrollTop = box.scrollHeight;
         }
     },
-    async sendMessage(){
-        const input=document.getElementById('msg-input');
-        const content=input.value.trim();
-        if(!content || !state.activeChat) return;
-        const box=document.getElementById('chat-box');
-        box.innerHTML+=`<div class="msg me">${content}</div>`;
-        box.scrollTop=box.scrollHeight;
-        input.value="";
-        await apiRequest({action:'send_message',target_user:state.activeChat,content});
+    async sendMessage() {
+        const input = document.getElementById('msg-input');
+        const content = input.value.trim();
+        if (!content || !state.activeChat) return;
+        
+        // 立即上屏
+        const box = document.getElementById('chat-box');
+        box.innerHTML += `<div class="msg me">${content}</div>`;
+        box.scrollTop = box.scrollHeight;
+        
+        input.value = "";
+        
+        // 后台发送
+        await apiRequest({ action: 'send_message', target_user: state.activeChat, content });
     },
-    insertEmoji(e){
-        const input=document.getElementById('msg-input');
+    insertEmoji(e) {
+        const input = document.getElementById('msg-input');
         const start = input.selectionStart ?? input.value.length;
-        input.value = input.value.slice(0,start) + e + input.value.slice(start);
+        input.value = input.value.slice(0, start) + e + input.value.slice(start);
         input.focus();
         input.selectionStart = input.selectionEnd = start + e.length;
-    }
-};
-
-/* ================== 用户设置 ================== */
-
-const settings={
-    async saveProfile(){
-        const bio=document.getElementById('settings-bio').value.trim();
-        const res=await apiRequest({action:'update_profile',bio});
-        if(res.status==='success'){
-            applyProfileFromServer(res.profile);
-            alert("Profile updated.");
-        }else alert(res.message);
-    },
-    async saveAvatar(){
-        const avatar=document.getElementById('settings-avatar').value.trim();
-        const res=await apiRequest({action:'update_profile',avatar});
-        if(res.status==='success'){
-            applyProfileFromServer(res.profile);
-            alert("Avatar updated.");
-        }else alert(res.message);
-    },
-    async uploadAvatarFile(){
-    const input = document.getElementById('settings-avatar-file');
-    const file = input.files && input.files[0];
-    if(!file) return alert("请选择一张图片。");
-
-    // 可选：限制一下大小，比如 12MB
-    const MAX_SIZE = 12 * 1024 * 1024;
-    if(file.size > MAX_SIZE){
-        if(!confirm("图片大于 12MB，仍然继续上传吗？")) return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        const result = e.target.result; // data:image/png;base64,xxxx
-        const match = /^data:(.*?);base64,(.*)$/.exec(result);
-        if(!match){
-            alert("无法读取这张图片。");
-            return;
-        }
-        const mimeType  = match[1];
-        const base64Data= match[2];
-
-        // 调用后端 upload_avatar
-        const res = await apiRequest({
-            action: 'upload_avatar',
-            fileName: file.name,
-            mimeType: mimeType,
-            data: base64Data
-        });
-
-        if(res.status === 'success'){
-            // 1）用统一函数同步所有字段（包括 avatar）
-            applyProfileFromServer(res);
-
-            // 2）把后端返回的直链填回输入框，方便复制
-            if(res.avatarUrl){
-                document.getElementById('settings-avatar').value = res.avatarUrl;
-            }
-
-            alert("Avatar uploaded!");
-        }else{
-            alert(res.message || "Upload failed.");
-        }
-    };
-    reader.onerror = () => {
-        alert("读取图片失败。");
-    };
-    reader.readAsDataURL(file);
-},
-
-    async changeName(){
-        const newName=document.getElementById('settings-newname').value.trim();
-        if(!newName) return alert("请输入新名字。");
-        if(!confirm("改名将消耗 100 🪙，确定吗？")) return;
-        const res=await apiRequest({action:'update_profile',new_name:newName});
-        if(res.status==='success'){
-            applyProfileFromServer(res.profile);
-            alert("Name changed successfully.");
-        }else alert(res.message);
     }
 };
 
