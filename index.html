@@ -294,23 +294,51 @@
     display:block;
 }
 
-/* 弹幕层（覆盖在 video 上） */
-.anime-danmaku-layer{
-    position:absolute;
-    inset:0;
-    pointer-events:none;
-    overflow:hidden;
+/* 覆盖在视频上的弹幕层 */
+#anime-danmaku-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 10;
 }
-.dm-item{
-    position:absolute;
-    white-space:nowrap;
-    font-size:14px;
-    text-shadow:0 0 3px #000;
-    animation:dm-move 8s linear forwards;
+
+/* 单条弹幕 */
+.dm-item {
+    position: absolute;
+    right: -40%;        /* 从画面右侧外起步 */
+    white-space: nowrap;
+    will-change: transform;
+    animation: dm-move 8s linear forwards, dm-fade 8s linear forwards;
 }
-@keyframes dm-move{
-    from{ transform:translateX(100%); }
-    to{ transform:translateX(-120%); }
+
+/* 水平移动 */
+@keyframes dm-move {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-160%);
+    }
+}
+
+/* 轻微淡出效果 */
+@keyframes dm-fade {
+    0% {
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
 }
 
 /* 工具栏 / 弹幕输入 */
@@ -1921,7 +1949,7 @@ const community={
 };
 /* ================== ANIME 播放器（B 站风格逻辑） ================== */
 
-const anime = {
+const animePage = {
     state:{
         initialized:false,
         currentSeriesId:null,
@@ -1931,6 +1959,11 @@ const anime = {
         lastSaveTime:0,
         comments:{},     // 本地评论
         favSet:new Set()
+
+        // 新增：弹幕时间轴
+    danmakuMap:{},   // { epKey: [ {time,text,style}, ... ] }
+    dmCursor:0,      // 当前已播放到的弹幕索引
+    prevTime:0       // 上一帧视频时间，用来判断快进/后退
     },
     dom:{},
 
@@ -2043,14 +2076,11 @@ const anime = {
         // 收藏
         this.dom.favBtn.addEventListener('click', ()=>this.toggleFav());
 
-        // 视频事件：记忆进度 / 自动下一集
-        this.dom.video.addEventListener('timeupdate', ()=>{
-            const now = Date.now();
-            if(now - this.state.lastSaveTime > 3000){ // 3 秒存一次
-                this.state.lastSaveTime = now;
-                this.saveProgress(this.dom.video.currentTime || 0);
-            }
-        });
+       // 视频事件：记忆进度 + 弹幕时间轴
+this.dom.video.addEventListener('timeupdate', ()=>{
+    this.handleTimeUpdate();
+});
+
 
         this.dom.video.addEventListener('ended', ()=>{
             if(this.state.autoNext){
@@ -2092,6 +2122,13 @@ const anime = {
         }catch(e){
             this.state.comments = {};
         }
+        // 弹幕时间轴
+try{
+    this.state.danmakuMap = JSON.parse(localStorage.getItem('ngnlAnimeDanmaku') || '{}');
+}catch(e){
+    this.state.danmakuMap = {};
+}
+
     },
 
     getEpisode(seriesId, index){
@@ -2114,6 +2151,10 @@ const anime = {
 
         this.state.currentSeriesId = seriesId;
         this.state.currentEpIndex  = index;
+        // 重置弹幕游标
+this.state.dmCursor = 0;
+this.state.prevTime = 0;
+
 
         // 更新列表选中态
         this.highlightCurrentCard();
@@ -2214,34 +2255,116 @@ const anime = {
         all[this.getEpisodeKey(this.state.currentSeriesId, this.state.currentEpIndex)] = data;
         localStorage.setItem('ngnlAnimeAllProgress', JSON.stringify(all));
     },
+    
+    handleTimeUpdate(){
+    const v = this.dom.video;
+    if(!v) return;
+
+    const t = v.currentTime || 0;
+    const now = Date.now();
+
+    // 1) 正常保存播放进度（你原来的逻辑）
+    if(now - this.state.lastSaveTime > 3000){ // 3 秒存一次
+        this.state.lastSaveTime = now;
+        this.saveProgress(t);
+    }
+
+    // 2) 按时间轴触发本集弹幕
+    if(!this.state.danmakuOn) {
+        this.state.prevTime = t;
+        return;
+    }
+
+    const epKey = this.getCurrentEpisodeKey();
+    const list = this.state.danmakuMap[epKey] || [];
+
+    // 视频被拖到更早的位置：重算游标
+    if(t < this.state.prevTime - 0.5){
+        this.state.dmCursor = 0;
+        while(this.state.dmCursor < list.length && list[this.state.dmCursor].time < t){
+            this.state.dmCursor++;
+        }
+    }
+
+    // 正常向前播放：把时间 <= 当前 t 的新弹幕全部放出来
+    while(this.state.dmCursor < list.length && list[this.state.dmCursor].time <= t){
+        this.spawnDanmaku(list[this.state.dmCursor]);  // 这里传的是对象
+        this.state.dmCursor++;
+    }
+
+    this.state.prevTime = t;
+},
+makeDanmakuStyle(){
+    // 随机亮色、字号和轻微描边，让效果更像弹幕
+    const hue = Math.floor(Math.random()*360);
+    const fontSize = 18 + Math.floor(Math.random()*10); // 18-28px
+
+    return {
+        color: `hsl(${hue},80%,70%)`,
+        fontSize: fontSize + 'px',
+        shadow: '0 0 4px rgba(0,0,0,0.8)'
+    };
+},
+
+addDanmakuRecord(time, text){
+    const epKey = this.getCurrentEpisodeKey();
+    if(!this.state.danmakuMap[epKey]) this.state.danmakuMap[epKey] = [];
+
+    const style = this.makeDanmakuStyle();
+    this.state.danmakuMap[epKey].push({ time, text, style });
+
+    // 按时间排序，保证时间轴有序
+    this.state.danmakuMap[epKey].sort((a,b)=>a.time - b.time);
+
+    localStorage.setItem('ngnlAnimeDanmaku', JSON.stringify(this.state.danmakuMap));
+},
 
     /* ---------- 弹幕 ---------- */
-    sendDanmaku(){
-        const txt = this.dom.dmInput.value.trim();
-        if(!txt) return;
-        this.dom.dmInput.value = '';
-        this.spawnDanmaku(txt);
-    },
+   sendDanmaku(){
+    const txt = this.dom.dmInput.value.trim();
+    if(!txt) return;
+    this.dom.dmInput.value = '';
 
-    spawnDanmaku(text){
-        if(!this.state.danmakuOn) return;
+    const t = this.dom.video ? (this.dom.video.currentTime || 0) : 0;
 
-        const el = document.createElement('div');
-        el.className = 'dm-item';
-        el.textContent = text;
+    // 写入当前集的弹幕时间轴
+    this.addDanmakuRecord(t, txt);
 
-        const lanes = 8;
-        const laneHeight = 24;
-        const lane = Math.floor(Math.random()*lanes);
-        el.style.top = (lane * laneHeight) + 'px';
+    // 立刻在画面上飘一次（跟 B 站一样：发送即看见）
+    const epKey = this.getCurrentEpisodeKey();
+    const list = this.state.danmakuMap[epKey] || [];
+    const last = list[list.length - 1];
+    this.spawnDanmaku(last);
+},
 
-        // 随机一个亮色
-        const hue = Math.floor(Math.random()*360);
-        el.style.color = `hsl(${hue},80%,70%)`;
 
-        this.dom.dmLayer.appendChild(el);
-        el.addEventListener('animationend', ()=>el.remove());
-    },
+    spawnDanmaku(data){
+    if(!this.state.danmakuOn) return;
+
+    // 兼容：可以传字符串，也可以传 {text,style}
+    const text  = typeof data === 'string' ? data : (data.text || '');
+    const style = typeof data === 'string' ? this.makeDanmakuStyle() : (data.style || this.makeDanmakuStyle());
+    if(!text) return;
+
+    const el = document.createElement('div');
+    el.className = 'dm-item';
+    el.textContent = text;
+
+    // 轨道：防止都挤在一起
+    const lanes = 8;
+    const laneHeight = 26;
+    const lane = Math.floor(Math.random()*lanes);
+    el.style.top = (lane * laneHeight) + 'px';
+
+    // 应用样式
+    el.style.color = style.color;
+    el.style.fontSize = style.fontSize;
+    el.style.textShadow = style.shadow;
+
+    this.dom.dmLayer.appendChild(el);
+    el.addEventListener('animationend', ()=>el.remove());
+},
+
 
     /* ---------- 评论（本地存储） ---------- */
     getCurrentEpisodeKey(){
