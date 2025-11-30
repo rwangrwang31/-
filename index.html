@@ -3509,6 +3509,7 @@ const chessGame = {
             icon: p.icon, name: p.name, desc: p.desc,
             skill: { ...p.skill, cd: p.skill.initialCd || 0 }, // 应用初始CD
             status: null, hasActed: false, isGrail: false,
+            hasMoved: false, // ⭐ 新增：记录本回合是否已移动
             stats: { damageDealt: 0, healingDone: 0, damageTaken: 0 }
         });
     },
@@ -3543,7 +3544,8 @@ const chessGame = {
             }
             if (clicked && clicked.team !== this.selectedUnit.team) {
                 if (this.isInRange(this.selectedUnit, x, y, 'attack')) return this.actionAttack(this.selectedUnit, clicked);
-            } else if (!clicked) {
+            } // 移动到空地 (⭐ 修复：必须没移动过才能移动)
+            else if (!clicked && !this.selectedUnit.hasMoved) {
                 if (this.isInRange(this.selectedUnit, x, y, 'move')) return this.actionMove(this.selectedUnit, x, y);
             }
         }
@@ -3589,6 +3591,7 @@ const chessGame = {
             this.showPopup(u.x, u.y, "ACT AGAIN", "#f00");
             u.hasActed = false; // ⭐ 关键：重置行动状态
             endAct = false;     // ⭐ 关键：不结束回合
+            u.hasMoved = false; // ⭐ 修复：允许再次移动
             used = true;
         }
         
@@ -3692,6 +3695,7 @@ const chessGame = {
 
     actionMove(u, x, y) {
         u.x = x; u.y = y;
+        u.hasMoved = true; // ⭐ 修复：标记已移动，防止无限连走
         
         // 检查是否还有敌人
         const hasEnemy = this.units.some(t => t.team !== u.team && this.isInRange(u, t.x, t.y, 'attack'));
@@ -3885,6 +3889,7 @@ const chessGame = {
         this.units.forEach(u => { 
             if (u.team === next) {
                 u.hasActed = false;
+                u.hasMoved = false; // ⭐ 修复：重置移动状态
                 if(u.skill.cd > 0) u.skill.cd--;
                 if (u.status === 'stun') { u.status = null; u.hasActed = true; this.showPopup(u.x, u.y, "RECOVER", "#fff"); }
             }
@@ -4028,7 +4033,8 @@ const chessGame = {
                     const dist = Math.abs(x - u.x) + Math.abs(y - u.y);
                     const t = this.getTile(x, y);
                     const target = this.getUnitAt(x, y);
-                    if (!target && dist <= u.mov) t.classList.add('range-move');
+                    // ⭐ 修复：只有没移动过 (hasMoved=false) 才显示移动范围
+                    if (!target && dist <= u.mov && !u.hasMoved) t.classList.add('range-move');
                     if (target && target.team !== u.team && dist <= u.rng) t.classList.add('range-attack');
                 }
             }
