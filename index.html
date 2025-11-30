@@ -3402,12 +3402,12 @@ const chessGame = {
         
         'Elf':       { hp: 90,  atk: 30, def: 0,  rng: 3, mov: 3, icon: '🧝', name: '森精种', desc: '【六重术式】护盾。(CD:4)', skill: { type: 'buff_def_aoe', range: 3, power: 15, initialCd: 1, maxCd: 4, name: 'Kūgan' } },
         'Dwarf':     { hp: 100, atk: 40, def: 8,  rng: 2, mov: 2, icon: '⚒️', name: '地精种', desc: '【髓爆】自爆。(CD:0)', skill: { type: 'suicide_bomb', range: 2, power: 4.0, initialCd: 0, maxCd: 99, name: 'E-Bomb' } },
-        'ExMachina': { hp: 130, atk: 35, def: 8,  rng: 2, mov: 3, icon: '🤖', name: '机凯种', desc: '【伪典】直线激光。(CD:5)', skill: { type: 'line_atk', range: 8, power: 2.0, initialCd: 2, maxCd: 5, name: 'Pseudomorph' } },
+        'ExMachina': { hp: 130, atk: 35, def: 8,  rng: 2, mov: 3, icon: '🤖', name: '机凯种', desc: '【伪典·天击】直线 2.0倍 伤害。(CD:5)', skill: { type: 'line_atk', range: 8, power: 2.0, initialCd: 2, maxCd: 5, name: 'Pseudomorph' } },
         'Fairy':     { hp: 70,  atk: 15, def: 0,  rng: 3, mov: 4, icon: '🧚', name: '妖精种', desc: '【自然之息】群疗。(CD:3)', skill: { type: 'heal_aoe', range: 3, power: 60, initialCd: 1, maxCd: 3, name: 'Nature Heal' } },
         'Demonia':   { hp: 140, atk: 38, def: 2,  rng: 1, mov: 3, icon: '👹', name: '妖魔种', desc: '【狂暴】自残再动。(CD:3)', skill: { type: 'act_again_dmg', costHp: 20, initialCd: 1, maxCd: 3, name: 'Berserk' } },
         'Dhampir':   { hp: 90,  atk: 28, def: 0,  rng: 1, mov: 4, icon: '🧛', name: '吸血种', desc: '【吸血】攻击回血。(CD:2)', skill: { type: 'drain_aoe', range: 1, power: 1.0, initialCd: 0, maxCd: 2, name: 'Drain' } },
         'Lunamana':  { hp: 80,  atk: 25, def: 0,  rng: 3, mov: 3, icon: '🌙', name: '月咏种', desc: '【静寂】沉默。(CD:3)', skill: { type: 'debuff_silence', range: 3, initialCd: 1, maxCd: 3, name: 'Silence' } },
-        'Warbeast':  { hp: 110, atk: 32, def: 3,  rng: 1, mov: 5, icon: '🐾', name: '兽人种', desc: '【血坏】自残再动。(CD:4)', skill: { type: 'buff_mov_act', costHpPct: 0.15, power: 3, initialCd: 1, maxCd: 4, name: 'Blood Break' } },
+        'Warbeast':  { hp: 110, atk: 32, def: 3,  rng: 1, mov: 5, icon: '🐾', name: '兽人种', desc: '【血坏】扣除15%HP，移动+3且再次行动。(CD:4)', skill: { type: 'buff_mov_act', costHpPct: 0.15, power: 3, initialCd: 1, maxCd: 4, name: 'Blood Break' } },
         'Seiren':    { hp: 80,  atk: 20, def: 0,  rng: 2, mov: 2, icon: '🧜', name: '海栖种', desc: '【梦之歌】沉睡。(CD:4)', skill: { type: 'debuff_sleep', range: 2, initialCd: 1, maxCd: 4, name: 'Lullaby' } },
         'Imanity':   { hp: 70,  atk: 15, def: 0,  rng: 1, mov: 3, icon: '♟️', name: '人类种', desc: '【盟约】全员加攻。(CD:5)', skill: { type: 'buff_atk_global', power: 10, initialCd: 0, maxCd: 5, name: 'Aschente' } }
     },
@@ -3559,7 +3559,7 @@ const chessGame = {
     useSkill() {
         const u = this.selectedUnit;
         if (!u || u.hasActed) return;
-        if (u.skill.cd > 0) return this.log(`Cooling down... (${u.skill.cd})`, 'system');
+        if (u.skill.cd > 0) return this.log(`Skill Cooldown: ${u.skill.cd} turns.`, 'system');
         if (u.status === 'silence') return this.log(`${u.name} is Silenced!`, 'system');
 
         const s = u.skill;
@@ -3568,30 +3568,57 @@ const chessGame = {
 
         this.log(`${u.name} casts [${s.name}]!`, 'skill');
 
-        // --- 再动技能 ---
+        // --- 1. 再动类 (血坏 / 狂暴 / 相位) ---
         if (['buff_mov_act', 'act_again_dmg', 'buff_invincible'].includes(s.type)) {
-            if (s.costHpPct) {
-                const cost = Math.floor(u.maxHp * s.costHpPct);
-                u.hp -= cost; u.stats.damageTaken += cost;
+            // 计算代价
+            let cost = 0;
+            if (s.costHp) cost = s.costHp;
+            if (s.costHpPct) cost = Math.floor(u.maxHp * s.costHpPct);
+
+            if(cost > 0) {
+                u.hp -= cost; 
+                u.stats.damageTaken += cost;
                 this.showPopup(u.x, u.y, `-${cost}`, "#f00");
                 if(u.hp <= 0) { this.checkDeath(u); return; }
             }
-            if (s.costHp) {
-                u.hp -= s.costHp; u.stats.damageTaken += s.costHp;
-                this.showPopup(u.x, u.y, `-${s.costHp}`, "#f00");
-            }
             
-            if (s.type === 'buff_mov_act') u.mov += s.power;
-            if (s.type === 'buff_invincible') u.mov += 10;
+            // 效果应用
+            if (s.type === 'buff_mov_act') u.mov += s.power; // 血坏加移动
+            if (s.type === 'buff_invincible') u.mov += 10;   // 相位无限移动
 
             this.showPopup(u.x, u.y, "ACT AGAIN", "#f00");
-            u.hasActed = false; 
-            endAct = false;
+            u.hasActed = false; // ⭐ 关键：重置行动状态
+            endAct = false;     // ⭐ 关键：不结束回合
             used = true;
         }
         
-        // --- 范围/攻击/治疗 ---
+        // --- 2. 机凯种：伪典·天击 (直线激光) ---
+        else if (s.type === 'line_atk') {
+            this.units.forEach(t => { 
+                // 判断是否在同一行或同一列
+                if (t.team !== u.team && ((t.x===u.x && Math.abs(t.y-u.y)<=s.range)||(t.y===u.y && Math.abs(t.x-u.x)<=s.range))) {
+                    this.applyDamage(u, t, u.atk * s.power);
+                }
+            });
+            used = true;
+        }
+
+        // --- 3. 天翼种：天击 (自晕高伤) ---
+        else if (s.type === 'nuke_self_stun') {
+            let target = this.findNearestEnemy(u); // 自动索敌最近
+            if(target && this.getDist(u,target) <= s.range) {
+                this.applyDamage(u, target, u.atk * s.power);
+                u.status = 'stun'; // 下回合无法行动
+                this.showPopup(u.x, u.y, "WEAKENED", "#ccc");
+                used = true;
+            } else {
+                this.log("No target in range!", "system");
+            }
+        }
+
+        // --- 4. 范围/攻击/治疗/Buff (通用逻辑) ---
         else if (['aoe','aoe_true','aoe_stun','heal_aoe','buff_def_aoe','drain_aoe','aoe_self_dmg','debuff_sleep','debuff_silence'].includes(s.type)) {
+            // 自残逻辑 (龙精种)
             if (s.type === 'aoe_self_dmg') { 
                 const cost = Math.floor(u.maxHp * s.costHpPct);
                 u.hp -= cost; this.showPopup(u.x, u.y, `-${cost}`, "#f00");
@@ -3599,58 +3626,63 @@ const chessGame = {
 
             this.units.forEach(t => {
                 if (this.getDist(u, t) <= s.range) {
-                    if (t.team !== u.team) {
-                        // 敌方效果
+                    if (t.team !== u.team) { // 对敌
                         if (['aoe','aoe_true','aoe_stun','drain_aoe','aoe_self_dmg'].includes(s.type)) {
-                            // 神击: 真实伤害
                             const ignore = s.type === 'aoe_true';
                             const dmg = this.applyDamage(u, t, u.atk * s.power, ignore);
-                            if(s.type==='drain_aoe') { u.hp = Math.min(u.maxHp, u.hp + dmg); this.showPopup(u.x, u.y, "+HP", "#0f0"); }
-                            if(s.type==='aoe_stun') { t.status='stun'; this.showPopup(t.x, t.y, "STUN", "#ff0"); }
+                            if(s.type==='drain_aoe') { // 吸血
+                                u.hp = Math.min(u.maxHp, u.hp + dmg); 
+                                this.showPopup(u.x, u.y, "+HP", "#0f0"); 
+                            }
                         }
+                        if (s.type==='aoe_stun') { t.status='stun'; this.showPopup(t.x, t.y, "STUN", "#ff0"); }
                         if (s.type==='debuff_sleep') { t.status='sleep'; this.showPopup(t.x, t.y, "ZZZ", "#ccc"); }
                         if (s.type==='debuff_silence') { t.status='silence'; this.showPopup(t.x, t.y, "SILENCE", "#888"); }
-                    } else if (t.team === u.team) {
-                        // 友方效果
+                    } else if (t.team === u.team) { // 对友
                         if (s.type==='heal_aoe') { 
                             t.hp = Math.min(t.maxHp, t.hp + s.power); 
                             u.stats.healingDone += s.power;
                             this.showPopup(t.x, t.y, `+${s.power}`, "#0f0"); 
                         }
-                        if (s.type==='buff_def_aoe') { t.def += s.power; this.showPopup(t.x, t.y, "DEF UP", "#00f"); }
+                        if (s.type==='buff_def_aoe') { 
+                            t.def += s.power; 
+                            this.showPopup(t.x, t.y, "DEF UP", "#00f"); 
+                        }
                     }
                 }
             });
             used = true;
         }
         
-        // --- 其它 ---
-        else if (s.type === 'nuke_self_stun') { // 天击
-            let target = this.findNearestEnemy(u);
-            if(target && this.getDist(u,target) <= s.range) {
-                this.applyDamage(u, target, u.atk * s.power);
-                u.status = 'stun';
-                this.showPopup(u.x, u.y, "WEAKENED", "#ccc");
-                used = true;
-            }
-        }
-        else if (s.type === 'suicide_bomb') { // 自爆
+        // --- 5. 自爆 (地精种) ---
+        else if (s.type === 'suicide_bomb') {
             this.units.forEach(t => { if(t.id!==u.id && this.getDist(u,t)<=s.range) this.applyDamage(u,t,u.atk*s.power); });
             u.hp = 0; u.stats.damageTaken += 999;
             this.checkDeath(u);
             used = true;
         }
-        else if (s.type === 'buff_atk_self') { u.atk *= s.power; this.showPopup(u.x, u.y, "ATK UP", "#f00"); used=true; }
-        else if (s.type === 'buff_atk_global') { this.units.forEach(t=>{if(t.team===u.team){t.atk+=s.power;this.showPopup(t.x,t.y,"ATK UP","#0ff");}}); used=true; }
-        else if (s.type === 'line_atk') { 
-            this.units.forEach(t => { if(t.team!==u.team && ((t.x===u.x && Math.abs(t.y-u.y)<=s.range)||(t.y===u.y && Math.abs(t.x-u.x)<=s.range))) this.applyDamage(u,t,u.atk*s.power); });
-            used = true;
+        
+        // --- 6. 全局Buff (人类种) / 自身Buff (机凯种解析备用) ---
+        else if (s.type === 'buff_atk_self') { u.atk = Math.floor(u.atk * s.power); this.showPopup(u.x, u.y, "ATK UP", "#f00"); used=true; }
+        else if (s.type === 'buff_atk_global') { 
+            this.units.forEach(t => { 
+                if (t.team === u.team) { 
+                    t.atk += s.power; 
+                    this.showPopup(t.x, t.y, "ATK UP", "#0ff"); 
+                }
+            }); 
+            used = true; 
         }
 
         if (used) {
-            u.skill.cd = u.skill.maxCd;
-            if (endAct) { u.hasActed = true; this.selectedUnit = null; }
-            else { this.selectedUnit = u; }
+            u.skill.cd = u.skill.maxCd; // 设置冷却
+            if (endAct) { 
+                u.hasActed = true; 
+                this.selectedUnit = null; 
+            } else {
+                this.selectedUnit = u; // 再动保持选中
+                this.updateUI();       // 立即刷新 UI 以显示新范围
+            }
             
             this.updateUI();
             this.checkWin();
@@ -3660,8 +3692,23 @@ const chessGame = {
 
     actionMove(u, x, y) {
         u.x = x; u.y = y;
+        
+        // 检查是否还有敌人
         const hasEnemy = this.units.some(t => t.team !== u.team && this.isInRange(u, t.x, t.y, 'attack'));
-        if (!hasEnemy) { u.hasActed = true; this.selectedUnit = null; }
+        
+        // ⭐ 修复逻辑：
+        // 如果移动后没有敌人，但技能可用且不是被动，不要立即结束回合，给玩家放技能的机会
+        // 只有当 (无敌人 AND (无技能 OR 技能CD中)) 时才自动结束
+        const canUseSkill = u.skill && u.skill.cd === 0 && u.status !== 'silence' && !['passive'].includes(u.skill.type);
+        
+        if (!hasEnemy && !canUseSkill) {
+            u.hasActed = true;
+            this.selectedUnit = null;
+        } else {
+            // 保持选中，更新UI让玩家可以选“攻击”或“技能”
+            this.selectedUnit = u;
+        }
+        
         this.updateUI();
         if (this.gameMode === 'pvp_online') this.networkSync();
     },
@@ -3700,73 +3747,81 @@ const chessGame = {
         }
     },
 
-    // ================= 智能 AI 系统 (Difficulty Tier) =================
+    // ================= 智能 AI 系统 (核心修复) =================
     async aiTurn() {
         this.log(`Enemy Phase (${this.difficulty.toUpperCase()})...`, "system");
         const aiUnits = this.units.filter(u => u.team === 'red');
         const targetGrail = this.units.find(u => u.team === 'blue' && u.isGrail);
 
         for (const ai of aiUnits) {
+            // 跳过无法行动的单位
             if (ai.hp <= 0 || ['stun','sleep'].includes(ai.status)) continue;
 
-            // 1. 决策目标
+            // 1. 决策目标 (根据难度选择)
             let target = null;
             if (this.difficulty === 'lunatic' || this.difficulty === 'hard') {
-                // 高级AI：优先打星杯，其次打残血
+                // 高级AI：优先打星杯持有者，其次打残血
                 target = targetGrail || this.findWeakestEnemy(ai);
             } else if (this.difficulty === 'normal') {
+                // 普通AI：只打最近的
                 target = this.findNearestEnemy(ai);
             } else {
-                // Easy: 随机目标
+                // 简单AI：随机选择一个蓝方单位
                 const blues = this.units.filter(u => u.team === 'blue');
                 if(blues.length) target = blues[Math.floor(Math.random()*blues.length)];
             }
 
             if (!target) continue;
 
-            // 2. 攻击/技能决策
+            // 2. 攻击判定 (优先使用技能)
             if (this.isInRange(ai, target.x, target.y, 'attack')) {
                 await this.wait(400);
                 
-                // 技能使用概率
-                let skillProb = 0;
-                if(this.difficulty === 'lunatic') skillProb = 0.8;
-                else if(this.difficulty === 'hard') skillProb = 0.5;
-                else skillProb = 0.2;
+                // 技能使用概率 (难度越高越爱用技能)
+                let skillProb = 0.2; // Easy/Normal
+                if(this.difficulty === 'hard') skillProb = 0.5;
+                if(this.difficulty === 'lunatic') skillProb = 0.9;
 
-                if (ai.skill.cd === 0 && Math.random() < skillProb && ['aoe','nuke','line_atk'].includes(ai.skill.type)) {
+                // 尝试使用伤害类技能
+                if (ai.skill.cd === 0 && Math.random() < skillProb && 
+                   ['aoe','nuke','line_atk','aoe_self_dmg'].includes(ai.skill.type)) {
                     this.selectedUnit = ai; 
                     this.useSkill();
                 } else {
                     this.actionAttack(ai, target);
                 }
-                continue;
+                continue; // 攻击后结束本单位行动
             }
 
-            // 3. 移动决策
+            // 3. 移动决策 (寻路)
             let bestX = ai.x, bestY = ai.y;
-            // 简单寻路 vs 智能寻路
+            
             if (this.difficulty === 'easy') {
-                // 随机移动
+                // Easy: 随机乱走
                 const moves = this.getValidMoves(ai);
                 if(moves.length) {
                     const m = moves[Math.floor(Math.random()*moves.length)];
                     bestX = m.x; bestY = m.y;
                 }
             } else {
-                // 逼近目标
+                // Normal/Hard/Lunatic: 逼近目标
                 let minDst = 999;
                 const moves = this.getValidMoves(ai);
+                
+                // 寻找能打到人的位置，或者离目标最近的位置
                 moves.forEach(m => {
                     const d = this.getDist(m, target);
+                    // Lunatic AI 会尝试保持最大射程风筝 (暂简化为贴脸)
                     if(d < minDst) { minDst = d; bestX = m.x; bestY = m.y; }
                 });
             }
 
+            // 执行移动
             if (bestX !== ai.x || bestY !== ai.y) {
                 await this.wait(300);
                 ai.x = bestX; ai.y = bestY;
                 this.updateUI();
+                
                 // 移动后再次尝试攻击
                 if (this.isInRange(ai, target.x, target.y, 'attack')) {
                     await this.wait(300);
@@ -3776,39 +3831,42 @@ const chessGame = {
             ai.hasActed = true;
         }
 
+        // 所有单位行动完毕
         await this.wait(500);
-        this.endTurn(); // AI 结束回合
+        
+        // ⭐ 关键修复：先解锁，再切换回合
+        this.isProcessing = false; 
+        this.endTurn(); 
+        
         this.log("Player Turn.", "system");
     },
 
+    // 辅助：寻找血量最低的敌人 (Hard/Lunatic 专用)
     findWeakestEnemy(u) {
-        let target=null, minHp=9999;
+        let target = null, minHp = 9999;
         this.units.forEach(t => {
             if (t.team !== u.team) {
-                if(t.hp < minHp) { minHp=t.hp; target=t; }
+                // 距离优先权重：如果两个都残血，打近的
+                const dist = this.getDist(u, t);
+                const score = t.hp + (dist * 2); 
+                if(score < minHp) { minHp = score; target = t; }
             }
         });
         return target;
     },
     
-    findNearestEnemy(u) {
-        let target=null, min=999;
-        this.units.forEach(t => {
-            if (t.team !== u.team) {
-                let d = this.getDist(u, t);
-                if(d < min){ min=d; target=t; }
-            }
-        });
-        return target;
-    },
-
+    // 辅助：获取所有合法移动格 (用于 AI 寻路)
     getValidMoves(u) {
         let moves = [];
         for (let my = u.y - u.mov; my <= u.y + u.mov; my++) {
             for (let mx = u.x - u.mov; mx <= u.x + u.mov; mx++) {
-                if (mx<0||mx>=this.boardSize||my<0||my>=this.boardSize) continue;
+                // 越界检查
+                if (mx < 0 || mx >= this.boardSize || my < 0 || my >= this.boardSize) continue;
+                // 距离检查 (曼哈顿距离)
                 if (this.getDist({x:mx,y:my}, u) > u.mov) continue;
+                // 碰撞检查 (不能有其他人)
                 if (this.getUnitAt(mx, my)) continue;
+                
                 moves.push({x:mx, y:my});
             }
         }
