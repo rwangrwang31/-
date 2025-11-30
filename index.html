@@ -3894,6 +3894,7 @@ const chessGame = {
         if (this.isProcessing) return;
         if (this.currentTurn !== this.myRole && this.gameMode === 'pvp_online') return;
 
+        this.isProcessing = true;
         this.selectedUnit = null;
         const next = (this.currentTurn === 'blue') ? 'red' : 'blue';
         this.currentTurn = next;
@@ -3963,25 +3964,32 @@ const chessGame = {
 
     async networkPoll(force=false) {
         if (!this.matchId) return;
-        if (this.isSyncing) return;
-        if (!force && this.currentTurn === this.myRole) return;
+        if (this.isSyncing) return; // 正在上传时不拉取
+        if (!force && this.currentTurn === this.myRole && !this.isProcessing) return; // 如果已经是我的回合且未锁定，不拉取
 
         const res = await apiRequest({ action: 'game_poll', matchId: this.matchId });
         if (res.status === 'success') {
             if (force || res.turn === this.myRole) {
-                if(!force) this.log("Your Turn!", "system");
+                // 如果服务器确认轮到我了
+                if (res.turn === this.myRole) {
+                    if (this.currentTurn !== this.myRole) this.log("Your Turn!", "system");
+                    this.isProcessing = false; // ⭐ 解锁操作
+                }
+
                 this.currentTurn = res.turn;
                 if (res.state) { 
                     this.units = res.state.units || []; 
                     this.deadUnits = res.state.deadUnits || [];
                     this.logs = res.state.logs || []; 
                 }
-                if (!force && this.currentTurn === this.myRole) {
+                
+                if (this.currentTurn === this.myRole && !force) {
+                    // 确保本地状态同步
                     this.units.forEach(u => { 
-                        if(u.team === this.myRole) {
+                        if(u.team === this.myRole && u.hasActed) {
+                            // 这里可以加额外的重置校验，但在 endTurn 切换时通常已处理
                             u.hasActed = false;
                             u.hasMoved = false;
-                            if(u.skill.cd > 0) u.skill.cd--;
                         }
                     });
                 }
@@ -4012,10 +4020,36 @@ const chessGame = {
         this.renderUnits();
         this.renderRanges();
         this.updateSidePanel();
+        
         const turnText = document.getElementById('game-turn-text');
-        turnText.innerText = (this.currentTurn === this.myRole) ? "YOUR TURN" : "OPPONENT TURN";
-        if(this.gameMode === 'pve' && this.currentTurn === 'red') turnText.innerText = "ENEMY TURN";
+        const btnEnd = document.getElementById('btn-end-turn');
+        
+        // 更新回合文本
+        if(this.gameMode === 'pve') {
+            turnText.innerText = this.currentTurn === 'blue' ? "PLAYER TURN" : "ENEMY TURN";
+        } else {
+            turnText.innerText = this.currentTurn === this.myRole ? "YOUR TURN" : "OPPONENT TURN";
+        }
         turnText.style.color = this.currentTurn === 'blue' ? "var(--cyan)" : "var(--pink)";
+
+        // ⭐ 更新按钮状态
+        if (btnEnd) {
+            const isMyTurn = (this.gameMode === 'pve' && this.currentTurn === 'blue') || 
+                             (this.gameMode === 'pvp_online' && this.currentTurn === this.myRole);
+            
+            // 如果不是我的回合，或者正在处理中(isProcessing)，则禁用
+            if (!isMyTurn || this.isProcessing) {
+                btnEnd.disabled = true;
+                btnEnd.style.opacity = 0.5;
+                btnEnd.style.cursor = "not-allowed";
+                btnEnd.innerText = this.isProcessing ? "WAITING..." : "OPPONENT TURN";
+            } else {
+                btnEnd.disabled = false;
+                btnEnd.style.opacity = 1;
+                btnEnd.style.cursor = "pointer";
+                btnEnd.innerText = "END TURN";
+            }
+        }
     },
     renderBoardGrid() {
         this.boardEl.innerHTML = '';
