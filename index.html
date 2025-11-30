@@ -3431,14 +3431,8 @@ const chessGame = {
         this.isProcessing = false;
         document.getElementById('game-log').innerHTML = '';
         
-        // 难度选择UI处理
-        const diffSel = document.getElementById('pve-difficulty-selector');
-        if(mode === 'pve') {
-            diffSel.style.display = 'block';
-            this.difficulty = document.getElementById('game-difficulty').value;
-        } else {
-            diffSel.style.display = 'none';
-        }
+        const diffSel = document.getElementById('game-difficulty');
+        if(diffSel) this.difficulty = diffSel.value || 'normal';
 
         const overlay = document.getElementById('game-result-overlay');
         if(overlay) { overlay.style.opacity = 0; overlay.style.pointerEvents = 'none'; }
@@ -3448,29 +3442,44 @@ const chessGame = {
             this.currentTurn = 'blue';
             if (this.pollInterval) clearInterval(this.pollInterval);
             this.setupAllUnits();
-            this.log(`PVE Started. Difficulty: ${this.difficulty.toUpperCase()}`, "system");
+            this.log(`PVE Started (${this.difficulty}).`, "system");
             this.updateUI();
         } else {
+            // PVP 联机
             if (!state.isLoggedIn) return alert("Login required.");
-            
-            // 修复：强制要求输入房间号，确保好友能匹配
-            const roomId = prompt("Enter Room ID (e.g. 'ROOM1'):\n[Share this ID with your friend]");
+            const roomId = prompt("Enter Room ID to Create/Join:");
             if (!roomId) return;
 
             this.log(`Connecting to [${roomId}]...`, "system");
             const res = await apiRequest({ action: 'game_create', custom_id: roomId }); 
             
             if (res.status === 'waiting') {
+                // === P1 (房主) 逻辑 ===
                 this.matchId = res.matchId;
                 this.myRole = 'blue';
-                this.log(`Room Created. Waiting for P2...`, "system");
-                this.setupAllUnits(); 
-                this.networkSync();
+                
+                // ⭐ 随机先手逻辑 ⭐
+                // 50% 概率 Blue 先手，50% 概率 Red 先手
+                const startSide = Math.random() < 0.5 ? 'blue' : 'red';
+                this.currentTurn = startSide;
+
+                this.log(`Room Created. Coin toss result: ${startSide.toUpperCase()} Start!`, "system");
+                
+                this.setupAllUnits();
+                
+                // 立即上传初始状态（包含随机后的 currentTurn）
+                // 这样服务器上的默认 'blue' 会被覆盖，P2 加入时就能看到正确的先手方
+                this.networkSync(); 
+
             } else if (res.status === 'matched') {
+                // === P2 (挑战者) 逻辑 ===
                 this.matchId = res.matchId;
                 this.myRole = 'red';
                 this.log(`Joined Room! VS ${res.opponent}`, "system");
-                await this.networkPoll(true); // 立即拉取初始数据
+                
+                // 立即拉取 P1 的初始盘面（包含 P1 随机出来的先手设置）
+                await this.networkPoll(true); 
+            
             } else if (res.status === 'reconnected') {
                 this.matchId = res.matchId;
                 this.myRole = res.role;
