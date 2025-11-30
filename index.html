@@ -817,7 +817,7 @@ input[type="color"] {
         .forum-right h3{font-family:'Orbitron';font-size:.9rem;margin-bottom:6px;color:var(--cyan);}
         .forum-right textarea{flex:1;margin:6px 0 10px;}
 
-        /* ================= 9. 设定区：全息法典风格 ================= */
+        /* ================= 9. 设定区：棋盘与盟约 (NGNL Style) ================= */
 #codex {
     position: relative;
     z-index: 1;
@@ -825,52 +825,59 @@ input[type="color"] {
 
 .codex-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* 左右两栏 */
+    grid-template-columns: 1fr 1.4fr; /* 左侧盟约较窄，右侧棋盘较宽 */
     gap: 40px;
-    align-items: start;
+    align-items: stretch;
 }
 
-/* 通用卡片容器：全息玻璃质感 */
+/* --- 通用容器样式：全息玻璃 --- */
 .codex-card {
-    background: rgba(15, 15, 25, 0.75);
-    border-radius: 12px;
+    background: rgba(10, 5, 15, 0.85);
+    border-radius: 16px;
     position: relative;
     overflow: hidden;
-    /* 双重边框实现发光感 */
-    border: 1px solid rgba(5, 217, 232, 0.3);
+    /* 特图风格：粉紫边框发光 */
+    border: 1px solid rgba(255, 42, 109, 0.3);
     box-shadow: 
-        0 0 20px rgba(5, 217, 232, 0.1),
-        inset 0 0 40px rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
-    padding: 0; /* 内部布局自己控制 */
+        0 0 20px rgba(255, 42, 109, 0.1),
+        inset 0 0 60px rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(12px);
+    display: flex;
+    flex-direction: column;
 }
 
-/* 顶部标题栏 */
+/* 顶部光条扫描动画 */
+.codex-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: -100%; width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    animation: scanline 4s linear infinite;
+    z-index: 10;
+}
+@keyframes scanline { 0% { left: -100%; } 100% { left: 100%; } }
+
 .codex-header {
-    background: linear-gradient(90deg, rgba(5, 217, 232, 0.1), transparent);
-    padding: 15px 20px;
-    border-bottom: 1px solid rgba(5, 217, 232, 0.2);
+    background: linear-gradient(90deg, rgba(255, 42, 109, 0.1), transparent);
+    padding: 18px 24px;
+    border-bottom: 1px solid rgba(255, 42, 109, 0.2);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
-
 .codex-header h3 {
     font-family: 'Orbitron';
-    color: var(--cyan);
+    color: #fff;
     font-size: 1.2rem;
     letter-spacing: 2px;
-    text-shadow: 0 0 8px var(--cyan);
+    text-shadow: 0 0 10px var(--pink); /* 粉色霓虹标题 */
     margin: 0;
 }
 
-.codex-icon {
-    font-size: 1.5rem;
-    color: rgba(255, 255, 255, 0.2);
-}
-
 .codex-body {
-    padding: 20px;
+    padding: 24px;
+    flex: 1;
+    position: relative;
 }
 
 /* --- 左侧：十条盟约 (The Ten Pledges) --- */
@@ -878,135 +885,189 @@ input[type="color"] {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
+    position: relative;
+    z-index: 2;
 }
 
 .pledge-item {
     display: flex;
-    gap: 12px;
+    gap: 14px;
     font-size: 0.95rem;
-    line-height: 1.5;
-    color: #ddd;
-    padding: 8px 10px;
-    border-radius: 6px;
-    transition: background 0.3s;
-    border-left: 2px solid transparent;
+    line-height: 1.6;
+    color: #e0e0e0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.03), transparent);
+    border-left: 3px solid rgba(255, 42, 109, 0.3);
+    transition: all 0.3s ease;
 }
 
+/* 悬停时的“选中”特效 */
 .pledge-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-left-color: var(--pink);
+    background: linear-gradient(90deg, rgba(255, 42, 109, 0.15), transparent);
+    border-left-color: var(--cyan);
+    transform: translateX(8px);
+    box-shadow: 0 0 15px rgba(5, 217, 232, 0.1);
 }
 
 .pledge-num {
     font-family: 'Orbitron';
-    color: var(--pink);
+    color: var(--cyan);
     font-weight: bold;
-    min-width: 24px;
-    text-align: right;
+    font-size: 1.1rem;
+    text-shadow: 0 0 5px var(--cyan);
 }
 
-/* --- 右侧：十六种族 (Exceed Ranking) --- */
-.race-list-container {
+/* 盟约背景的大 Logo */
+.codex-bg-logo {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 15rem;
+    opacity: 0.05;
+    color: var(--pink);
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(2px);
+}
+
+/* --- 右侧：十六种族 (Chessboard Grid) --- */
+/* 棋盘格背景纹理 */
+.race-grid-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4x4 布局 */
+    gap: 12px;
+    padding: 10px;
+    /* 模拟棋盘底纹 */
+    background-image: 
+        conic-gradient(rgba(255,255,255,0.03) 90deg, transparent 90deg, transparent 180deg, rgba(255,255,255,0.03) 180deg, rgba(255,255,255,0.03) 270deg, transparent 270deg);
+    background-size: 40px 40px;
+}
+
+/* 单个种族卡片：独立棋子 */
+.race-card {
+    position: relative;
+    aspect-ratio: 1 / 1.1; /* 接近方形 */
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 10px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    max-height: 600px;
-    overflow-y: auto;
-    padding-right: 5px;
-}
-
-/* 种族条目：天梯榜单风格 */
-.race-row {
-    display: flex;
     align-items: center;
-    background: rgba(0, 0, 0, 0.4);
-    padding: 8px 14px;
-    border-radius: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: all 0.2s;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    overflow: hidden;
+    cursor: default;
 }
 
-.race-row:hover {
-    transform: translateX(5px);
-    background: rgba(255, 255, 255, 0.08);
-    border-color: var(--cyan);
+/* 卡片悬停：浮起 + 发光 */
+.race-card:hover {
+    transform: translateY(-5px) scale(1.05);
+    z-index: 10;
+    background: rgba(20, 20, 30, 0.9);
 }
 
-/* 排名数字 */
-.race-rank {
+/* 排名角标 */
+.r-rank {
+    position: absolute;
+    top: 6px; left: 8px;
     font-family: 'Orbitron';
-    width: 30px;
-    color: #666;
-    font-size: 0.9rem;
-}
-
-/* 名字与英文 */
-.race-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-.race-name-en {
-    font-family: 'Orbitron';
-    font-size: 0.9rem;
-    color: #fff;
-    letter-spacing: 1px;
-}
-.race-name-cn {
-    font-size: 0.75rem;
-    color: #888;
-}
-
-/* 棋子图标 */
-.race-chess {
-    font-size: 1.2rem;
-    color: #444;
-    width: 30px;
-    text-align: center;
-}
-
-/* --- 特殊阶级高亮 (Tier Colors) --- */
-/* 神灵种/幻想种/精灵种 (Rank 1-3) */
-.tier-god .race-rank { color: var(--gold); text-shadow: 0 0 5px var(--gold); }
-.tier-god .race-name-en { color: var(--gold); }
-.tier-god .race-chess { color: var(--gold); }
-.tier-god { border-left: 3px solid var(--gold); }
-
-/* 中位种族 (Rank 4-9) */
-.tier-mid .race-rank { color: var(--purple); }
-.tier-mid .race-name-en { color: #dcb0ff; }
-.tier-mid .race-chess { color: var(--purple); }
-.tier-mid { border-left: 3px solid var(--purple); }
-
-/* 人类/兽人 (Rank 14-16) */
-.tier-low .race-rank { color: var(--cyan); }
-.tier-low .race-name-en { color: var(--cyan); }
-.tier-low .race-chess { color: var(--cyan); }
-.tier-low { border-left: 3px solid var(--cyan); }
-
-/* Imanity 特别高亮 (主角种族) */
-.race-row.is-imanity {
-    background: linear-gradient(90deg, rgba(255, 42, 109, 0.15), transparent);
-    border: 1px solid var(--pink);
-    box-shadow: 0 0 10px rgba(255, 42, 109, 0.2);
-}
-.race-row.is-imanity .race-name-en { color: var(--pink); text-shadow: 0 0 5px var(--pink); }
-
-/* 底部简介 */
-.codex-footer {
-    margin-top: 15px;
     font-size: 0.8rem;
-    color: #777;
-    line-height: 1.6;
-    border-top: 1px dashed rgba(255, 255, 255, 0.1);
-    padding-top: 10px;
+    opacity: 0.6;
 }
 
-@media(max-width: 900px){
+/* 棋子图标（核心视觉） */
+.r-piece {
+    font-size: 2.2rem;
+    margin-bottom: 6px;
+    transition: transform 0.4s;
+}
+.race-card:hover .r-piece {
+    transform: scale(1.2) rotate(10deg);
+}
+
+/* 种族名 */
+.r-name-en {
+    font-family: 'Orbitron';
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.1;
+}
+.r-name-cn {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    margin-top: 2px;
+}
+
+/* === 各种族的专属配色与光效 (Lore Colors) === */
+
+/* Old Deus (神灵种): 纯金 + 核心辉光 */
+.race-card[data-tier="god"] {
+    border-color: rgba(255, 215, 0, 0.5);
+    box-shadow: inset 0 0 20px rgba(255, 215, 0, 0.1);
+}
+.race-card[data-tier="god"] .r-piece { 
+    color: var(--gold); 
+    text-shadow: 0 0 15px var(--gold);
+    animation: pulseGold 2s infinite;
+}
+@keyframes pulseGold { 0%,100%{text-shadow:0 0 10px var(--gold);} 50%{text-shadow:0 0 25px var(--gold), 0 0 5px white;} }
+
+/* Phantasma/Elemental/Flügel (高位魔法种): 粉/紫/天蓝 */
+.race-card[data-tier="high"] {
+    border-color: rgba(217, 5, 232, 0.5);
+}
+.race-card[data-tier="high"] .r-piece { 
+    color: #e08aff; 
+    text-shadow: 0 0 10px #bf00ff; 
+}
+.race-card[data-race="Flügel"] .r-piece { color: #ffb4ff; text-shadow: 0 0 15px #ff7bff; }
+.race-card[data-race="Dragonia"] .r-piece { color: #ff5c5c; text-shadow: 0 0 15px #ff0000; }
+
+/* Mid Tier (地精/森精/妖精): 绿色/自然色 */
+.race-card[data-tier="mid"] {
+    border-color: rgba(5, 217, 232, 0.3);
+}
+.race-card[data-tier="mid"] .r-piece { color: #5cffe3; text-shadow: 0 0 8px #00cea8; }
+.race-card[data-race="Ex-Machina"] { border-color: #5cff5c; }
+.race-card[data-race="Ex-Machina"] .r-piece { 
+    color: #5cff5c; 
+    text-shadow: 0 0 10px #00ff00; 
+    /* 机械故障特效 */
+    animation: glitchText 3s infinite;
+}
+@keyframes glitchText {
+    0%{transform:skew(0);} 95%{transform:skew(0);}
+    96%{transform:skew(-10deg);} 97%{transform:skew(10deg);} 100%{transform:skew(0);}
+}
+
+/* Low Tier (兽人/吸血/海栖): 红色/深红 */
+.race-card[data-tier="low"] {
+    border-color: rgba(255, 100, 100, 0.3);
+}
+.race-card[data-tier="low"] .r-piece { color: #ff7aa8; text-shadow: 0 0 8px #d6004d; }
+
+/* Imanity (人类种): 最弱也是最强 - 白色微光 + 霓虹边框 */
+.race-card[data-race="Imanity"] {
+    border: 1px solid #fff;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.8));
+    box-shadow: 0 0 15px rgba(255,255,255,0.2);
+}
+.race-card[data-race="Imanity"] .r-piece {
+    color: #fff;
+    text-shadow: 0 0 10px #fff, 0 0 20px var(--cyan), 0 0 30px var(--pink);
+}
+
+@media(max-width: 1024px){
     .codex-grid { grid-template-columns: 1fr; }
+    .race-grid-container { grid-template-columns: repeat(4, 1fr); }
 }
-
+@media(max-width: 600px){
+    .race-grid-container { grid-template-columns: repeat(2, 1fr); }
+}
         /* ================= 10. 其它 ================= */
         footer{text-align:center;padding:40px;color:#555;font-family:'Orbitron';font-size:.8rem;}
         @media(max-width:1024px){
@@ -1133,6 +1194,7 @@ input[type="color"] {
         
         <div class="codex-grid">
             <div class="codex-card">
+                <div class="codex-bg-logo">⚖️</div>
                 <div class="codex-header">
                     <h3>TEN PLEDGES</h3>
                     <div class="codex-icon">📜</div>
@@ -1159,7 +1221,7 @@ input[type="color"] {
                     <div class="codex-icon">♟️</div>
                 </div>
                 <div class="codex-body">
-                    <div id="race-list-container" class="race-list-container"></div>
+                    <div id="race-list-container" class="race-grid-container"></div>
                     
                     <div class="codex-footer">
                         <strong>序列设定 (Ixseed)：</strong><br>
@@ -2986,42 +3048,37 @@ const visuals={
         requestAnimationFrame(draw);
     },
     initRaces(){
-        // 官方设定 Rank 1-16 完整列表
-        // tier: 'god'(1-3), 'mid'(4-9), 'low'(10-16) 用于 CSS 染色
+        // tier 定义: god(金), high(紫/粉), mid(绿/青), low(红/橙)
         const races = [
             { r: 1,  en: "Old Deus",      cn: "神灵种", piece: "♔", tier: "god" },
-            { r: 2,  en: "Phantasma",     cn: "幻想种", piece: "♕", tier: "god" },
-            { r: 3,  en: "Elemental",     cn: "精灵种", piece: "♗", tier: "god" },
-            { r: 4,  en: "Dragonia",      cn: "龙精种", piece: "♖", tier: "mid" },
+            { r: 2,  en: "Phantasma",     cn: "幻想种", piece: "♕", tier: "high" },
+            { r: 3,  en: "Elemental",     cn: "精灵种", piece: "♗", tier: "high" },
+            { r: 4,  en: "Dragonia",      cn: "龙精种", piece: "♖", tier: "high" },
             { r: 5,  en: "Gigant",        cn: "巨人种", piece: "♖", tier: "mid" },
-            { r: 6,  en: "Flügel",        cn: "天翼种", piece: "♕", tier: "mid" },
+            { r: 6,  en: "Flügel",        cn: "天翼种", piece: "♕", tier: "high" }, // 特殊粉色
             { r: 7,  en: "Elf",           cn: "森精种", piece: "♖", tier: "mid" },
             { r: 8,  en: "Dwarf",         cn: "地精种", piece: "♗", tier: "mid" },
             { r: 9,  en: "Fairy",         cn: "妖精种", piece: "P", tier: "mid" },
-            { r: 10, en: "Ex-Machina",    cn: "机凯种", piece: "♗", tier: "low" },
+            { r: 10, en: "Ex-Machina",    cn: "机凯种", piece: "♗", tier: "mid" }, // 特殊绿色
             { r: 11, en: "Demonia",       cn: "妖魔种", piece: "P", tier: "low" },
             { r: 12, en: "Dhampir",       cn: "吸血种", piece: "♘", tier: "low" },
             { r: 13, en: "Lunamana",      cn: "月咏种", piece: "♖", tier: "low" },
             { r: 14, en: "Warbeast",      cn: "兽人种", piece: "P", tier: "low" },
             { r: 15, en: "Seiren",        cn: "海栖种", piece: "♘", tier: "low" },
-            { r: 16, en: "Imanity",       cn: "人类种", piece: "♔", tier: "low" }
+            { r: 16, en: "Imanity",       cn: "人类种", piece: "♔", tier: "imanity" } // 主角位
         ];
 
         const container = document.getElementById('race-list-container');
         if(!container) return;
 
         container.innerHTML = races.map(race => {
-            // 特殊样式：如果是 Imanity，加高亮类
-            const isImanity = race.en === "Imanity" ? "is-imanity" : "";
-            
+            // 生成卡片
             return `
-            <div class="race-row tier-${race.tier} ${isImanity}">
-                <div class="race-rank">#${race.r}</div>
-                <div class="race-info">
-                    <span class="race-name-en">${race.en}</span>
-                    <span class="race-name-cn">${race.cn}</span>
-                </div>
-                <div class="race-chess" title="Chess Piece Representation">${race.piece}</div>
+            <div class="race-card" data-tier="${race.tier}" data-race="${race.en}">
+                <div class="r-rank">#${race.r}</div>
+                <div class="r-piece">${race.piece}</div>
+                <div class="r-name-en">${race.en}</div>
+                <div class="r-name-cn">${race.cn}</div>
             </div>`;
         }).join('');
     },
