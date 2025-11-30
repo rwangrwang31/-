@@ -2658,14 +2658,16 @@ const animePage = {
         this.loadLocalSettings();
         this.bindEvents();
 
-        // 默认加载第一集
+        // 默认加载第一集 (修改：传入 false 禁止自动播放)
         const first = ANIME_DATA[0];
         if (first) {
             try {
                 const saved = JSON.parse(localStorage.getItem('ngnlAnimeLast') || 'null');
                 if (saved && saved.seriesId) {
-                    this.playEpisode(saved.seriesId, saved.epIndex, saved.currentTime, true);
+                    // 恢复上次进度，但不自动播放
+                    this.playEpisode(saved.seriesId, saved.epIndex, saved.currentTime, false);
                 } else {
+                    // 加载第一集，不自动播放
                     this.playEpisode(first.id, 0, 0, false);
                 }
             } catch (e) {
@@ -2680,7 +2682,8 @@ const animePage = {
             if (!card) return;
             const sid = card.getAttribute('data-series');
             const idx = parseInt(card.getAttribute('data-index'), 10);
-            this.playEpisode(sid, idx, 0, false);
+            // 修改：点击选集时，强制自动播放 (true)
+            this.playEpisode(sid, idx, 0, true);
         });
 
         this.dom.speedSel.addEventListener('change', () => {
@@ -2734,7 +2737,9 @@ const animePage = {
     getEpisodeKey(sid, idx) { return sid + '_' + idx; },
 
     // ================= 核心播放逻辑 =================
-    async playEpisode(seriesId, index, resumeTime = 0, isRestore = false) {
+    // ================= 核心播放逻辑 =================
+    // 修改：第4个参数改为 autoPlay
+    async playEpisode(seriesId, index, resumeTime = 0, autoPlay = true) {
         // 切换集数时，先清除旧的轮询
         if (this.state.pollTimer) clearInterval(this.state.pollTimer);
 
@@ -2766,10 +2771,13 @@ const animePage = {
             this.pollNewDanmaku();
         }, 10000);
         
-        try {
-            await this.dom.video.play();
-        } catch (e) {
-            console.log("Autoplay blocked.");
+        // 修改：只有当 autoPlay 为 true 时才调用 play()
+        if (autoPlay) {
+            try {
+                await this.dom.video.play();
+            } catch (e) {
+                console.log("Autoplay blocked or disabled.");
+            }
         }
     },
 
