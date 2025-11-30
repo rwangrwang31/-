@@ -3431,9 +3431,7 @@ const chessGame = {
         this.isProcessing = false;
         document.getElementById('game-log').innerHTML = '';
         
-        const diffSel = document.getElementById('game-difficulty');
-        if(diffSel) this.difficulty = diffSel.value || 'normal';
-
+        // 重置结算层
         const overlay = document.getElementById('game-result-overlay');
         if(overlay) { overlay.style.opacity = 0; overlay.style.pointerEvents = 'none'; }
 
@@ -3442,42 +3440,41 @@ const chessGame = {
             this.currentTurn = 'blue';
             if (this.pollInterval) clearInterval(this.pollInterval);
             this.setupAllUnits();
-            this.log(`PVE Started (${this.difficulty}).`, "system");
+            this.log(`PVE Started.`, "system");
             this.updateUI();
         } else {
             // PVP 联机
             if (!state.isLoggedIn) return alert("Login required.");
-            const roomId = prompt("Enter Room ID to Create/Join:");
+            const roomId = prompt("Enter Room ID (Create or Join):");
             if (!roomId) return;
 
             this.log(`Connecting to [${roomId}]...`, "system");
             const res = await apiRequest({ action: 'game_create', custom_id: roomId }); 
             
             if (res.status === 'waiting') {
-                // === P1 (房主) 逻辑 ===
+                // === P1 (房主) ===
                 this.matchId = res.matchId;
                 this.myRole = 'blue';
                 
-                // ⭐ 随机先手逻辑 ⭐
-                // 50% 概率 Blue 先手，50% 概率 Red 先手
-                const startSide = Math.random() < 0.5 ? 'blue' : 'red';
-                this.currentTurn = startSide;
-
-                this.log(`Room Created. Coin toss result: ${startSide.toUpperCase()} Start!`, "system");
-                
+                // 1. 生成棋盘
                 this.setupAllUnits();
                 
-                // 立即上传初始状态（包含随机后的 currentTurn）
-                // 这样服务器上的默认 'blue' 会被覆盖，P2 加入时就能看到正确的先手方
-                this.networkSync(); 
+                // 2. 随机先手 (50% 概率)
+                const startSide = Math.random() < 0.5 ? 'blue' : 'red';
+                this.currentTurn = startSide;
+                this.log(`Coin Toss: ${startSide.toUpperCase()} Start!`, "system");
+
+                // 3. 必须等待上传完成，防止P2进来读到空数据
+                await this.networkSync(); 
+                this.log(`Room Ready. Waiting for P2...`, "system");
 
             } else if (res.status === 'matched') {
-                // === P2 (挑战者) 逻辑 ===
+                // === P2 (加入者) ===
                 this.matchId = res.matchId;
                 this.myRole = 'red';
                 this.log(`Joined Room! VS ${res.opponent}`, "system");
                 
-                // 立即拉取 P1 的初始盘面（包含 P1 随机出来的先手设置）
+                // 4. P2 绝不自己生成棋子，强制拉取 P1 的数据
                 await this.networkPoll(true); 
             
             } else if (res.status === 'reconnected') {
@@ -3485,9 +3482,6 @@ const chessGame = {
                 this.myRole = res.role;
                 this.log(`Reconnected as ${res.role.toUpperCase()}`, "system");
                 await this.networkPoll(true);
-            } else {
-                alert(res.message || "Connection Error");
-                return;
             }
             
             if (this.pollInterval) clearInterval(this.pollInterval);
@@ -3973,32 +3967,40 @@ const chessGame = {
 
     async networkPoll(force=false) {
         if (!this.matchId) return;
-        if (this.isSyncing) return; // 正在上传时不拉取
-        if (!force && this.currentTurn === this.myRole && !this.isProcessing) return; // 如果已经是我的回合且未锁定，不拉取
+        
+        // 1. 如果正在上传，或者当前是我的回合且非强制更新，则跳过
+        // (防止操作时被服务器旧数据覆盖)
+        if (this.isSyncing) return;
+        if (!force && this.currentTurn === this.myRole) return;
 
         const res = await apiRequest({ action: 'game_poll', matchId: this.matchId });
+        
         if (res.status === 'success') {
+            // 2. 只有当 (强制更新) 或 (服务器回合改变了) 才更新本地
             if (force || res.turn === this.myRole) {
-                // 如果服务器确认轮到我了
-                if (res.turn === this.myRole) {
-                    if (this.currentTurn !== this.myRole) this.log("Your Turn!", "system");
-                    this.isProcessing = false; // ⭐ 解锁操作
+                
+                // 数据完整性检查：防止拉取到空盘
+                if (!res.state || !res.state.units || res.state.units.length === 0) {
+                    return; // 服务器数据异常，忽略
                 }
 
-                this.currentTurn = res.turn;
-                if (res.state) { 
-                    this.units = res.state.units || []; 
-                    this.deadUnits = res.state.deadUnits || [];
-                    this.logs = res.state.logs || []; 
+                if (!force && res.turn === this.myRole && this.currentTurn !== this.myRole) {
+                    this.log("Your Turn!", "system");
+                    this.isProcessing = false; // 解锁操作
                 }
                 
-                if (this.currentTurn === this.myRole && !force) {
-                    // 确保本地状态同步
+                this.currentTurn = res.turn;
+                this.units = res.state.units; 
+                this.deadUnits = res.state.deadUnits || [];
+                this.logs = res.state.logs || []; 
+                
+                // 3. 轮到我时，重置行动力
+                if (this.currentTurn === this.myRole) {
                     this.units.forEach(u => { 
-                        if(u.team === this.myRole && u.hasActed) {
-                            // 这里可以加额外的重置校验，但在 endTurn 切换时通常已处理
+                        if(u.team === this.myRole) {
                             u.hasActed = false;
-                            u.hasMoved = false;
+                            u.hasMoved = false; // 确保可移动
+                            if(u.skill.cd > 0) u.skill.cd--;
                         }
                     });
                 }
@@ -4008,18 +4010,22 @@ const chessGame = {
         }
     },
     async networkSync() {
-        this.isSyncing = true; // ⭐ 锁定：禁止轮询读取旧数据
+        this.isSyncing = true; // 上锁：禁止轮询
         try {
             await apiRequest({
                 action: 'game_move', 
                 matchId: this.matchId,
-                state: JSON.stringify({ units: this.units, deadUnits: this.deadUnits, logs: this.logs }),
+                state: JSON.stringify({ 
+                    units: this.units, 
+                    deadUnits: this.deadUnits, 
+                    logs: this.logs 
+                }),
                 nextTurn: this.currentTurn
             });
         } catch (e) {
-            console.error("Sync failed:", e);
+            console.error("Sync Error:", e);
         } finally {
-            // 延迟解锁，确保服务器写入完成
+            // 延迟解锁，确保服务器写入延迟
             setTimeout(() => { this.isSyncing = false; }, 500);
         }
     },
