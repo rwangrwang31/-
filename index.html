@@ -1682,6 +1682,7 @@ input[type="color"] {
                         <div>MOV: <span id="u-mov" style="color:var(--cyan)">0</span></div>
                     </div>
                     <div id="u-desc" style="margin-top:10px;font-size:.8rem;color:#888;line-height:1.4;"></div>
+                    <button id="btn-skill" class="btn btn-sm" style="width:100%;margin-top:8px;border-color:var(--gold);color:var(--gold);" onclick="chessGame.useSkill()">SKILL</button>
                 </div>
 
                 <div class="game-log-box">
@@ -3330,63 +3331,115 @@ const visuals={
 
 /* ================== THE GREAT WAR: TACTICS GAME ENGINE ================== */
 
+/* ================== THE GREAT WAR: ONLINE TACTICS (16 RACES) ================== */
+
 const chessGame = {
     boardSize: 8,
-    gameMode: 'pve', // 'pve' or 'pvp'
-    turn: 'blue', // 'blue' (Player) or 'red' (Enemy)
+    matchId: null,
+    myRole: 'blue', // 'blue' (P1) or 'red' (P2)
+    currentTurn: 'blue',
+    gameMode: 'pve', // 'pve' or 'pvp_online'
+    
     selectedUnit: null,
     units: [],
     logs: [],
     boardEl: null,
-    
-    // 种族单位原型 (Data)
+    pollInterval: null,
+    isProcessing: false,
+
+    // ================= 16 种族设定 (盟约排名) =================
+    // 技能类型: dmg(单体), aoe(范围), heal(治疗), buff(强化), move(再动)
     prototypes: {
-        'Imanity':   { hp: 40, atk: 12, rng: 1, mov: 3, icon: '♔', name: 'Sora & Shiro', desc: '弱小的种族，但拥有无限的可能性。King Piece.' },
-        'Flügel':    { hp: 80, atk: 25, rng: 2, mov: 4, icon: '♕', name: 'Jibril',       desc: '天翼种。高机动高火力的弑神兵器。' },
-        'Warbeast':  { hp: 60, atk: 18, rng: 1, mov: 5, icon: '♞', name: 'Izuna',        desc: '兽人种。移动速度极快，擅长近战突袭。' },
-        'Elf':       { hp: 50, atk: 15, rng: 3, mov: 3, icon: '♗', name: 'Feel',         desc: '森精种。擅长远距离魔法打击。' },
-        'ExMachina': { hp: 70, atk: 20, rng: 1, mov: 3, icon: '♖', name: 'Schwi',        desc: '机凯种。拥有强大的防御和演算能力。' },
-        'OldDeus':   { hp: 120,atk: 30, rng: 2, mov: 2, icon: '☀', name: 'Tet',          desc: '唯一神。作为最终BOSS的存在。' }
+        'OldDeus':   { hp: 150, atk: 40, rng: 3, mov: 2, icon: '♔', name: '神灵种', desc: '【神击】对范围内的敌人造成毁灭性打击。', skill: { type: 'aoe', range: 3, power: 1.5, name: 'God Strike' } },
+        'Phantasma': { hp: 100, atk: 35, rng: 2, mov: 3, icon: '♕', name: '幻想种', desc: '【相位转移】瞬间移动到地图任意位置。', skill: { type: 'teleport', name: 'Phase Shift' } },
+        'Elemental': { hp: 80,  atk: 30, rng: 4, mov: 3, icon: '♗', name: '精灵种', desc: '【精灵风暴】对直线上的敌人造成魔法伤害。', skill: { type: 'line', range: 4, power: 1.2, name: 'Mana Blast' } },
+        'Dragonia':  { hp: 120, atk: 45, rng: 1, mov: 4, icon: '♖', name: '龙精种', desc: '【崩啸】以自身HP为代价，造成极大范围伤害。', skill: { type: 'aoe_self', range: 2, costHp: 30, power: 2.0, name: 'Roar' } },
+        'Gigant':    { hp: 140, atk: 35, rng: 1, mov: 2, icon: '♜', name: '巨人种', desc: '【地裂】震晕周围一圈的敌人。', skill: { type: 'aoe_stun', range: 1, power: 0.5, name: 'Quake' } },
+        'Flügel':    { hp: 90,  atk: 38, rng: 3, mov: 5, icon: '🪽', name: '天翼种', desc: '【天击】消耗所有行动力，对单体造成即死级伤害。', skill: { type: 'nuke', range: 4, power: 3.0, name: 'Heaven Strike' } },
+        'Elf':       { hp: 70,  atk: 25, rng: 3, mov: 3, icon: '🧝', name: '森精种', desc: '【虚空第零守护】为范围内友军提供护盾。', skill: { type: 'buff_def', range: 2, name: 'Void Shield' } },
+        'Dwarf':     { hp: 80,  atk: 32, rng: 2, mov: 2, icon: '⚒️', name: '地精种', desc: '【髓爆】自爆攻击，对周围造成伤害。', skill: { type: 'suicide', range: 2, power: 2.5, name: 'E-Bomb' } },
+        'Fairy':     { hp: 50,  atk: 15, rng: 3, mov: 4, icon: '🧚', name: '妖精种', desc: '【自然之息】治疗一名友军。', skill: { type: 'heal', range: 3, power: 40, name: 'Nature Heal' } },
+        'ExMachina': { hp: 100, atk: 28, rng: 2, mov: 3, icon: '🤖', name: '机凯种', desc: '【伪典·焉龙啸】复制上一次受到的攻击。', skill: { type: 'copy', name: 'Copycat' } },
+        'Demonia':   { hp: 110, atk: 30, rng: 1, mov: 3, icon: '👹', name: '妖魔种', desc: '【狂暴】下一次攻击力翻倍，但自身防御下降。', skill: { type: 'buff_atk', name: 'Berserk' } },
+        'Dhampir':   { hp: 70,  atk: 22, rng: 1, mov: 4, icon: '🧛', name: '吸血种', desc: '【吸血】造成伤害并回复等量HP。', skill: { type: 'drain', range: 1, power: 1.0, name: 'Drain' } },
+        'Lunamana':  { hp: 60,  atk: 20, rng: 3, mov: 3, icon: '🌙', name: '月咏种', desc: '【静寂】使一名敌人无法移动。', skill: { type: 'debuff_root', range: 3, name: 'Silence' } },
+        'Warbeast':  { hp: 80,  atk: 26, rng: 1, mov: 6, icon: '🐾', name: '兽人种', desc: '【血坏】本回合可以移动两次。', skill: { type: 'move_again', name: 'Blood Break' } },
+        'Seiren':    { hp: 60,  atk: 18, rng: 2, mov: 2, icon: '🧜', name: '海栖种', desc: '【塞壬之歌】使周围敌人进入睡眠。', skill: { type: 'sleep', range: 2, name: 'Siren Song' } },
+        'Imanity':   { hp: 50,  atk: 10, rng: 1, mov: 3, icon: '♟️', name: '人类种', desc: '【盟约】鼓舞士气，全员攻击力提升。', skill: { type: 'buff_all', name: 'Aschente' } }
     },
 
     init() {
         this.boardEl = document.getElementById('game-board');
         this.renderBoardGrid();
-        this.log("Welcome to the Chessboard. Choose a mode to start.");
+        // 如果是 PVE，重置界面
+        if(!this.matchId) this.log("Welcome. Select mode.");
     },
 
-    startGame(mode) {
+    // ================= 游戏流程控制 =================
+
+    async startGame(mode) {
         this.gameMode = mode;
-        this.turn = 'blue';
         this.units = [];
-        this.selectedUnit = null;
         this.logs = [];
+        this.selectedUnit = null;
         document.getElementById('game-log').innerHTML = '';
-        this.log(`Game Started: ${mode.toUpperCase()} Mode.`);
-        
-        // 生成双方单位
-        // Blue Team (Player)
-        this.spawnUnit('Imanity',  'blue', 3, 7); // King
-        this.spawnUnit('Flügel',   'blue', 4, 7);
-        this.spawnUnit('Warbeast', 'blue', 2, 6);
-        this.spawnUnit('Elf',      'blue', 5, 6);
 
-        // Red Team (Enemy)
         if (mode === 'pve') {
-            this.spawnUnit('OldDeus',   'red', 3, 0); // Boss
-            this.spawnUnit('ExMachina', 'red', 4, 1);
-            this.spawnUnit('Warbeast',  'red', 2, 1);
-            this.spawnUnit('Warbeast',  'red', 5, 1);
+            this.myRole = 'blue';
+            this.currentTurn = 'blue';
+            this.setupPveUnits();
+            this.log("Started PVE Match (vs Computer).");
+            this.updateUI();
         } else {
-            // PvP 镜像
-            this.spawnUnit('Imanity',  'red', 4, 0);
-            this.spawnUnit('Flügel',   'red', 3, 0);
-            this.spawnUnit('Warbeast', 'red', 5, 1);
-            this.spawnUnit('Elf',      'red', 2, 1);
+            // PVP 联机逻辑
+            if (!state.isLoggedIn) return alert("Login required for PVP.");
+            this.log("Connecting to Disboard Server...", "system");
+            const res = await apiRequest({ action: 'game_create' });
+            
+            if (res.status === 'waiting') {
+                this.matchId = res.matchId;
+                this.myRole = 'blue';
+                this.log(`Created Room: ${this.matchId}. Waiting for P2...`, "system");
+                this.setupPvpUnits(); // 预设单位
+                this.networkSync();   // 上传初始状态
+            } else if (res.status === 'matched') {
+                this.matchId = res.matchId;
+                this.myRole = 'red';
+                this.log(`Joined Room: ${this.matchId}. Opponent: ${res.opponent}`, "system");
+            }
+            
+            // 启动轮询
+            if (this.pollInterval) clearInterval(this.pollInterval);
+            this.pollInterval = setInterval(() => this.networkPoll(), 3000);
         }
+    },
 
-        this.updateBoardUI();
-        this.updateTurnUI();
+    setupPveUnits() {
+        // Player: Sora(Imanity), Jibril, Izuna, Steph
+        this.spawnUnit('Imanity', 'blue', 3, 7);
+        this.spawnUnit('Flügel',  'blue', 4, 7);
+        this.spawnUnit('Warbeast','blue', 2, 6);
+        this.spawnUnit('Elf',     'blue', 5, 6);
+
+        // Enemy: Tet, ExMachina * 2
+        this.spawnUnit('OldDeus',   'red', 3, 0);
+        this.spawnUnit('ExMachina', 'red', 2, 1);
+        this.spawnUnit('ExMachina', 'red', 4, 1);
+    },
+
+    setupPvpUnits() {
+        // 初始阵容 (双方镜像)
+        // Blue
+        this.spawnUnit('Imanity', 'blue', 3, 7);
+        this.spawnUnit('Flügel',  'blue', 4, 7);
+        this.spawnUnit('Warbeast','blue', 2, 6);
+        this.spawnUnit('ExMachina','blue',5, 6);
+        
+        // Red
+        this.spawnUnit('OldDeus', 'red', 3, 0);
+        this.spawnUnit('Phantasma','red',4, 0);
+        this.spawnUnit('Dragonia', 'red', 2, 1);
+        this.spawnUnit('Elf',      'red', 5, 1);
     },
 
     spawnUnit(type, team, x, y) {
@@ -3396,89 +3449,35 @@ const chessGame = {
             type: type,
             team: team,
             x: x, y: y,
-            maxHp: proto.hp,
-            hp: proto.hp,
-            atk: proto.atk,
-            rng: proto.rng,
-            mov: proto.mov,
-            icon: proto.icon,
-            name: proto.name,
-            desc: proto.desc,
-            hasActed: false
+            maxHp: proto.hp, hp: proto.hp,
+            atk: proto.atk, rng: proto.rng, mov: proto.mov,
+            icon: proto.icon, name: proto.name, desc: proto.desc,
+            skill: proto.skill,
+            hasActed: false,
+            buffs: []
         });
     },
 
-    renderBoardGrid() {
-        this.boardEl.innerHTML = '';
-        for (let y = 0; y < this.boardSize; y++) {
-            for (let x = 0; x < this.boardSize; x++) {
-                const tile = document.createElement('div');
-                tile.className = 'tile';
-                tile.dataset.x = x;
-                tile.dataset.y = y;
-                tile.onclick = () => this.handleTileClick(x, y);
-                this.boardEl.appendChild(tile);
-            }
-        }
-    },
-
-    updateBoardUI() {
-        // 清除所有格子上的单位和状态
-        const tiles = document.querySelectorAll('.tile');
-        tiles.forEach(t => {
-            t.innerHTML = '';
-            t.className = 'tile'; // reset class
-        });
-
-        // 渲染单位
-        this.units.forEach(u => {
-            const tile = this.getTile(u.x, u.y);
-            if (tile) {
-                const el = document.createElement('div');
-                el.className = `unit team-${u.team}`;
-                if (u.hasActed) el.classList.add('done');
-                if (this.selectedUnit && this.selectedUnit.id === u.id) el.classList.add('active');
-                
-                el.innerText = u.icon;
-                
-                // 小血条
-                const hpPct = (u.hp / u.maxHp) * 100;
-                el.innerHTML += `<div class="u-hp-mini"><div class="u-hp-fill" style="width:${hpPct}%"></div></div>`;
-                
-                tile.appendChild(el);
-            }
-        });
-
-        // 渲染移动/攻击范围
-        if (this.selectedUnit && !this.selectedUnit.hasActed) {
-            this.showRange();
-        }
-    },
-
-    getTile(x, y) {
-        return document.querySelector(`.tile[data-x="${x}"][data-y="${y}"]`);
-    },
-
-    getUnitAt(x, y) {
-        return this.units.find(u => u.x === x && u.y === y);
-    },
+    // ================= 核心操作 =================
 
     handleTileClick(x, y) {
-        // 如果是 AI 回合，禁止点击
-        if (this.gameMode === 'pve' && this.turn === 'red') return;
+        if (this.isProcessing) return;
+        // 只有轮到自己回合才能操作
+        if (this.currentTurn !== this.myRole && this.gameMode === 'pvp_online') return;
+        if (this.gameMode === 'pve' && this.currentTurn === 'red') return;
 
         const clickedUnit = this.getUnitAt(x, y);
 
-        // 1. 如果已选中单位，且点击了有效范围
+        // 1. 已选单位 -> 移动或攻击
         if (this.selectedUnit && !this.selectedUnit.hasActed) {
-            // 点击的是敌人 -> 攻击
-            if (clickedUnit && clickedUnit.team !== this.turn) {
+            // 攻击敌人
+            if (clickedUnit && clickedUnit.team !== this.selectedUnit.team) {
                 if (this.isInRange(this.selectedUnit, x, y, 'attack')) {
                     this.actionAttack(this.selectedUnit, clickedUnit);
                     return;
                 }
             }
-            // 点击的是空地 -> 移动
+            // 移动到空地
             else if (!clickedUnit) {
                 if (this.isInRange(this.selectedUnit, x, y, 'move')) {
                     this.actionMove(this.selectedUnit, x, y);
@@ -3487,127 +3486,279 @@ const chessGame = {
             }
         }
 
-        // 2. 选择单位 (只能选己方)
-        if (clickedUnit && clickedUnit.team === this.turn && !clickedUnit.hasActed) {
+        // 2. 选择单位 (只能选自己的)
+        if (clickedUnit && clickedUnit.team === this.myRole && !clickedUnit.hasActed) {
             this.selectedUnit = clickedUnit;
-            this.showUnitInfo(clickedUnit);
-            this.updateBoardUI();
+            this.updateUI();
         } else if (!clickedUnit) {
-            // 取消选择
             this.selectedUnit = null;
-            document.getElementById('unit-info-panel').style.opacity = 0;
-            this.updateBoardUI();
+            this.updateUI();
         }
     },
 
-    // 显示移动和攻击范围
-    showRange() {
+    // 释放技能
+    useSkill() {
         const u = this.selectedUnit;
-        const tiles = document.querySelectorAll('.tile');
-        tiles.forEach(t => {
-            const tx = parseInt(t.dataset.x);
-            const ty = parseInt(t.dataset.y);
-            const dist = Math.abs(tx - u.x) + Math.abs(ty - u.y); // 曼哈顿距离
+        if (!u || u.hasActed || !u.skill) return;
 
-            // 移动范围 (蓝色) - 排除有人的格子
-            if (dist <= u.mov && !this.getUnitAt(tx, ty)) {
-                t.classList.add('range-move');
-            }
-            
-            // 攻击范围 (红色) - 必须有敌人
-            const target = this.getUnitAt(tx, ty);
-            if (dist <= u.rng && target && target.team !== u.team) {
-                t.classList.add('range-attack');
-            }
-        });
+        const s = u.skill;
+        this.log(`${u.name} casts ${s.name}!`, 'skill');
+
+        // 根据技能类型处理
+        if (s.type === 'aoe' || s.type === 'nuke') {
+            // 简单的周围判定
+            this.units.forEach(t => {
+                if (t.team !== u.team && this.getDist(u, t) <= s.range) {
+                    this.applyDamage(u, t, u.atk * (s.power || 1));
+                }
+            });
+        } else if (s.type === 'heal') {
+            // 治疗自己和周围
+            this.units.forEach(t => {
+                if (t.team === u.team && this.getDist(u, t) <= s.range) {
+                    t.hp = Math.min(t.maxHp, t.hp + s.power);
+                    this.showPopup(t.x, t.y, `+${s.power}`, '#0f0');
+                }
+            });
+        } else if (s.type === 'buff_all') {
+            // 盟约 buff
+            this.units.forEach(t => {
+                if (t.team === u.team) {
+                    t.atk += 5;
+                    this.showPopup(t.x, t.y, `ATK UP`, '#0ff');
+                }
+            });
+        } else if (s.type === 'move_again') {
+            // 血坏
+            u.mov += 2;
+            this.showPopup(u.x, u.y, `MOV UP`, '#f0f');
+            // 特殊：这个技能不消耗行动，或者可以重置行动
+            // 这里简单处理：不算行动
+            this.updateUI();
+            return; 
+        }
+
+        u.hasActed = true;
+        this.selectedUnit = null;
+        this.updateUI();
+        this.checkWin();
+        if (this.gameMode === 'pvp_online') this.networkSync();
     },
 
-    isInRange(u, x, y, type) {
-        const dist = Math.abs(x - u.x) + Math.abs(y - u.y);
-        if (type === 'move') return dist <= u.mov;
-        if (type === 'attack') return dist <= u.rng;
-        return false;
-    },
-
-    // ================= 行动逻辑 =================
-
-    actionMove(unit, x, y) {
-        this.log(`${unit.name} moved to (${x}, ${y}).`);
-        unit.x = x;
-        unit.y = y;
-        // 移动后还能攻击，暂时不算行动结束，除非点击待机（为了简化，这里移动即视为回合结束，或者再点一次攻击）
-        // 简化版：移动不算结束，可以继续攻击。如果没攻击点待机。
-        // 为了Web体验流畅，简化为：移动后自动检测周围是否有敌人，如果没有则待机，有则保持选中等待攻击。
-        const hasTarget = this.units.some(t => t.team !== unit.team && this.isInRange(unit, t.x, t.y, 'attack'));
-        
-        if (!hasTarget) {
-            unit.hasActed = true;
+    actionMove(u, x, y) {
+        u.x = x; u.y = y;
+        // 移动后自动待机 (简化操作)
+        // 检查周围是否有敌人，如果有，可以攻击，否则待机
+        const hasEnemy = this.units.some(t => t.team !== u.team && this.getDist(u, t) <= u.rng);
+        if (!hasEnemy) {
+            u.hasActed = true;
             this.selectedUnit = null;
         }
-        
-        this.updateBoardUI();
+        this.updateUI();
+        if (this.gameMode === 'pvp_online') this.networkSync();
     },
 
-    actionAttack(attacker, defender) {
-        // 伤害计算：简单减法，浮动 10%
-        let dmg = Math.floor(attacker.atk * (0.9 + Math.random() * 0.2));
-        defender.hp -= dmg;
-        
-        this.log(`${attacker.name} attacks ${defender.name}!`, 'action');
-        this.showDamagePopup(defender.x, defender.y, dmg);
-
-        if (defender.hp <= 0) {
-            this.log(`${defender.name} was DEFEATED!`, 'kill');
-            // 移除死亡单位
-            this.units = this.units.filter(u => u.id !== defender.id);
-        } else {
-            this.log(`${defender.name} took ${dmg} DMG. HP: ${defender.hp}`);
-        }
-
-        attacker.hasActed = true;
+    actionAttack(atk, def) {
+        this.applyDamage(atk, def, atk.atk);
+        atk.hasActed = true;
         this.selectedUnit = null;
-        this.updateBoardUI();
-        this.checkWinCondition();
+        this.updateUI();
+        this.checkWin();
+        if (this.gameMode === 'pvp_online') this.networkSync();
     },
 
-    showDamagePopup(x, y, dmg) {
-        const tile = this.getTile(x, y);
-        if (tile) {
-            const pop = document.createElement('div');
-            pop.className = 'dmg-popup';
-            pop.innerText = `-${dmg}`;
-            tile.appendChild(pop);
-            setTimeout(() => pop.remove(), 1000);
+    applyDamage(src, target, amount) {
+        const dmg = Math.floor(amount);
+        target.hp -= dmg;
+        this.showPopup(target.x, target.y, `-${dmg}`, '#ff2a6d');
+        this.log(`${src.name} hits ${target.name} for ${dmg}.`);
+        
+        if (target.hp <= 0) {
+            this.log(`${target.name} defeated!`, 'kill');
+            this.units = this.units.filter(u => u.id !== target.id);
         }
     },
 
     endTurn() {
+        if (this.currentTurn !== this.myRole) return;
+        
         this.selectedUnit = null;
-        document.getElementById('unit-info-panel').style.opacity = 0;
+        this.units.forEach(u => { if(u.team === this.myRole) u.hasActed = false; }); // 重置自己单位
         
-        // 切换阵营
-        this.turn = this.turn === 'blue' ? 'red' : 'blue';
-        
-        // 重置行动状态
-        this.units.forEach(u => {
-            if (u.team === this.turn) u.hasActed = false;
-        });
+        const next = this.myRole === 'blue' ? 'red' : 'blue';
+        this.currentTurn = next;
+        this.updateUI();
 
-        this.updateTurnUI();
-        this.updateBoardUI();
-
-        // 如果是 PVE 且轮到红方，AI 行动
-        if (this.gameMode === 'pve' && this.turn === 'red') {
+        if (this.gameMode === 'pve') {
             setTimeout(() => this.aiTurn(), 1000);
+        } else {
+            this.networkSync(); // 上传回合结束状态
         }
     },
 
-    updateTurnUI() {
-        const txt = document.getElementById('game-turn-text');
-        txt.innerText = this.turn === 'blue' ? "PLAYER TURN" : "ENEMY TURN";
-        txt.style.color = this.turn === 'blue' ? "var(--cyan)" : "var(--pink)";
+    // ================= 网络模块 (Polling) =================
+
+    async networkPoll() {
+        if (!this.matchId) return;
+        const res = await apiRequest({ action: 'game_poll', matchId: this.matchId });
+        
+        if (res.status === 'success') {
+            // 如果 P2 刚加入
+            if (!this.opponentName && res.player2) {
+                this.opponentName = res.player2;
+                this.log(`Player 2 Connected: ${res.player2}`, 'system');
+            }
+
+            // 同步棋盘状态 (仅当回合发生变化 或 刚开始时)
+            // 简单的逻辑：如果服务器显示的 currentTurn 是我，但我本地记录的 currentTurn 是对方，说明对方行动完了
+            if (res.turn === this.myRole && this.currentTurn !== this.myRole) {
+                this.log("Your Turn!", "system");
+                this.currentTurn = this.myRole;
+                
+                // 解析新状态
+                if (res.state && res.state.units) {
+                    this.units = res.state.units;
+                    this.logs = res.state.logs || [];
+                }
+                
+                // 重置我的行动力
+                this.units.forEach(u => { if(u.team === this.myRole) u.hasActed = false; });
+                this.updateUI();
+            }
+        }
     },
 
+    async networkSync() {
+        // 上传当前单位状态、日志、下一回合是谁
+        const payload = {
+            units: this.units,
+            logs: this.logs
+        };
+        await apiRequest({
+            action: 'game_move',
+            matchId: this.matchId,
+            state: JSON.stringify(payload),
+            nextTurn: this.currentTurn // 如果是 endTurn调用，这里已经是对方了
+        });
+    },
+
+    // ================= 辅助 & UI =================
+
+    updateUI() {
+        this.renderUnits();
+        this.renderRanges();
+        this.updateSidePanel();
+        
+        const turnText = document.getElementById('game-turn-text');
+        turnText.innerText = this.currentTurn === this.myRole ? "YOUR TURN" : "OPPONENT TURN";
+        turnText.style.color = this.currentTurn === 'blue' ? "var(--cyan)" : "var(--pink)";
+    },
+
+    renderBoardGrid() {
+        this.boardEl.innerHTML = '';
+        for (let y = 0; y < this.boardSize; y++) {
+            for (let x = 0; x < this.boardSize; x++) {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.dataset.x = x; tile.dataset.y = y;
+                tile.onclick = () => this.handleTileClick(x, y);
+                this.boardEl.appendChild(tile);
+            }
+        }
+    },
+
+    renderUnits() {
+        document.querySelectorAll('.unit').forEach(e => e.remove());
+        this.units.forEach(u => {
+            const tile = this.getTile(u.x, u.y);
+            if (tile) {
+                const el = document.createElement('div');
+                el.className = `unit team-${u.team}`;
+                if (u.hasActed) el.classList.add('done');
+                if (this.selectedUnit && this.selectedUnit.id === u.id) el.classList.add('active');
+                el.innerText = u.icon;
+                const hpPct = (u.hp / u.maxHp) * 100;
+                el.innerHTML += `<div class="u-hp-mini"><div class="u-hp-fill" style="width:${hpPct}%"></div></div>`;
+                tile.appendChild(el);
+            }
+        });
+    },
+
+    renderRanges() {
+        document.querySelectorAll('.tile').forEach(t => t.className = 'tile');
+        if (this.selectedUnit && !this.selectedUnit.hasActed) {
+            const u = this.selectedUnit;
+            for (let y = 0; y < this.boardSize; y++) {
+                for (let x = 0; x < this.boardSize; x++) {
+                    const dist = Math.abs(x - u.x) + Math.abs(y - u.y);
+                    const t = this.getTile(x, y);
+                    const target = this.getUnitAt(x, y);
+                    
+                    if (!target && dist <= u.mov) t.classList.add('range-move');
+                    if (target && target.team !== u.team && dist <= u.rng) t.classList.add('range-attack');
+                }
+            }
+        }
+    },
+
+    updateSidePanel() {
+        const p = document.getElementById('unit-info-panel');
+        const u = this.selectedUnit;
+        if (u) {
+            p.style.opacity = 1;
+            document.getElementById('u-name').innerText = u.name;
+            document.getElementById('u-race').innerText = u.type;
+            document.getElementById('u-hp-text').innerText = `${u.hp}/${u.maxHp}`;
+            document.getElementById('u-hp-bar').style.width = `${(u.hp/u.maxHp)*100}%`;
+            document.getElementById('u-avatar').innerText = u.icon;
+            document.getElementById('u-desc').innerText = `${u.desc}\n\n[Skill] ${u.skill.name}`;
+            
+            // 技能按钮
+            const btn = document.getElementById('btn-skill');
+            if(btn) {
+                btn.disabled = u.hasActed;
+                btn.innerText = `SKILL: ${u.skill.name}`;
+            }
+        } else {
+            p.style.opacity = 0;
+        }
+    },
+
+    checkWin() {
+        const blue = this.units.filter(u => u.team === 'blue').length;
+        const red = this.units.filter(u => u.team === 'red').length;
+        if (blue === 0 || red === 0) {
+            const winner = blue > 0 ? 'blue' : 'red';
+            alert(`GAME OVER! ${winner.toUpperCase()} WINS!`);
+            if(this.pollInterval) clearInterval(this.pollInterval);
+            // 可以在这里上传 winner 状态
+        }
+    },
+
+    // Utils
+    getTile(x, y) { return document.querySelector(`.tile[data-x="${x}"][data-y="${y}"]`); },
+    getUnitAt(x, y) { return this.units.find(u => u.x === x && u.y === y); },
+    getDist(a, b) { return Math.abs(a.x - b.x) + Math.abs(a.y - b.y); },
+    isInRange(u, x, y, type) {
+        const dist = Math.abs(x - u.x) + Math.abs(y - u.y);
+        return type === 'move' ? dist <= u.mov : dist <= u.rng;
+    },
+    log(msg, type='') {
+        const box = document.getElementById('game-log');
+        box.innerHTML += `<div class="log-entry ${type}">> ${msg}</div>`;
+        box.scrollTop = box.scrollHeight;
+    },
+    showPopup(x, y, txt, color) {
+        const tile = this.getTile(x, y);
+        if (tile) {
+            const p = document.createElement('div');
+            p.className = 'dmg-popup';
+            p.innerText = txt;
+            p.style.color = color;
+            tile.appendChild(p);
+            setTimeout(() => p.remove(), 1000);
+        }
+    },
     // ================= AI 逻辑 (Greedy) =================
     async aiTurn() {
         const aiUnits = this.units.filter(u => u.team === 'red');
