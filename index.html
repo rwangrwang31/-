@@ -125,113 +125,169 @@
             51%{transform:skew(.5deg);text-shadow:-2px 2px 0 var(--cyan),2px -2px 0 var(--pink);}
         }
 
-        /* ================= 5. 角色卡片（扑克牌翻转） ================= */
-        .char-gallery{display:flex;justify-content:center;gap:30px;flex-wrap:wrap;}
-        .char-card{
-    width:240px;
-    height:360px;
-    perspective:1400px;
-    position:relative;
+        /* ================= 5. 角色卡片 (美化版) ================= */
+.char-gallery {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    perspective: 1200px; /* 增强3D透视感 */
+    padding: 20px 0;
 }
 
-/* 内层真正翻转的容器 */
-.char-inner{
-    width:100%;
-    height:100%;
-    position:relative;
-    transform-style:preserve-3d;
-    transition:transform .6s;
+.char-card {
+    width: 240px;
+    height: 380px;
+    position: relative;
+    cursor: pointer;
 }
 
-/* 悬停时翻转整张卡 */
-.char-card:hover .char-inner{
-    transform:rotateY(180deg);
+.char-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); /* 更平滑的翻转 */
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
 }
 
-/* 正反两面公共样式：叠在一起 */
-.char-face{
-    position:absolute;
-    inset:0;
-    border-radius:16px;
-    overflow:hidden;
-    backface-visibility:hidden;
+.char-card:hover .char-inner {
+    transform: rotateY(180deg);
+    box-shadow: 0 0 25px rgba(5, 217, 232, 0.4); /* 悬停时增加发光 */
 }
 
-/* 让图片和下方文字在卡片内均匀分布（正面） */
-.char-front{
-    background:radial-gradient(circle at 20% 0,var(--cyan),transparent 55%),
-               radial-gradient(circle at 90% 110%,var(--pink),transparent 55%),
-               #05030a;
-    display:flex;
-    flex-direction:column;
-    justify-content:space-between;
-    align-items:center;
-    padding:10px 10px 0;
+/* 正反面公共基础 */
+.char-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    backface-visibility: hidden;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* 关键：使用 contain，限制最大高度，取消负位移 */
-.char-front img{
-    width:100%;
-    height:auto;
-    max-height:260px;           /* 根据需要可以调，比如 250~280 */
-    object-fit:contain;
-    filter:drop-shadow(0 0 26px rgba(0,0,0,.8));
-    transition:transform .35s;
+/* --- 正面设计：解决白底图片不协调的问题 --- */
+.char-front {
+    /* 关键技巧：上半部分给白色背景来融合图片，下半部分用深色 */
+    background: linear-gradient(180deg, #ffffff 62%, #05030a 62%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; 
+    padding: 0; 
 }
 
-/* 悬停只做轻微缩放，不再向上移出卡片 */
-.char-card:hover .char-front img{
-    transform:scale(1.03);
+/* 图片区域 */
+.char-front img {
+    width: 100%;
+    height: 62%; /* 占据卡片上部 62% */
+    object-fit: contain; /* 完整显示角色，不裁切 */
+    background: #fff; /* 确保背景纯白，与卡片上半部无缝融合 */
+    padding: 15px; /* 给图片一点内边距，看起来像精美的立绘 */
+    transition: transform 0.4s ease;
 }
 
-.char-front-info{
-    width:100%;
-    padding:10px 15px 14px;
-    background:linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.9));
-    text-align:center;
-}
-.char-name{
-    font-family:'Orbitron';
-    font-size:1.4rem;
-    letter-spacing:2px;
-}
-.char-race{
-    font-size:.8rem;
-    color:var(--cyan);
+.char-card:hover .char-front img {
+    transform: scale(1.08) translateY(-5px); /* 悬停时角色轻微放大浮动 */
 }
 
-/* 背面 */
-.char-back{
-    background:
-        radial-gradient(circle at 50% 0,var(--purple),transparent 55%),
-        radial-gradient(circle at 0 100%,var(--cyan),transparent 55%),
-        #05010e;
-    transform:rotateY(180deg);
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:12px;
+/* 信息区域 (下半部分) */
+.char-front-info {
+    width: 100%;
+    height: 38%; /* 占据剩余空间 */
+    background: rgba(10, 10, 20, 0.95); /* 深色背景 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* 增加一道霓虹分割线 */
+    border-top: 3px solid var(--cyan); 
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
 }
 
-.card-symbol{
-    width:70px;
-    height:70px;
-    border-radius:14px;
-    border:2px solid var(--gold);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:2.2rem;
-    box-shadow:0 0 18px rgba(255,215,0,.6),
-               0 0 40px rgba(255,42,109,.5);
+/* 装饰：给信息区加一点科技感背景纹理 */
+.char-front-info::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: 
+        repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 10px,
+            rgba(5, 217, 232, 0.03) 10px,
+            rgba(5, 217, 232, 0.03) 20px
+        );
+    pointer-events: none;
 }
-.char-desc{
-    padding:0 18px;
-    font-size:.85rem;
-    color:#eee;
-    text-align:center;
-    line-height:1.5;
+
+.char-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px var(--cyan); /* 名字发光 */
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 5;
+}
+
+.char-race {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    color: var(--pink);
+    border: 1px solid var(--pink);
+    padding: 4px 12px;
+    border-radius: 20px; /* 胶囊形状标签 */
+    background: rgba(255, 42, 109, 0.1);
+    box-shadow: 0 0 8px rgba(255, 42, 109, 0.4);
+    letter-spacing: 1px;
+    position: relative;
+    z-index: 5;
+}
+
+/* --- 背面设计 --- */
+.char-back {
+    background: #090910;
+    transform: rotateY(180deg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 25px;
+    /* 炫酷的背景光效 */
+    background-image: 
+        radial-gradient(circle at 50% 0, rgba(217, 5, 232, 0.3), transparent 60%),
+        linear-gradient(0deg, #05030a 0%, #1a1a2e 100%);
+}
+
+.card-symbol {
+    font-size: 2.8rem;
+    color: var(--gold);
+    margin-bottom: 20px;
+    text-shadow: 0 0 25px var(--gold);
+    border: 2px solid var(--gold);
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%; 
+    background: rgba(0,0,0,0.6);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+}
+
+.char-desc {
+    font-size: 0.9rem;
+    color: #ddd;
+    text-align: center;
+    line-height: 1.6;
+    font-weight: 300;
 }
 /* ===== Anime Player Layout ===== */
 .anime-layout{
