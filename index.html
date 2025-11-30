@@ -1106,6 +1106,109 @@ input[type="color"] {
 @media(max-width: 600px){
     .race-grid-container { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ================= 11. 战棋游戏 (Tactics Game) ================= */
+.game-top-bar {
+    height: 60px; background: rgba(0,0,0,0.8); border-bottom: 1px solid #333;
+    display: flex; justify-content: space-between; align-items: center; padding: 0 30px;
+    font-family: 'Orbitron';
+}
+.game-turn-indicator {
+    font-size: 1.2rem; font-weight: bold; letter-spacing: 2px;
+    text-shadow: 0 0 10px currentColor; color: #fff;
+}
+.game-container {
+    flex: 1; display: flex; overflow: hidden; height: calc(100% - 60px);
+}
+.game-board-wrap {
+    flex: 1; display: flex; justify-content: center; align-items: center;
+    background: radial-gradient(circle, #1a1a2e 0%, #05010d 100%);
+    overflow: auto; perspective: 1000px;
+}
+.game-board {
+    display: grid; gap: 4px;
+    /* 8x8 board by default */
+    grid-template-columns: repeat(8, 60px);
+    grid-template-rows: repeat(8, 60px);
+    transform: rotateX(20deg); /* 伪3D视角 */
+    transition: transform 0.5s;
+    padding: 20px;
+    background: rgba(255,255,255,0.02);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    border: 2px solid var(--cyan);
+}
+
+/* 棋盘格子 */
+.tile {
+    width: 60px; height: 60px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.tile:hover { box-shadow: inset 0 0 15px rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5); }
+
+/* 移动/攻击 范围指示 */
+.tile.range-move { background: rgba(5, 217, 232, 0.3); box-shadow: inset 0 0 10px var(--cyan); }
+.tile.range-attack { background: rgba(255, 42, 109, 0.3); box-shadow: inset 0 0 10px var(--pink); cursor: crosshair; }
+
+/* 棋子 (Unit) */
+.unit {
+    width: 80%; height: 80%; margin: 10%;
+    border-radius: 50%;
+    position: relative; z-index: 5;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; pointer-events: none; /* 点击穿透给格子处理 */
+}
+/* 阵营区分 */
+.unit.team-blue { border: 2px solid var(--cyan); background: rgba(5, 217, 232, 0.2); color: var(--cyan); text-shadow: 0 0 5px var(--cyan); }
+.unit.team-red { border: 2px solid var(--pink); background: rgba(255, 42, 109, 0.2); color: var(--pink); text-shadow: 0 0 5px var(--pink); }
+
+.unit.active { transform: scale(1.2) translateY(-10px); box-shadow: 0 20px 20px rgba(0,0,0,0.6); z-index: 10; border-color: #fff; }
+.unit.done { filter: grayscale(100%); opacity: 0.7; transform: scale(0.9); }
+
+/* 血条 */
+.u-hp-mini {
+    position: absolute; bottom: -5px; left: 0; width: 100%; height: 4px; background: #333;
+}
+.u-hp-fill { height: 100%; background: #0f0; transition: width 0.3s; }
+
+/* 右侧面板 */
+.game-sidebar {
+    width: 300px; background: rgba(5,5,10,0.95); border-left: 1px solid #333;
+    display: flex; flex-direction: column; padding: 20px; z-index: 10;
+}
+.unit-status-card {
+    background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border: 1px solid var(--cyan);
+    margin-bottom: 20px; text-align: center; transition: opacity 0.3s;
+}
+.u-avatar {
+    width: 60px; height: 60px; border-radius: 50%; background: #333; margin: 0 auto 10px;
+    border: 2px solid #fff; font-size: 2rem; display: flex; align-items: center; justify-content: center;
+}
+.hp-bar-bg { width: 100%; height: 10px; background: #222; margin: 0 10px; border-radius: 5px; overflow: hidden; }
+.hp-bar-fill { height: 100%; background: linear-gradient(90deg, #ff4d4d, #ff9e9e); width: 100%; transition: width 0.3s; }
+.stat-row { display: flex; align-items: center; justify-content: space-between; font-size: .85rem; margin-bottom: 10px; }
+.stat-grid-mini { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; font-size: .8rem; font-family: 'Orbitron'; }
+.game-log-box { flex: 1; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #333; padding-top: 10px; }
+.game-log-content { flex: 1; overflow-y: auto; font-size: .8rem; color: #aaa; font-family: monospace; }
+.log-entry { margin-bottom: 4px; border-left: 2px solid #444; padding-left: 6px; }
+.log-dmg { color: var(--pink); }
+.log-kill { color: red; font-weight: bold; }
+.btn-sm { padding: 4px 10px; font-size: 0.75rem; }
+
+/* 伤害飘字动画 */
+.dmg-popup {
+    position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%);
+    font-family: 'Orbitron'; font-weight: bold; font-size: 1.2rem; color: #ff2a6d;
+    text-shadow: 2px 2px 0 #000; pointer-events: none; z-index: 20;
+    animation: popup 1s forwards;
+}
+@keyframes popup { 0% { top: 0; opacity: 1; } 100% { top: -40px; opacity: 0; } }
+
         /* ================= 10. 其它 ================= */
         footer{text-align:center;padding:40px;color:#555;font-family:'Orbitron';font-size:.8rem;}
         @media(max-width:1024px){
@@ -1208,6 +1311,7 @@ input[type="color"] {
            <a href="#" class="nav-item" onclick="ui.showModal('anime-layer');animePage.ensureReady();return false;">ANIME</a>
            <a href="#" class="nav-item" onclick="ui.showModal('discussion-layer');forum.init();return false;">FORUM</a>
            <a href="#" class="nav-item" onclick="ui.showModal('shop-layer');shop.init();return false;">SHOP</a>
+           <a href="#" class="nav-item" onclick="ui.showModal('game-layer');chessGame.init();return false;">GAME</a>
         </div>
         <div class="user-badge" onclick="ui.showModal('user-overlay')">
             <span id="hud-username">GUEST</span>
@@ -1533,6 +1637,61 @@ input[type="color"] {
             <div style="font-family:'Orbitron';color:var(--gold);">Balance: <span id="shop-coins">0</span> 🪙</div>
         </div>
         <div id="shop-grid" class="shop-grid"></div>
+    </div>
+</div>
+
+<!-- 8. GAME MODAL -->
+<div id="game-layer" class="modal-layer">
+    <div class="m-head">
+        <span class="m-title">THE GREAT WAR - TACTICS</span>
+        <button class="btn" style="border-color:var(--pink);color:var(--pink);" onclick="ui.hideAllModals()">SURRENDER</button>
+    </div>
+    <div class="m-body" style="padding:0;display:flex;flex-direction:column;">
+        <div class="game-top-bar">
+            <div class="game-score">
+                <span style="color:var(--cyan)">BLUE TEAM (PLAYER)</span> 
+                vs 
+                <span style="color:var(--pink)">RED TEAM (ENEMY)</span>
+            </div>
+            <div class="game-turn-indicator" id="game-turn-text">WAITING TO START...</div>
+            <div class="game-controls">
+                <button class="btn btn-sm" onclick="chessGame.startGame('pve')">VS CPU</button>
+                <button class="btn btn-sm" onclick="chessGame.startGame('pvp')">VS PLAYER</button>
+            </div>
+        </div>
+
+        <div class="game-container">
+            <div class="game-board-wrap">
+                <div id="game-board" class="game-board"></div>
+            </div>
+
+            <div class="game-sidebar">
+                <div class="unit-status-card" id="unit-info-panel" style="opacity:0;">
+                    <div class="u-avatar" id="u-avatar"></div>
+                    <h3 id="u-name">NAME</h3>
+                    <div id="u-race" style="color:#aaa;font-size:.8rem;margin-bottom:10px;">RACE</div>
+                    
+                    <div class="stat-row">
+                        <span>HP</span>
+                        <div class="hp-bar-bg"><div id="u-hp-bar" class="hp-bar-fill"></div></div>
+                        <span id="u-hp-text">0/0</span>
+                    </div>
+                    <div class="stat-grid-mini">
+                        <div>ATK: <span id="u-atk" style="color:var(--pink)">0</span></div>
+                        <div>RNG: <span id="u-rng" style="color:var(--gold)">0</span></div>
+                        <div>MOV: <span id="u-mov" style="color:var(--cyan)">0</span></div>
+                    </div>
+                    <div id="u-desc" style="margin-top:10px;font-size:.8rem;color:#888;line-height:1.4;"></div>
+                </div>
+
+                <div class="game-log-box">
+                    <h4>BATTLE LOG</h4>
+                    <div id="game-log" class="game-log-content"></div>
+                </div>
+                
+                <button id="btn-end-turn" class="btn" style="width:100%;margin-top:auto;" onclick="chessGame.endTurn()">END TURN</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -3166,6 +3325,398 @@ const visuals={
             bar.appendChild(span);
         });
         wrapper.insertBefore(bar, wrapper.querySelector('.btn'));
+    }
+};
+
+/* ================== THE GREAT WAR: TACTICS GAME ENGINE ================== */
+
+const chessGame = {
+    boardSize: 8,
+    gameMode: 'pve', // 'pve' or 'pvp'
+    turn: 'blue', // 'blue' (Player) or 'red' (Enemy)
+    selectedUnit: null,
+    units: [],
+    logs: [],
+    boardEl: null,
+    
+    // 种族单位原型 (Data)
+    prototypes: {
+        'Imanity':   { hp: 40, atk: 12, rng: 1, mov: 3, icon: '♔', name: 'Sora & Shiro', desc: '弱小的种族，但拥有无限的可能性。King Piece.' },
+        'Flügel':    { hp: 80, atk: 25, rng: 2, mov: 4, icon: '♕', name: 'Jibril',       desc: '天翼种。高机动高火力的弑神兵器。' },
+        'Warbeast':  { hp: 60, atk: 18, rng: 1, mov: 5, icon: '♞', name: 'Izuna',        desc: '兽人种。移动速度极快，擅长近战突袭。' },
+        'Elf':       { hp: 50, atk: 15, rng: 3, mov: 3, icon: '♗', name: 'Feel',         desc: '森精种。擅长远距离魔法打击。' },
+        'ExMachina': { hp: 70, atk: 20, rng: 1, mov: 3, icon: '♖', name: 'Schwi',        desc: '机凯种。拥有强大的防御和演算能力。' },
+        'OldDeus':   { hp: 120,atk: 30, rng: 2, mov: 2, icon: '☀', name: 'Tet',          desc: '唯一神。作为最终BOSS的存在。' }
+    },
+
+    init() {
+        this.boardEl = document.getElementById('game-board');
+        this.renderBoardGrid();
+        this.log("Welcome to the Chessboard. Choose a mode to start.");
+    },
+
+    startGame(mode) {
+        this.gameMode = mode;
+        this.turn = 'blue';
+        this.units = [];
+        this.selectedUnit = null;
+        this.logs = [];
+        document.getElementById('game-log').innerHTML = '';
+        this.log(`Game Started: ${mode.toUpperCase()} Mode.`);
+        
+        // 生成双方单位
+        // Blue Team (Player)
+        this.spawnUnit('Imanity',  'blue', 3, 7); // King
+        this.spawnUnit('Flügel',   'blue', 4, 7);
+        this.spawnUnit('Warbeast', 'blue', 2, 6);
+        this.spawnUnit('Elf',      'blue', 5, 6);
+
+        // Red Team (Enemy)
+        if (mode === 'pve') {
+            this.spawnUnit('OldDeus',   'red', 3, 0); // Boss
+            this.spawnUnit('ExMachina', 'red', 4, 1);
+            this.spawnUnit('Warbeast',  'red', 2, 1);
+            this.spawnUnit('Warbeast',  'red', 5, 1);
+        } else {
+            // PvP 镜像
+            this.spawnUnit('Imanity',  'red', 4, 0);
+            this.spawnUnit('Flügel',   'red', 3, 0);
+            this.spawnUnit('Warbeast', 'red', 5, 1);
+            this.spawnUnit('Elf',      'red', 2, 1);
+        }
+
+        this.updateBoardUI();
+        this.updateTurnUI();
+    },
+
+    spawnUnit(type, team, x, y) {
+        const proto = this.prototypes[type];
+        this.units.push({
+            id: Date.now() + Math.random(),
+            type: type,
+            team: team,
+            x: x, y: y,
+            maxHp: proto.hp,
+            hp: proto.hp,
+            atk: proto.atk,
+            rng: proto.rng,
+            mov: proto.mov,
+            icon: proto.icon,
+            name: proto.name,
+            desc: proto.desc,
+            hasActed: false
+        });
+    },
+
+    renderBoardGrid() {
+        this.boardEl.innerHTML = '';
+        for (let y = 0; y < this.boardSize; y++) {
+            for (let x = 0; x < this.boardSize; x++) {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.dataset.x = x;
+                tile.dataset.y = y;
+                tile.onclick = () => this.handleTileClick(x, y);
+                this.boardEl.appendChild(tile);
+            }
+        }
+    },
+
+    updateBoardUI() {
+        // 清除所有格子上的单位和状态
+        const tiles = document.querySelectorAll('.tile');
+        tiles.forEach(t => {
+            t.innerHTML = '';
+            t.className = 'tile'; // reset class
+        });
+
+        // 渲染单位
+        this.units.forEach(u => {
+            const tile = this.getTile(u.x, u.y);
+            if (tile) {
+                const el = document.createElement('div');
+                el.className = `unit team-${u.team}`;
+                if (u.hasActed) el.classList.add('done');
+                if (this.selectedUnit && this.selectedUnit.id === u.id) el.classList.add('active');
+                
+                el.innerText = u.icon;
+                
+                // 小血条
+                const hpPct = (u.hp / u.maxHp) * 100;
+                el.innerHTML += `<div class="u-hp-mini"><div class="u-hp-fill" style="width:${hpPct}%"></div></div>`;
+                
+                tile.appendChild(el);
+            }
+        });
+
+        // 渲染移动/攻击范围
+        if (this.selectedUnit && !this.selectedUnit.hasActed) {
+            this.showRange();
+        }
+    },
+
+    getTile(x, y) {
+        return document.querySelector(`.tile[data-x="${x}"][data-y="${y}"]`);
+    },
+
+    getUnitAt(x, y) {
+        return this.units.find(u => u.x === x && u.y === y);
+    },
+
+    handleTileClick(x, y) {
+        // 如果是 AI 回合，禁止点击
+        if (this.gameMode === 'pve' && this.turn === 'red') return;
+
+        const clickedUnit = this.getUnitAt(x, y);
+
+        // 1. 如果已选中单位，且点击了有效范围
+        if (this.selectedUnit && !this.selectedUnit.hasActed) {
+            // 点击的是敌人 -> 攻击
+            if (clickedUnit && clickedUnit.team !== this.turn) {
+                if (this.isInRange(this.selectedUnit, x, y, 'attack')) {
+                    this.actionAttack(this.selectedUnit, clickedUnit);
+                    return;
+                }
+            }
+            // 点击的是空地 -> 移动
+            else if (!clickedUnit) {
+                if (this.isInRange(this.selectedUnit, x, y, 'move')) {
+                    this.actionMove(this.selectedUnit, x, y);
+                    return;
+                }
+            }
+        }
+
+        // 2. 选择单位 (只能选己方)
+        if (clickedUnit && clickedUnit.team === this.turn && !clickedUnit.hasActed) {
+            this.selectedUnit = clickedUnit;
+            this.showUnitInfo(clickedUnit);
+            this.updateBoardUI();
+        } else if (!clickedUnit) {
+            // 取消选择
+            this.selectedUnit = null;
+            document.getElementById('unit-info-panel').style.opacity = 0;
+            this.updateBoardUI();
+        }
+    },
+
+    // 显示移动和攻击范围
+    showRange() {
+        const u = this.selectedUnit;
+        const tiles = document.querySelectorAll('.tile');
+        tiles.forEach(t => {
+            const tx = parseInt(t.dataset.x);
+            const ty = parseInt(t.dataset.y);
+            const dist = Math.abs(tx - u.x) + Math.abs(ty - u.y); // 曼哈顿距离
+
+            // 移动范围 (蓝色) - 排除有人的格子
+            if (dist <= u.mov && !this.getUnitAt(tx, ty)) {
+                t.classList.add('range-move');
+            }
+            
+            // 攻击范围 (红色) - 必须有敌人
+            const target = this.getUnitAt(tx, ty);
+            if (dist <= u.rng && target && target.team !== u.team) {
+                t.classList.add('range-attack');
+            }
+        });
+    },
+
+    isInRange(u, x, y, type) {
+        const dist = Math.abs(x - u.x) + Math.abs(y - u.y);
+        if (type === 'move') return dist <= u.mov;
+        if (type === 'attack') return dist <= u.rng;
+        return false;
+    },
+
+    // ================= 行动逻辑 =================
+
+    actionMove(unit, x, y) {
+        this.log(`${unit.name} moved to (${x}, ${y}).`);
+        unit.x = x;
+        unit.y = y;
+        // 移动后还能攻击，暂时不算行动结束，除非点击待机（为了简化，这里移动即视为回合结束，或者再点一次攻击）
+        // 简化版：移动不算结束，可以继续攻击。如果没攻击点待机。
+        // 为了Web体验流畅，简化为：移动后自动检测周围是否有敌人，如果没有则待机，有则保持选中等待攻击。
+        const hasTarget = this.units.some(t => t.team !== unit.team && this.isInRange(unit, t.x, t.y, 'attack'));
+        
+        if (!hasTarget) {
+            unit.hasActed = true;
+            this.selectedUnit = null;
+        }
+        
+        this.updateBoardUI();
+    },
+
+    actionAttack(attacker, defender) {
+        // 伤害计算：简单减法，浮动 10%
+        let dmg = Math.floor(attacker.atk * (0.9 + Math.random() * 0.2));
+        defender.hp -= dmg;
+        
+        this.log(`${attacker.name} attacks ${defender.name}!`, 'action');
+        this.showDamagePopup(defender.x, defender.y, dmg);
+
+        if (defender.hp <= 0) {
+            this.log(`${defender.name} was DEFEATED!`, 'kill');
+            // 移除死亡单位
+            this.units = this.units.filter(u => u.id !== defender.id);
+        } else {
+            this.log(`${defender.name} took ${dmg} DMG. HP: ${defender.hp}`);
+        }
+
+        attacker.hasActed = true;
+        this.selectedUnit = null;
+        this.updateBoardUI();
+        this.checkWinCondition();
+    },
+
+    showDamagePopup(x, y, dmg) {
+        const tile = this.getTile(x, y);
+        if (tile) {
+            const pop = document.createElement('div');
+            pop.className = 'dmg-popup';
+            pop.innerText = `-${dmg}`;
+            tile.appendChild(pop);
+            setTimeout(() => pop.remove(), 1000);
+        }
+    },
+
+    endTurn() {
+        this.selectedUnit = null;
+        document.getElementById('unit-info-panel').style.opacity = 0;
+        
+        // 切换阵营
+        this.turn = this.turn === 'blue' ? 'red' : 'blue';
+        
+        // 重置行动状态
+        this.units.forEach(u => {
+            if (u.team === this.turn) u.hasActed = false;
+        });
+
+        this.updateTurnUI();
+        this.updateBoardUI();
+
+        // 如果是 PVE 且轮到红方，AI 行动
+        if (this.gameMode === 'pve' && this.turn === 'red') {
+            setTimeout(() => this.aiTurn(), 1000);
+        }
+    },
+
+    updateTurnUI() {
+        const txt = document.getElementById('game-turn-text');
+        txt.innerText = this.turn === 'blue' ? "PLAYER TURN" : "ENEMY TURN";
+        txt.style.color = this.turn === 'blue' ? "var(--cyan)" : "var(--pink)";
+    },
+
+    // ================= AI 逻辑 (Greedy) =================
+    async aiTurn() {
+        const aiUnits = this.units.filter(u => u.team === 'red');
+        
+        for (const ai of aiUnits) {
+            // 简单的延迟，让玩家看清操作
+            await new Promise(r => setTimeout(r, 600));
+
+            // 1. 寻找最近的敌人
+            let target = null;
+            let minDst = 999;
+            const enemies = this.units.filter(u => u.team === 'blue');
+            
+            if (enemies.length === 0) break;
+
+            enemies.forEach(e => {
+                const dst = Math.abs(e.x - ai.x) + Math.abs(e.y - ai.y);
+                if (dst < minDst) { minDst = dst; target = e; }
+            });
+
+            // 2. 如果能攻击，直接打
+            if (this.isInRange(ai, target.x, target.y, 'attack')) {
+                this.actionAttack(ai, target);
+                continue;
+            }
+
+            // 3. 否则，向敌人移动
+            // 简单寻路：向目标方向移动 mov 格
+            let bestX = ai.x, bestY = ai.y;
+            let minDstToTarget = minDst;
+
+            // 暴力搜索可行移动范围内，离目标最近的格子
+            for (let my = ai.y - ai.mov; my <= ai.y + ai.mov; my++) {
+                for (let mx = ai.x - ai.mov; mx <= ai.x + ai.mov; mx++) {
+                    // 越界检查
+                    if (mx < 0 || mx >= this.boardSize || my < 0 || my >= this.boardSize) continue;
+                    
+                    // 曼哈顿距离判断是否在移动范围内
+                    const moveDist = Math.abs(mx - ai.x) + Math.abs(my - ai.y);
+                    if (moveDist > ai.mov) continue;
+
+                    // 目标格子不能有人 (除非是自己)
+                    const unitOnTile = this.getUnitAt(mx, my);
+                    if (unitOnTile && unitOnTile.id !== ai.id) continue;
+
+                    // 计算到目标的距离
+                    const distToTarget = Math.abs(mx - target.x) + Math.abs(my - target.y);
+                    if (distToTarget < minDstToTarget) {
+                        minDstToTarget = distToTarget;
+                        bestX = mx;
+                        bestY = my;
+                    }
+                }
+            }
+
+            // 执行移动
+            if (bestX !== ai.x || bestY !== ai.y) {
+                this.actionMove(ai, bestX, bestY);
+                // 移动后再次检查是否可攻击
+                if (this.isInRange(ai, target.x, target.y, 'attack')) {
+                    await new Promise(r => setTimeout(r, 400));
+                    this.actionAttack(ai, target);
+                }
+            }
+        }
+
+        // AI 回合结束
+        this.endTurn();
+    },
+
+    checkWinCondition() {
+        const blueCnt = this.units.filter(u => u.team === 'blue').length;
+        const redCnt = this.units.filter(u => u.team === 'red').length;
+
+        if (blueCnt === 0) {
+            alert("DEFEAT... The Imanity has fallen.");
+            ui.hideAllModals();
+        } else if (redCnt === 0) {
+            alert("VICTORY! Imanity Conquers All!");
+            ui.hideAllModals();
+        }
+    },
+
+    // ================= UI 辅助 =================
+    showUnitInfo(u) {
+        const p = document.getElementById('unit-info-panel');
+        p.style.opacity = 1;
+        document.getElementById('u-avatar').innerText = u.icon;
+        document.getElementById('u-avatar').style.borderColor = u.team === 'blue' ? 'var(--cyan)' : 'var(--pink)';
+        document.getElementById('u-name').innerText = u.name;
+        document.getElementById('u-race').innerText = u.type;
+        document.getElementById('u-hp-text').innerText = `${u.hp}/${u.maxHp}`;
+        document.getElementById('u-hp-bar').style.width = `${(u.hp/u.maxHp)*100}%`;
+        document.getElementById('u-atk').innerText = u.atk;
+        document.getElementById('u-rng').innerText = u.rng;
+        document.getElementById('u-mov').innerText = u.mov;
+        document.getElementById('u-desc').innerText = u.desc;
+    },
+
+    log(msg, type='') {
+        const box = document.getElementById('game-log');
+        const d = new Date();
+        const time = `${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+        let cls = 'log-entry';
+        if (type === 'kill') cls += ' log-kill';
+        if (type === 'action') cls += ' log-dmg';
+        
+        box.innerHTML += `<div class="${cls}">[${time}] ${msg}</div>`;
+        box.scrollTop = box.scrollHeight;
     }
 };
 
