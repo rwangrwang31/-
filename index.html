@@ -1649,11 +1649,21 @@ input[type="color"] {
     <div class="m-body" style="padding:0;display:flex;flex-direction:column;">
         <div class="game-top-bar">
             <div class="game-score">
-                <span style="color:var(--cyan)">BLUE TEAM (PLAYER)</span> 
-                vs 
-                <span style="color:var(--pink)">RED TEAM (ENEMY)</span>
+                <span style="color:var(--cyan)">BLUE</span> vs <span style="color:var(--pink)">RED</span>
             </div>
-            <div class="game-turn-indicator" id="game-turn-text">WAITING TO START...</div>
+            
+            <div id="pve-difficulty-selector" style="display:none;">
+                <span style="font-size:0.8rem;color:#aaa;">AI LEVEL: </span>
+                <select id="game-difficulty" class="input" style="width:auto;display:inline-block;margin:0;padding:2px 8px;font-size:0.8rem;">
+                    <option value="easy">EASY (Steph)</option>
+                    <option value="normal" selected>NORMAL (Jibril)</option>
+                    <option value="hard">HARD (Shiro)</option>
+                    <option value="lunatic">LUNATIC (Tet)</option>
+                </select>
+            </div>
+
+            <div class="game-turn-indicator" id="game-turn-text">WAITING...</div>
+
             <div class="game-controls">
                 <button class="btn btn-sm" onclick="chessGame.startGame('pve')">VS CPU</button>
                 <button class="btn btn-sm" onclick="chessGame.startGame('pvp')">VS PLAYER</button>
@@ -3363,17 +3373,16 @@ const visuals={
     }
 };
 
-/* ================== THE GREAT WAR: TACTICS (LORE ACCURATE FINAL) ================== */
+/* ================== THE GREAT WAR: TACTICS (AI EVOLUTION) ================== */
 
 const chessGame = {
-    // === 基础配置 ===
     boardSize: 10,
     matchId: null,
     myRole: 'blue',
     currentTurn: 'blue',
     gameMode: 'pve',
+    difficulty: 'normal', // easy, normal, hard, lunatic
     
-    // === 运行时状态 ===
     selectedUnit: null,
     units: [],
     deadUnits: [],
@@ -3382,28 +3391,25 @@ const chessGame = {
     pollInterval: null,
     isProcessing: false,
 
-    // ================= 16 种族：原著设定与平衡 =================
-    // cd: 当前冷却, maxCd: 技能冷却回合
+    // ================= 16 种族：数值与技能 (原著平衡版) =================
     prototypes: {
-        // --- 序列 1-6 (上位种族) ---
-        'OldDeus':   { hp: 350, atk: 60, def: 15, rng: 3, mov: 2, icon: '♔', name: '神灵种', desc: '【神击】对周围 3 格造成 1.5倍 真实伤害。(CD:5)', skill: { type: 'aoe_true', range: 3, power: 1.5, maxCd: 5, name: 'God Strike' } },
-        'Phantasma': { hp: 150, atk: 40, def: 5,  rng: 2, mov: 3, icon: '♕', name: '幻想种', desc: '【相位】本回合移动无限，且闪避率100%。(CD:4)', skill: { type: 'buff_invincible', maxCd: 4, name: 'Phase Shift' } },
-        'Elemental': { hp: 100, atk: 45, def: 0,  rng: 4, mov: 3, icon: '♗', name: '精灵种', desc: '【魔炮】对直线造成 1.2倍 魔法伤害。(CD:3)', skill: { type: 'line_atk', range: 9, power: 1.2, maxCd: 3, name: 'Mana Blast' } },
-        'Dragonia':  { hp: 250, atk: 70, def: 10, rng: 1, mov: 4, icon: '♖', name: '龙精种', desc: '【崩啸】消耗 30% HP，对周围 2 格造成毁灭伤害。(CD:3)', skill: { type: 'aoe_self_dmg', range: 2, costHpPct: 0.3, power: 2.5, maxCd: 3, name: 'Roar' } },
-        'Gigant':    { hp: 200, atk: 35, def: 12, rng: 1, mov: 2, icon: '♜', name: '巨人种', desc: '【地裂】震晕周围 1 格敌人。(CD:3)', skill: { type: 'aoe_stun', range: 1, power: 0.8, maxCd: 3, name: 'Quake' } },
-        'Flügel':    { hp: 120, atk: 55, def: 3,  rng: 3, mov: 5, icon: '🪽', name: '天翼种', desc: '【天击】3倍伤害，但下回合无法行动且防御归零。(CD:6)', skill: { type: 'nuke_self_stun', range: 4, power: 3.0, maxCd: 6, name: 'Heaven Strike' } },
+        'OldDeus':   { hp: 350, atk: 60, def: 15, rng: 3, mov: 2, icon: '♔', name: '神灵种', desc: '【神击】范围毁灭打击。(CD:5)', skill: { type: 'aoe', range: 3, power: 1.5, initialCd: 2, maxCd: 5, name: 'God Strike' } },
+        'Phantasma': { hp: 150, atk: 40, def: 5,  rng: 2, mov: 3, icon: '♕', name: '幻想种', desc: '【相位】无限移动。(CD:4)', skill: { type: 'buff_mov', power: 10, initialCd: 1, maxCd: 4, name: 'Phase Shift' } },
+        'Dragonia':  { hp: 250, atk: 70, def: 10, rng: 1, mov: 4, icon: '♖', name: '龙精种', desc: '【崩啸】自残AOE。(CD:3)', skill: { type: 'aoe_self_dmg', range: 2, costHpPct: 0.3, power: 2.5, initialCd: 0, maxCd: 3, name: 'Roar' } },
+        'Elemental': { hp: 100, atk: 45, def: 0,  rng: 4, mov: 3, icon: '♗', name: '精灵种', desc: '【魔炮】直线轰炸。(CD:3)', skill: { type: 'line_atk', range: 9, power: 1.2, initialCd: 1, maxCd: 3, name: 'Mana Blast' } },
+        'Gigant':    { hp: 200, atk: 35, def: 12, rng: 1, mov: 2, icon: '♜', name: '巨人种', desc: '【地裂】范围眩晕。(CD:3)', skill: { type: 'aoe_stun', range: 1, power: 0.8, initialCd: 1, maxCd: 3, name: 'Quake' } },
+        'Flügel':    { hp: 120, atk: 55, def: 3,  rng: 3, mov: 5, icon: '🪽', name: '天翼种', desc: '【天击】自晕高伤。(CD:6)', skill: { type: 'nuke_self_stun', range: 4, power: 3.0, initialCd: 2, maxCd: 6, name: 'Heaven Strike' } },
         
-        // --- 序列 7-16 (下位种族) ---
-        'Elf':       { hp: 90,  atk: 30, def: 0,  rng: 3, mov: 3, icon: '🧝', name: '森精种', desc: '【虚空第零加护】群体 +15 防御护盾。(CD:4)', skill: { type: 'buff_def_aoe', range: 3, power: 15, maxCd: 4, name: 'Kūgan' } },
-        'Dwarf':     { hp: 100, atk: 40, def: 8,  rng: 2, mov: 2, icon: '⚒️', name: '地精种', desc: '【髓爆】自爆。4.0倍 范围伤害，自身死亡。(CD:0)', skill: { type: 'suicide_bomb', range: 2, power: 4.0, maxCd: 99, name: 'E-Bomb' } },
-        'Fairy':     { hp: 70,  atk: 15, def: 0,  rng: 3, mov: 4, icon: '🧚', name: '妖精种', desc: '【自然之息】治疗周围 3 格友军 60HP。(CD:3)', skill: { type: 'heal_aoe', range: 3, power: 60, maxCd: 3, name: 'Nature Heal' } },
-        'ExMachina': { hp: 130, atk: 35, def: 8,  rng: 2, mov: 3, icon: '🤖', name: '机凯种', desc: '【伪典·天击】复制天击，发射直线高伤激光。(CD:5)', skill: { type: 'line_atk', range: 8, power: 2.0, maxCd: 5, name: 'Pseudomorph' } },
-        'Demonia':   { hp: 140, atk: 38, def: 2,  rng: 1, mov: 3, icon: '👹', name: '妖魔种', desc: '【狂暴】牺牲 20 HP，立即再次行动。(CD:3)', skill: { type: 'act_again_dmg', costHp: 20, maxCd: 3, name: 'Berserk' } },
-        'Dhampir':   { hp: 90,  atk: 28, def: 0,  rng: 1, mov: 4, icon: '🧛', name: '吸血种', desc: '【吸血】吸取 1 格内敌人生命值。(CD:2)', skill: { type: 'drain_aoe', range: 1, power: 1.0, maxCd: 2, name: 'Drain' } },
-        'Lunamana':  { hp: 80,  atk: 25, def: 0,  rng: 3, mov: 3, icon: '🌙', name: '月咏种', desc: '【静寂】沉默周围 3 格敌人。(CD:3)', skill: { type: 'debuff_silence', range: 3, maxCd: 3, name: 'Silence' } },
-        'Warbeast':  { hp: 110, atk: 32, def: 3,  rng: 1, mov: 5, icon: '🐾', name: '兽人种', desc: '【血坏】扣除15%HP，移动+3且再次行动。(CD:4)', skill: { type: 'buff_mov_act', costHpPct: 0.15, power: 3, maxCd: 4, name: 'Blood Break' } },
-        'Seiren':    { hp: 80,  atk: 20, def: 0,  rng: 2, mov: 2, icon: '🧜', name: '海栖种', desc: '【梦之歌】使周围 2 格敌人睡眠。(CD:4)', skill: { type: 'debuff_sleep', range: 2, maxCd: 4, name: 'Lullaby' } },
-        'Imanity':   { hp: 70,  atk: 15, def: 0,  rng: 1, mov: 3, icon: '♟️', name: '人类种', desc: '【向盟约宣誓】全员攻击 +10。(CD:5)', skill: { type: 'buff_atk_global', power: 10, maxCd: 5, name: 'Aschente' } }
+        'Elf':       { hp: 90,  atk: 30, def: 0,  rng: 3, mov: 3, icon: '🧝', name: '森精种', desc: '【六重术式】护盾。(CD:4)', skill: { type: 'buff_def_aoe', range: 3, power: 15, initialCd: 1, maxCd: 4, name: 'Kūgan' } },
+        'Dwarf':     { hp: 100, atk: 40, def: 8,  rng: 2, mov: 2, icon: '⚒️', name: '地精种', desc: '【髓爆】自爆。(CD:0)', skill: { type: 'suicide_bomb', range: 2, power: 4.0, initialCd: 0, maxCd: 99, name: 'E-Bomb' } },
+        'ExMachina': { hp: 130, atk: 35, def: 8,  rng: 2, mov: 3, icon: '🤖', name: '机凯种', desc: '【伪典】直线激光。(CD:5)', skill: { type: 'line_atk', range: 8, power: 2.0, initialCd: 2, maxCd: 5, name: 'Pseudomorph' } },
+        'Fairy':     { hp: 70,  atk: 15, def: 0,  rng: 3, mov: 4, icon: '🧚', name: '妖精种', desc: '【自然之息】群疗。(CD:3)', skill: { type: 'heal_aoe', range: 3, power: 60, initialCd: 1, maxCd: 3, name: 'Nature Heal' } },
+        'Demonia':   { hp: 140, atk: 38, def: 2,  rng: 1, mov: 3, icon: '👹', name: '妖魔种', desc: '【狂暴】自残再动。(CD:3)', skill: { type: 'act_again_dmg', costHp: 20, initialCd: 1, maxCd: 3, name: 'Berserk' } },
+        'Dhampir':   { hp: 90,  atk: 28, def: 0,  rng: 1, mov: 4, icon: '🧛', name: '吸血种', desc: '【吸血】攻击回血。(CD:2)', skill: { type: 'drain_aoe', range: 1, power: 1.0, initialCd: 0, maxCd: 2, name: 'Drain' } },
+        'Lunamana':  { hp: 80,  atk: 25, def: 0,  rng: 3, mov: 3, icon: '🌙', name: '月咏种', desc: '【静寂】沉默。(CD:3)', skill: { type: 'debuff_silence', range: 3, initialCd: 1, maxCd: 3, name: 'Silence' } },
+        'Warbeast':  { hp: 110, atk: 32, def: 3,  rng: 1, mov: 5, icon: '🐾', name: '兽人种', desc: '【血坏】自残再动。(CD:4)', skill: { type: 'buff_mov_act', costHpPct: 0.15, power: 3, initialCd: 1, maxCd: 4, name: 'Blood Break' } },
+        'Seiren':    { hp: 80,  atk: 20, def: 0,  rng: 2, mov: 2, icon: '🧜', name: '海栖种', desc: '【梦之歌】沉睡。(CD:4)', skill: { type: 'debuff_sleep', range: 2, initialCd: 1, maxCd: 4, name: 'Lullaby' } },
+        'Imanity':   { hp: 70,  atk: 15, def: 0,  rng: 1, mov: 3, icon: '♟️', name: '人类种', desc: '【盟约】全员加攻。(CD:5)', skill: { type: 'buff_atk_global', power: 10, initialCd: 0, maxCd: 5, name: 'Aschente' } }
     },
 
     init() {
@@ -3411,10 +3417,10 @@ const chessGame = {
         this.boardEl.style.gridTemplateColumns = `repeat(${this.boardSize}, 60px)`;
         this.boardEl.style.gridTemplateRows = `repeat(${this.boardSize}, 60px)`;
         this.renderBoardGrid();
-        if(!this.matchId) this.log("System Ready. [Target: Enemy Star Grail]", "system");
+        if(!this.matchId) this.log("System Ready.", "system");
     },
 
-    // ================= 游戏流程控制 =================
+    // ================= 游戏开始 =================
     async startGame(mode) {
         this.gameMode = mode;
         this.units = [];
@@ -3424,6 +3430,15 @@ const chessGame = {
         this.isProcessing = false;
         document.getElementById('game-log').innerHTML = '';
         
+        // 难度选择UI处理
+        const diffSel = document.getElementById('pve-difficulty-selector');
+        if(mode === 'pve') {
+            diffSel.style.display = 'block';
+            this.difficulty = document.getElementById('game-difficulty').value;
+        } else {
+            diffSel.style.display = 'none';
+        }
+
         const overlay = document.getElementById('game-result-overlay');
         if(overlay) { overlay.style.opacity = 0; overlay.style.pointerEvents = 'none'; }
 
@@ -3432,12 +3447,13 @@ const chessGame = {
             this.currentTurn = 'blue';
             if (this.pollInterval) clearInterval(this.pollInterval);
             this.setupAllUnits();
-            this.log("PVE Match Started.", "system");
+            this.log(`PVE Started. Difficulty: ${this.difficulty.toUpperCase()}`, "system");
             this.updateUI();
         } else {
-            // PVP 联机
             if (!state.isLoggedIn) return alert("Login required.");
-            const roomId = prompt("Enter Room ID to Create/Join:");
+            
+            // 修复：强制要求输入房间号，确保好友能匹配
+            const roomId = prompt("Enter Room ID (e.g. 'ROOM1'):\n[Share this ID with your friend]");
             if (!roomId) return;
 
             this.log(`Connecting to [${roomId}]...`, "system");
@@ -3446,22 +3462,29 @@ const chessGame = {
             if (res.status === 'waiting') {
                 this.matchId = res.matchId;
                 this.myRole = 'blue';
-                this.log(`Room Created. Waiting P2...`, "system");
-                this.setupAllUnits();
+                this.log(`Room Created. Waiting for P2...`, "system");
+                this.setupAllUnits(); 
                 this.networkSync();
             } else if (res.status === 'matched') {
                 this.matchId = res.matchId;
                 this.myRole = 'red';
                 this.log(`Joined Room! VS ${res.opponent}`, "system");
-                // ⭐ P2 立即拉取 P1 的初始盘面
-                await this.networkPoll(true); 
+                await this.networkPoll(true); // 立即拉取初始数据
+            } else if (res.status === 'reconnected') {
+                this.matchId = res.matchId;
+                this.myRole = res.role;
+                this.log(`Reconnected as ${res.role.toUpperCase()}`, "system");
+                await this.networkPoll(true);
+            } else {
+                alert(res.message || "Connection Error");
+                return;
             }
+            
             if (this.pollInterval) clearInterval(this.pollInterval);
             this.pollInterval = setInterval(() => this.networkPoll(), 3000);
         }
     },
 
-    // 初始化 16 v 16 阵容
     setupAllUnits() {
         const keys = Object.keys(this.prototypes);
         // Blue (Bottom)
@@ -3473,6 +3496,9 @@ const chessGame = {
 
     spawnUnit(type, team, x, y) {
         const p = this.prototypes[type];
+        x = Math.max(0, Math.min(this.boardSize-1, x));
+        y = Math.max(0, Math.min(this.boardSize-1, y));
+        
         this.units.push({
             id: Date.now() + Math.random(),
             type: type, team: team,
@@ -3481,7 +3507,7 @@ const chessGame = {
             atk: p.atk, def: p.def || 0,
             rng: p.rng, mov: p.mov,
             icon: p.icon, name: p.name, desc: p.desc,
-            skill: { ...p.skill, cd: 0 }, // 初始 CD 为 0
+            skill: { ...p.skill, cd: p.skill.initialCd || 0 }, // 应用初始CD
             status: null, hasActed: false, isGrail: false,
             stats: { damageDealt: 0, healingDone: 0, damageTaken: 0 }
         });
@@ -3497,10 +3523,10 @@ const chessGame = {
     applyGrailBuff(u) {
         u.isGrail = true;
         u.name = `★ ${u.name}`;
-        u.maxHp += 300; u.hp = u.maxHp; // 星杯加成
+        u.maxHp += 300; u.hp = u.maxHp;
         u.atk = Math.floor(u.atk * 1.5);
         u.def += 15;
-        this.log(`Star Grail Holder: [${u.name}]`, 'system');
+        this.log(`Grail Holder: [${u.name}]`, 'system');
     },
 
     // ================= 玩家操作 =================
@@ -3529,11 +3555,11 @@ const chessGame = {
         }
     },
 
-    // ================= 技能系统 (修复 + 原著向) =================
+    // ================= 技能逻辑 (修复作用域 + CD) =================
     useSkill() {
         const u = this.selectedUnit;
         if (!u || u.hasActed) return;
-        if (u.skill.cd > 0) return this.log(`Skill Cooldown: ${u.skill.cd} turns.`, 'system');
+        if (u.skill.cd > 0) return this.log(`Cooling down... (${u.skill.cd})`, 'system');
         if (u.status === 'silence') return this.log(`${u.name} is Silenced!`, 'system');
 
         const s = u.skill;
@@ -3542,32 +3568,30 @@ const chessGame = {
 
         this.log(`${u.name} casts [${s.name}]!`, 'skill');
 
-        // --- 1. 再动类 (血坏 / 狂暴) ---
-        if (s.type === 'buff_mov_act' || s.type === 'act_again_dmg') {
-            const cost = s.costHp || Math.floor(u.maxHp * (s.costHpPct||0));
-            if(cost > 0) {
+        // --- 再动技能 ---
+        if (['buff_mov_act', 'act_again_dmg', 'buff_invincible'].includes(s.type)) {
+            if (s.costHpPct) {
+                const cost = Math.floor(u.maxHp * s.costHpPct);
                 u.hp -= cost; u.stats.damageTaken += cost;
                 this.showPopup(u.x, u.y, `-${cost}`, "#f00");
                 if(u.hp <= 0) { this.checkDeath(u); return; }
             }
-            if (s.type === 'buff_mov_act') u.mov += s.power;
+            if (s.costHp) {
+                u.hp -= s.costHp; u.stats.damageTaken += s.costHp;
+                this.showPopup(u.x, u.y, `-${s.costHp}`, "#f00");
+            }
             
+            if (s.type === 'buff_mov_act') u.mov += s.power;
+            if (s.type === 'buff_invincible') u.mov += 10;
+
             this.showPopup(u.x, u.y, "ACT AGAIN", "#f00");
-            u.hasActed = false; // ⭐ 重置行动状态
-            endAct = false;     // ⭐ 阻止回合结束
-            used = true;
-        }
-        // --- 2. 相位 (幻想种) ---
-        else if (s.type === 'buff_invincible' || s.type === 'buff_mov') { 
-            u.mov += 10; 
-            this.showPopup(u.x, u.y, "PHASE SHIFT", "#f0f");
             u.hasActed = false; 
             endAct = false;
             used = true;
         }
-        // --- 3. 范围技能 (AOE/Heal/Buff) ---
-        else if (['aoe', 'aoe_true', 'aoe_stun', 'heal_aoe', 'debuff_sleep', 'debuff_silence', 'drain_aoe', 'aoe_self_dmg', 'buff_def_aoe'].includes(s.type)) {
-            // 龙精种自残
+        
+        // --- 范围/攻击/治疗 ---
+        else if (['aoe','aoe_true','aoe_stun','heal_aoe','buff_def_aoe','drain_aoe','aoe_self_dmg','debuff_sleep','debuff_silence'].includes(s.type)) {
             if (s.type === 'aoe_self_dmg') { 
                 const cost = Math.floor(u.maxHp * s.costHpPct);
                 u.hp -= cost; this.showPopup(u.x, u.y, `-${cost}`, "#f00");
@@ -3575,76 +3599,58 @@ const chessGame = {
 
             this.units.forEach(t => {
                 if (this.getDist(u, t) <= s.range) {
-                    // 敌方
                     if (t.team !== u.team) {
+                        // 敌方效果
                         if (['aoe','aoe_true','aoe_stun','drain_aoe','aoe_self_dmg'].includes(s.type)) {
-                            // aoe_true 为真实伤害，忽略防御 (神击)
-                            const ignoreDef = (s.type === 'aoe_true');
-                            const dmg = this.applyDamage(u, t, u.atk * s.power, ignoreDef);
-                            
-                            if (s.type === 'drain_aoe') { // 吸血
-                                const heal = Math.floor(dmg * 0.5);
-                                u.hp = Math.min(u.maxHp, u.hp + heal);
-                                this.showPopup(u.x, u.y, `+${heal}`, "#0f0");
-                            }
+                            // 神击: 真实伤害
+                            const ignore = s.type === 'aoe_true';
+                            const dmg = this.applyDamage(u, t, u.atk * s.power, ignore);
+                            if(s.type==='drain_aoe') { u.hp = Math.min(u.maxHp, u.hp + dmg); this.showPopup(u.x, u.y, "+HP", "#0f0"); }
+                            if(s.type==='aoe_stun') { t.status='stun'; this.showPopup(t.x, t.y, "STUN", "#ff0"); }
                         }
-                        if (s.type === 'aoe_stun') { t.status = 'stun'; this.showPopup(t.x, t.y, "STUN", "#ff0"); }
-                        if (s.type === 'debuff_sleep') { t.status = 'sleep'; this.showPopup(t.x, t.y, "ZZZ", "#ccc"); }
-                        if (s.type === 'debuff_silence') { t.status = 'silence'; this.showPopup(t.x, t.y, "SILENCE", "#888"); }
-                    }
-                    // 友方
-                    else if (t.team === u.team) {
-                        if (s.type === 'heal_aoe') { 
+                        if (s.type==='debuff_sleep') { t.status='sleep'; this.showPopup(t.x, t.y, "ZZZ", "#ccc"); }
+                        if (s.type==='debuff_silence') { t.status='silence'; this.showPopup(t.x, t.y, "SILENCE", "#888"); }
+                    } else if (t.team === u.team) {
+                        // 友方效果
+                        if (s.type==='heal_aoe') { 
                             t.hp = Math.min(t.maxHp, t.hp + s.power); 
                             u.stats.healingDone += s.power;
                             this.showPopup(t.x, t.y, `+${s.power}`, "#0f0"); 
                         }
-                        if (s.type === 'buff_def_aoe') { 
-                            t.def += s.power; 
-                            this.showPopup(t.x, t.y, "DEF UP", "#00f"); 
-                        }
+                        if (s.type==='buff_def_aoe') { t.def += s.power; this.showPopup(t.x, t.y, "DEF UP", "#00f"); }
                     }
                 }
             });
             used = true;
         }
-        // --- 4. 伪典 (机凯种) & 精灵炮 (直线) ---
-        else if (s.type === 'line_atk') {
-            this.units.forEach(t => { 
-                if (t.team !== u.team && ((t.x===u.x && Math.abs(t.y-u.y)<=s.range)||(t.y===u.y && Math.abs(t.x-u.x)<=s.range))) {
-                    this.applyDamage(u, t, u.atk * s.power);
-                }
-            });
-            used = true;
-        }
-        // --- 5. 天击 (自晕) ---
-        else if (s.type === 'nuke_self_stun') {
+        
+        // --- 其它 ---
+        else if (s.type === 'nuke_self_stun') { // 天击
             let target = this.findNearestEnemy(u);
             if(target && this.getDist(u,target) <= s.range) {
                 this.applyDamage(u, target, u.atk * s.power);
-                u.status = 'stun'; // 下回合无法行动
+                u.status = 'stun';
                 this.showPopup(u.x, u.y, "WEAKENED", "#ccc");
                 used = true;
             }
         }
-        // --- 6. 自爆 ---
-        else if (s.type === 'suicide_bomb') {
+        else if (s.type === 'suicide_bomb') { // 自爆
             this.units.forEach(t => { if(t.id!==u.id && this.getDist(u,t)<=s.range) this.applyDamage(u,t,u.atk*s.power); });
             u.hp = 0; u.stats.damageTaken += 999;
             this.checkDeath(u);
             used = true;
         }
-        // --- 7. Buff ---
         else if (s.type === 'buff_atk_self') { u.atk *= s.power; this.showPopup(u.x, u.y, "ATK UP", "#f00"); used=true; }
-        else if (s.type === 'buff_atk_global') { 
-            this.units.forEach(t => { if(t.team===u.team){ t.atk+=s.power; this.showPopup(t.x,t.y,"ATK UP","#0ff"); }}); 
-            used = true; 
+        else if (s.type === 'buff_atk_global') { this.units.forEach(t=>{if(t.team===u.team){t.atk+=s.power;this.showPopup(t.x,t.y,"ATK UP","#0ff");}}); used=true; }
+        else if (s.type === 'line_atk') { 
+            this.units.forEach(t => { if(t.team!==u.team && ((t.x===u.x && Math.abs(t.y-u.y)<=s.range)||(t.y===u.y && Math.abs(t.x-u.x)<=s.range))) this.applyDamage(u,t,u.atk*s.power); });
+            used = true;
         }
 
         if (used) {
-            u.skill.cd = u.skill.maxCd; // 设置CD
+            u.skill.cd = u.skill.maxCd;
             if (endAct) { u.hasActed = true; this.selectedUnit = null; }
-            else { this.selectedUnit = u; this.updateUI(); } // 再动
+            else { this.selectedUnit = u; }
             
             this.updateUI();
             this.checkWin();
@@ -3694,11 +3700,153 @@ const chessGame = {
         }
     },
 
-    // ================= 3. 结算 (数据统计) =================
+    // ================= 智能 AI 系统 (Difficulty Tier) =================
+    async aiTurn() {
+        this.log(`Enemy Phase (${this.difficulty.toUpperCase()})...`, "system");
+        const aiUnits = this.units.filter(u => u.team === 'red');
+        const targetGrail = this.units.find(u => u.team === 'blue' && u.isGrail);
+
+        for (const ai of aiUnits) {
+            if (ai.hp <= 0 || ['stun','sleep'].includes(ai.status)) continue;
+
+            // 1. 决策目标
+            let target = null;
+            if (this.difficulty === 'lunatic' || this.difficulty === 'hard') {
+                // 高级AI：优先打星杯，其次打残血
+                target = targetGrail || this.findWeakestEnemy(ai);
+            } else if (this.difficulty === 'normal') {
+                target = this.findNearestEnemy(ai);
+            } else {
+                // Easy: 随机目标
+                const blues = this.units.filter(u => u.team === 'blue');
+                if(blues.length) target = blues[Math.floor(Math.random()*blues.length)];
+            }
+
+            if (!target) continue;
+
+            // 2. 攻击/技能决策
+            if (this.isInRange(ai, target.x, target.y, 'attack')) {
+                await this.wait(400);
+                
+                // 技能使用概率
+                let skillProb = 0;
+                if(this.difficulty === 'lunatic') skillProb = 0.8;
+                else if(this.difficulty === 'hard') skillProb = 0.5;
+                else skillProb = 0.2;
+
+                if (ai.skill.cd === 0 && Math.random() < skillProb && ['aoe','nuke','line_atk'].includes(ai.skill.type)) {
+                    this.selectedUnit = ai; 
+                    this.useSkill();
+                } else {
+                    this.actionAttack(ai, target);
+                }
+                continue;
+            }
+
+            // 3. 移动决策
+            let bestX = ai.x, bestY = ai.y;
+            // 简单寻路 vs 智能寻路
+            if (this.difficulty === 'easy') {
+                // 随机移动
+                const moves = this.getValidMoves(ai);
+                if(moves.length) {
+                    const m = moves[Math.floor(Math.random()*moves.length)];
+                    bestX = m.x; bestY = m.y;
+                }
+            } else {
+                // 逼近目标
+                let minDst = 999;
+                const moves = this.getValidMoves(ai);
+                moves.forEach(m => {
+                    const d = this.getDist(m, target);
+                    if(d < minDst) { minDst = d; bestX = m.x; bestY = m.y; }
+                });
+            }
+
+            if (bestX !== ai.x || bestY !== ai.y) {
+                await this.wait(300);
+                ai.x = bestX; ai.y = bestY;
+                this.updateUI();
+                // 移动后再次尝试攻击
+                if (this.isInRange(ai, target.x, target.y, 'attack')) {
+                    await this.wait(300);
+                    this.actionAttack(ai, target);
+                }
+            }
+            ai.hasActed = true;
+        }
+
+        await this.wait(500);
+        this.endTurn(); // AI 结束回合
+        this.log("Player Turn.", "system");
+    },
+
+    findWeakestEnemy(u) {
+        let target=null, minHp=9999;
+        this.units.forEach(t => {
+            if (t.team !== u.team) {
+                if(t.hp < minHp) { minHp=t.hp; target=t; }
+            }
+        });
+        return target;
+    },
+    
+    findNearestEnemy(u) {
+        let target=null, min=999;
+        this.units.forEach(t => {
+            if (t.team !== u.team) {
+                let d = this.getDist(u, t);
+                if(d < min){ min=d; target=t; }
+            }
+        });
+        return target;
+    },
+
+    getValidMoves(u) {
+        let moves = [];
+        for (let my = u.y - u.mov; my <= u.y + u.mov; my++) {
+            for (let mx = u.x - u.mov; mx <= u.x + u.mov; mx++) {
+                if (mx<0||mx>=this.boardSize||my<0||my>=this.boardSize) continue;
+                if (this.getDist({x:mx,y:my}, u) > u.mov) continue;
+                if (this.getUnitAt(mx, my)) continue;
+                moves.push({x:mx, y:my});
+            }
+        }
+        return moves;
+    },
+
+    // ================= 回合/结算/网络 =================
+    endTurn() {
+        if (this.isProcessing) return;
+        if (this.currentTurn !== this.myRole && this.gameMode === 'pvp_online') return;
+
+        this.selectedUnit = null;
+        const next = (this.currentTurn === 'blue') ? 'red' : 'blue';
+        this.currentTurn = next;
+        
+        this.units.forEach(u => { 
+            if (u.team === next) {
+                u.hasActed = false;
+                if(u.skill.cd > 0) u.skill.cd--;
+                if (u.status === 'stun') { u.status = null; u.hasActed = true; this.showPopup(u.x, u.y, "RECOVER", "#fff"); }
+            }
+        });
+
+        this.updateUI();
+
+        if (this.gameMode === 'pve' && next === 'red') {
+            this.isProcessing = true;
+            setTimeout(() => this.aiTurn(), 1000);
+        } else if (this.gameMode === 'pve' && next === 'blue') {
+            this.isProcessing = false;
+        } else {
+            this.networkSync();
+        }
+    },
+
     checkWin() {
         const blueGrail = this.units.find(u => u.team === 'blue' && u.isGrail);
         const redGrail = this.units.find(u => u.team === 'red' && u.isGrail);
-        
         let winner = null;
         if (!blueGrail) winner = 'red';
         else if (!redGrail) winner = 'blue';
@@ -3713,137 +3861,33 @@ const chessGame = {
             const desc = document.getElementById('game-result-desc');
             const tbody = document.getElementById('game-result-tbody');
             
-            if(overlay) {
-                overlay.style.opacity = 1;
-                overlay.style.pointerEvents = 'all';
-                title.innerText = isVictory ? "VICTORY" : "DEFEAT";
-                title.style.color = isVictory ? "var(--cyan)" : "var(--pink)";
-                desc.innerText = isVictory ? "The Star Grail is yours." : "The Star Grail has been lost.";
+            overlay.style.opacity = 1;
+            overlay.style.pointerEvents = 'all';
+            
+            title.innerText = isVictory ? "VICTORY" : "DEFEAT";
+            title.style.color = isVictory ? "var(--cyan)" : "var(--pink)";
+            desc.innerText = isVictory ? "The Star Grail is yours." : "The Star Grail has been lost.";
 
-                // 生成统计表 (按造成伤害排序)
-                const all = [...this.units, ...this.deadUnits];
-                all.sort((a,b) => b.stats.damageDealt - a.stats.damageDealt);
-                
-                tbody.innerHTML = all.map(u => {
-                    const color = u.team === 'blue' ? 'var(--cyan)' : 'var(--pink)';
-                    const status = u.hp <= 0 ? '<span style="color:#666">DEAD</span>' : '<span style="color:#0f0">ALIVE</span>';
-                    return `
-                    <tr style="border-bottom:1px solid #333;">
-                        <td style="padding:8px;color:${color}">${u.icon} ${u.name}</td>
-                        <td style="padding:8px;color:#ff6c9c">${u.stats.damageDealt}</td>
-                        <td style="padding:8px;color:#9cffd0">${u.stats.healingDone}</td>
-                        <td style="padding:8px;color:#aaa">${u.stats.damageTaken}</td>
-                        <td style="padding:8px;">${status}</td>
-                    </tr>`;
-                }).join('');
-            } else {
-                alert(`GAME OVER. ${winner.toUpperCase()} WINS.`);
-            }
+            const all = [...this.units, ...this.deadUnits];
+            all.sort((a,b) => b.stats.damageDealt - a.stats.damageDealt);
+            
+            tbody.innerHTML = all.map(u => {
+                const color = u.team === 'blue' ? 'var(--cyan)' : 'var(--pink)';
+                const status = u.hp <= 0 ? '<span style="color:#666">DEAD</span>' : '<span style="color:#0f0">ALIVE</span>';
+                return `
+                <tr style="border-bottom:1px solid #333;">
+                    <td style="padding:8px;color:${color}">${u.icon} ${u.name}</td>
+                    <td style="padding:8px;color:#ff6c9c">${u.stats.damageDealt}</td>
+                    <td style="padding:8px;color:#9cffd0">${u.stats.healingDone}</td>
+                    <td style="padding:8px;color:#aaa">${u.stats.damageTaken}</td>
+                    <td style="padding:8px;">${status}</td>
+                </tr>`;
+            }).join('');
         }
     },
 
-    // ================= 回合切换 =================
-    endTurn() {
-        if (this.isProcessing) return;
-        if (this.currentTurn !== this.myRole && this.gameMode === 'pvp_online') return;
-
-        this.selectedUnit = null;
-        const next = (this.myRole === 'blue') ? 'red' : 'blue';
-        this.currentTurn = next;
-        
-        // 结算
-        this.units.forEach(u => { 
-            if (u.team === next) {
-                u.hasActed = false;
-                if(u.skill.cd > 0) u.skill.cd--;
-                if (u.status === 'stun') { u.status = null; u.hasActed = true; this.showPopup(u.x, u.y, "RECOVER", "#fff"); }
-            }
-        });
-
-        this.updateUI();
-
-        if (this.gameMode === 'pve') {
-            this.isProcessing = true;
-            setTimeout(() => this.aiTurn(), 1000);
-        } else {
-            this.networkSync();
-        }
-    },
-
-    // ================= AI =================
-    async aiTurn() {
-        this.log("Enemy Turn...", "system");
-        const aiUnits = this.units.filter(u => u.team === 'red');
-        const targetGrail = this.units.find(u => u.team === 'blue' && u.isGrail);
-
-        for (const ai of aiUnits) {
-            if (ai.hp <= 0 || ['stun','sleep'].includes(ai.status)) continue;
-
-            let target = targetGrail || this.findNearestEnemy(ai);
-            if (!target) continue;
-
-            if (this.isInRange(ai, target.x, target.y, 'attack')) {
-                await this.wait(400);
-                if (ai.skill.cd===0 && Math.random()<0.4 && ['aoe','nuke','line_atk'].includes(ai.skill.type)) {
-                    this.selectedUnit = ai; this.useSkill();
-                } else {
-                    this.actionAttack(ai, target);
-                }
-                continue;
-            }
-
-            let bestX=ai.x, bestY=ai.y, minDst=999;
-            for (let my = ai.y - ai.mov; my <= ai.y + ai.mov; my++) {
-                for (let mx = ai.x - ai.mov; mx <= ai.x + ai.mov; mx++) {
-                    if (mx<0 || mx>=this.boardSize || my<0 || my>=this.boardSize) continue;
-                    if (this.getDist({x:mx,y:my}, ai) > ai.mov) continue;
-                    if (this.getUnitAt(mx, my)) continue;
-                    const dst = this.getDist({x:mx,y:my}, target);
-                    if (dst < minDst) { minDst = dst; bestX = mx; bestY = my; }
-                }
-            }
-
-            if (bestX !== ai.x || bestY !== ai.y) {
-                await this.wait(300);
-                ai.x = bestX; ai.y = bestY;
-                this.updateUI();
-                if (this.isInRange(ai, target.x, target.y, 'attack')) {
-                    await this.wait(300);
-                    this.actionAttack(ai, target);
-                }
-            }
-            ai.hasActed = true;
-        }
-
-        await this.wait(500);
-        this.currentTurn = 'blue';
-        this.units.forEach(u => { 
-            if(u.team === 'blue') {
-                u.hasActed = false;
-                if(u.skill.cd > 0) u.skill.cd--; 
-            }
-        });
-        this.isProcessing = false;
-        this.log("Player Turn.", "system");
-        this.updateUI();
-    },
-
-    findNearestEnemy(u) {
-        let target = null, min = 999;
-        this.units.forEach(t => {
-            if (t.team !== u.team) {
-                let d = this.getDist(u, t);
-                if (t.isGrail) d -= 5; 
-                if(d < min){ min = d; target = t; }
-            }
-        });
-        return target;
-    },
-
-    // ================= 辅助 & 联机 =================
     async networkPoll(force=false) {
         if (!this.matchId) return;
-        // 如果是强制拉取，或者当前不是我的回合，则更新
         if (!force && this.currentTurn === this.myRole) return;
 
         const res = await apiRequest({ action: 'game_poll', matchId: this.matchId });
@@ -3877,12 +3921,14 @@ const chessGame = {
         });
     },
 
+    // ================= UI / Utils =================
     updateUI() {
         this.renderUnits();
         this.renderRanges();
         this.updateSidePanel();
         const turnText = document.getElementById('game-turn-text');
-        turnText.innerText = (this.currentTurn === this.myRole || (this.gameMode==='pve' && this.currentTurn==='blue')) ? "YOUR TURN" : "OPPONENT TURN";
+        turnText.innerText = (this.currentTurn === this.myRole) ? "YOUR TURN" : "OPPONENT TURN";
+        if(this.gameMode === 'pve' && this.currentTurn === 'red') turnText.innerText = "ENEMY TURN";
         turnText.style.color = this.currentTurn === 'blue' ? "var(--cyan)" : "var(--pink)";
     },
     renderBoardGrid() {
@@ -3906,7 +3952,7 @@ const chessGame = {
                 el.className = `unit team-${u.team}`;
                 if (u.hasActed) el.classList.add('done');
                 if (this.selectedUnit && this.selectedUnit.id === u.id) el.classList.add('active');
-                if (u.status === 'stun' || u.status === 'sleep') el.style.filter = 'hue-rotate(240deg) grayscale(0.8)';
+                if (['stun','sleep'].includes(u.status)) el.style.filter = 'hue-rotate(240deg) grayscale(0.8)';
                 if (u.isGrail) { el.style.boxShadow = `0 0 25px 5px ${u.team==='blue'?'#00ffff':'#ff0055'}`; el.style.border = "3px solid #fff"; el.style.zIndex="20"; }
                 el.innerText = u.icon;
                 const hpPct = Math.max(0, (u.hp / u.maxHp) * 100);
@@ -3947,7 +3993,7 @@ const chessGame = {
             document.getElementById('u-mov').innerText = u.mov;
             const btn = document.getElementById('btn-skill');
             if(btn) {
-                const cdTxt = u.skill.cd > 0 ? ` (CD:${u.skill.cd})` : "";
+                const cdTxt = u.skill.cd > 0 ? ` (${u.skill.cd})` : "";
                 btn.innerText = `SKILL: ${u.skill.name}${cdTxt}`;
                 btn.disabled = u.hasActed || u.status === 'silence' || u.skill.cd > 0 || ['stun','sleep'].includes(u.status);
                 btn.style.opacity = btn.disabled ? 0.5 : 1;
@@ -3977,7 +4023,6 @@ const chessGame = {
     },
     wait(ms) { return new Promise(r => setTimeout(r, ms)); }
 };
-
 
 /* ================== 启动 ================== */
 
