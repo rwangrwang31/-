@@ -3382,6 +3382,7 @@ const chessGame = {
     currentTurn: 'blue',
     gameMode: 'pve',
     difficulty: 'normal', // easy, normal, hard, lunatic
+    isSyncing: false, // 网络同步锁
     
     selectedUnit: null,
     units: [],
@@ -3962,6 +3963,7 @@ const chessGame = {
 
     async networkPoll(force=false) {
         if (!this.matchId) return;
+        if (this.isSyncing) return;
         if (!force && this.currentTurn === this.myRole) return;
 
         const res = await apiRequest({ action: 'game_poll', matchId: this.matchId });
@@ -3974,10 +3976,11 @@ const chessGame = {
                     this.deadUnits = res.state.deadUnits || [];
                     this.logs = res.state.logs || []; 
                 }
-                if (this.currentTurn === this.myRole) {
+                if (!force && this.currentTurn === this.myRole) {
                     this.units.forEach(u => { 
                         if(u.team === this.myRole) {
                             u.hasActed = false;
+                            u.hasMoved = false;
                             if(u.skill.cd > 0) u.skill.cd--;
                         }
                     });
@@ -3988,11 +3991,20 @@ const chessGame = {
         }
     },
     async networkSync() {
-        await apiRequest({
-            action: 'game_move', matchId: this.matchId,
-            state: JSON.stringify({ units: this.units, deadUnits: this.deadUnits, logs: this.logs }),
-            nextTurn: this.currentTurn
-        });
+        this.isSyncing = true; // ⭐ 锁定：禁止轮询读取旧数据
+        try {
+            await apiRequest({
+                action: 'game_move', 
+                matchId: this.matchId,
+                state: JSON.stringify({ units: this.units, deadUnits: this.deadUnits, logs: this.logs }),
+                nextTurn: this.currentTurn
+            });
+        } catch (e) {
+            console.error("Sync failed:", e);
+        } finally {
+            // 延迟解锁，确保服务器写入完成
+            setTimeout(() => { this.isSyncing = false; }, 500);
+        }
     },
 
     // ================= UI / Utils =================
