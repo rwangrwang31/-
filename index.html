@@ -125,21 +125,22 @@
             51%{transform:skew(.5deg);text-shadow:-2px 2px 0 var(--cyan),2px -2px 0 var(--pink);}
         }
 
-        /* ================= 5. 角色卡片 (美化版) ================= */
+        /* ================= 5. 角色卡片 (NGNL 专属风格) ================= */
 .char-gallery {
     display: flex;
     justify-content: center;
-    gap: 30px;
+    gap: 35px;
     flex-wrap: wrap;
-    perspective: 1200px; /* 增强3D透视感 */
-    padding: 20px 0;
+    perspective: 1500px;
+    padding: 30px 0;
 }
 
 .char-card {
-    width: 240px;
+    width: 250px;
     height: 380px;
     position: relative;
     cursor: pointer;
+    z-index: 1;
 }
 
 .char-inner {
@@ -147,147 +148,170 @@
     height: 100%;
     position: relative;
     transform-style: preserve-3d;
-    transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); /* 更平滑的翻转 */
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+    transition: transform 0.6s cubic-bezier(0.3, 1, 0.2, 1);
+    border-radius: 14px;
+    /* NGNL 标志性发光边框：粉紫青渐变 */
+    box-shadow: 
+        0 0 15px rgba(255, 42, 109, 0.4), /* Pink glow */
+        0 0 30px rgba(5, 217, 232, 0.2);  /* Cyan glow */
 }
 
 .char-card:hover .char-inner {
     transform: rotateY(180deg);
-    box-shadow: 0 0 25px rgba(5, 217, 232, 0.4); /* 悬停时增加发光 */
+    /* 悬停时增强光效 */
+    box-shadow: 
+        0 0 25px rgba(255, 42, 109, 0.7),
+        0 0 50px rgba(5, 217, 232, 0.5);
 }
 
-/* 正反面公共基础 */
+/* 渐变边框层 (模拟边框) */
+.char-inner::after {
+    content: "";
+    position: absolute;
+    inset: -3px; /* 向外扩一点 */
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--pink), var(--purple), var(--cyan));
+    z-index: -1;
+}
+
 .char-face {
     position: absolute;
     inset: 0;
-    border-radius: 12px;
+    border-radius: 14px;
     backface-visibility: hidden;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: #fff; /* 必须是白色以融合白底图片 */
 }
 
-/* --- 正面设计：解决白底图片不协调的问题 --- */
+/* --- 正面设计 --- */
 .char-front {
-    /* 关键技巧：上半部分给白色背景来融合图片，下半部分用深色 */
-    background: linear-gradient(180deg, #ffffff 62%, #05030a 62%);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: flex-start; 
-    padding: 0; 
 }
 
-/* 图片区域 */
+/* 1. 图片区域 */
 .char-front img {
     width: 100%;
-    height: 62%; /* 占据卡片上部 62% */
-    object-fit: contain; /* 完整显示角色，不裁切 */
-    background: #fff; /* 确保背景纯白，与卡片上半部无缝融合 */
-    padding: 15px; /* 给图片一点内边距，看起来像精美的立绘 */
+    height: 65%;
+    object-fit: contain;
+    padding: 15px;
+    background: #fff;
+    /* 关键：给图片四周加一个内阴影，让白色背景看起来像一种发光特效，而不是简单的白块 */
+    box-shadow: inset 0 0 30px rgba(255, 42, 109, 0.15); 
     transition: transform 0.4s ease;
 }
 
 .char-card:hover .char-front img {
-    transform: scale(1.08) translateY(-5px); /* 悬停时角色轻微放大浮动 */
+    transform: scale(1.05);
 }
 
-/* 信息区域 (下半部分) */
+/* 2. 信息区域 (重做：深紫色 + 棋盘格) */
 .char-front-info {
-    width: 100%;
-    height: 38%; /* 占据剩余空间 */
-    background: rgba(10, 10, 20, 0.95); /* 深色背景 */
+    flex: 1; /* 占满剩余空间 */
+    background: linear-gradient(180deg, #180a25 0%, #05010a 100%); /* 深紫色渐变 */
+    position: relative;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    /* 增加一道霓虹分割线 */
-    border-top: 3px solid var(--cyan); 
-    position: relative;
+    justify-content: center;
+    border-top: 2px solid var(--cyan);
     z-index: 2;
-    box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
+    overflow: hidden;
 }
 
-/* 装饰：给信息区加一点科技感背景纹理 */
-.char-front-info::after {
+/* 3. 棋盘格纹理 (NGNL 核心元素) */
+.char-front-info::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: 
-        repeating-linear-gradient(
-            45deg,
-            transparent,
-            transparent 10px,
-            rgba(5, 217, 232, 0.03) 10px,
-            rgba(5, 217, 232, 0.03) 20px
-        );
+    background-image: 
+        linear-gradient(45deg, rgba(255,255,255,0.03) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.03) 75%, rgba(255,255,255,0.03)),
+        linear-gradient(45deg, rgba(255,255,255,0.03) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.03) 75%, rgba(255,255,255,0.03));
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+    z-index: 0;
     pointer-events: none;
 }
 
+/* 4. 名字样式 */
 .char-name {
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.5rem;
-    font-weight: 900;
+    font-size: 1.4rem;
+    font-weight: 800;
     color: #fff;
-    text-transform: uppercase;
+    text-shadow: 
+        2px 2px 0px var(--purple),
+        -1px -1px 5px rgba(255, 255, 255, 0.5);
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 2;
     letter-spacing: 2px;
-    text-shadow: 0 0 10px var(--cyan); /* 名字发光 */
-    margin-bottom: 8px;
-    position: relative;
-    z-index: 5;
 }
 
+/* 5. 种族标签 (霓虹胶囊) */
 .char-race {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.75rem;
-    color: var(--pink);
-    border: 1px solid var(--pink);
-    padding: 4px 12px;
-    border-radius: 20px; /* 胶囊形状标签 */
-    background: rgba(255, 42, 109, 0.1);
-    box-shadow: 0 0 8px rgba(255, 42, 109, 0.4);
-    letter-spacing: 1px;
+    font-size: 0.7rem;
+    color: var(--cyan);
+    border: 1px solid var(--cyan);
+    padding: 3px 12px;
+    border-radius: 4px; /* 稍微方一点，更有科技感 */
+    background: rgba(5, 217, 232, 0.05);
+    box-shadow: 0 0 10px rgba(5, 217, 232, 0.3);
+    text-transform: uppercase;
     position: relative;
-    z-index: 5;
+    z-index: 2;
+    font-family: 'Orbitron';
 }
 
-/* --- 背面设计 --- */
+/* --- 背面设计 (保持神秘感) --- */
 .char-back {
-    background: #090910;
+    background: #11051a; /* 深紫色 */
     transform: rotateY(180deg);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 25px;
-    /* 炫酷的背景光效 */
-    background-image: 
-        radial-gradient(circle at 50% 0, rgba(217, 5, 232, 0.3), transparent 60%),
-        linear-gradient(0deg, #05030a 0%, #1a1a2e 100%);
+    padding: 20px;
+    border: 2px solid var(--purple);
+    box-shadow: inset 0 0 50px rgba(217, 5, 232, 0.2);
+}
+
+/* 背面背景：特图的六芒星或棋盘光效 */
+.char-back::after {
+    content: "♔"; /* 巨大的棋子背景 */
+    position: absolute;
+    font-size: 10rem;
+    color: rgba(255, 255, 255, 0.03);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
 }
 
 .card-symbol {
-    font-size: 2.8rem;
+    font-size: 2.5rem;
     color: var(--gold);
-    margin-bottom: 20px;
-    text-shadow: 0 0 25px var(--gold);
+    width: 60px;
+    height: 60px;
     border: 2px solid var(--gold);
-    width: 70px;
-    height: 70px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%; 
-    background: rgba(0,0,0,0.6);
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+    margin-bottom: 15px;
+    background: rgba(0,0,0,0.5);
+    box-shadow: 0 0 20px var(--gold);
+    position: relative;
+    z-index: 2;
 }
 
 .char-desc {
-    font-size: 0.9rem;
-    color: #ddd;
+    font-size: 0.85rem;
+    color: #e0e0e0;
     text-align: center;
     line-height: 1.6;
-    font-weight: 300;
+    position: relative;
+    z-index: 2;
 }
 /* ===== Anime Player Layout ===== */
 .anime-layout{
