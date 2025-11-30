@@ -933,43 +933,61 @@ input[type="color"] {
 }
 
 /* --- 右侧：十六种族 (Chessboard Grid) --- */
-/* 棋盘格背景纹理 */
 .race-grid-container {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 4x4 布局 */
+    grid-template-columns: repeat(4, 1fr);
     gap: 12px;
     padding: 10px;
-    /* 模拟棋盘底纹 */
     background-image: 
         conic-gradient(rgba(255,255,255,0.03) 90deg, transparent 90deg, transparent 180deg, rgba(255,255,255,0.03) 180deg, rgba(255,255,255,0.03) 270deg, transparent 270deg);
     background-size: 40px 40px;
 }
 
-/* 单个种族卡片：独立棋子 */
+/* 翻转容器 (Scene) */
 .race-card {
     position: relative;
-    aspect-ratio: 1 / 1.1; /* 接近方形 */
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    aspect-ratio: 1 / 1.1;
+    perspective: 1000px; /* 3D透视 */
+    cursor: pointer;
+}
+
+/* 内部翻转层 (Object) */
+.race-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
     border-radius: 10px;
-    padding: 10px;
+    /* 边框和发光移到 inner 上，保证翻转时边框跟随 */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.race-card:hover .race-inner {
+    transform: rotateY(180deg);
+    box-shadow: 0 0 15px rgba(5, 217, 232, 0.2); /* 翻转后发光增强 */
+}
+
+/* 正反面公共样式 */
+.race-front, .race-back {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden; /* 背面不可见 */
+    border-radius: 10px;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    overflow: hidden;
-    cursor: default;
 }
 
-/* 卡片悬停：浮起 + 发光 */
-.race-card:hover {
-    transform: translateY(-5px) scale(1.05);
-    z-index: 10;
-    background: rgba(20, 20, 30, 0.9);
+/* --- 正面 (Front) --- */
+.race-front {
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 2;
 }
 
-/* 排名角标 */
 .r-rank {
     position: absolute;
     top: 6px; left: 8px;
@@ -978,17 +996,15 @@ input[type="color"] {
     opacity: 0.6;
 }
 
-/* 棋子图标（核心视觉） */
 .r-piece {
     font-size: 2.2rem;
     margin-bottom: 6px;
     transition: transform 0.4s;
 }
 .race-card:hover .r-piece {
-    transform: scale(1.2) rotate(10deg);
+    transform: scale(1.1); /* 悬停时图标微缩放 */
 }
 
-/* 种族名 */
 .r-name-en {
     font-family: 'Orbitron';
     font-size: 0.85rem;
@@ -1002,65 +1018,84 @@ input[type="color"] {
     margin-top: 2px;
 }
 
-/* === 各种族的专属配色与光效 (Lore Colors) === */
+/* --- 背面 (Back) - 详细介绍 --- */
+.race-back {
+    transform: rotateY(180deg);
+    background: rgba(15, 10, 20, 0.95);
+    padding: 12px;
+    text-align: center;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+}
 
-/* Old Deus (神灵种): 纯金 + 核心辉光 */
-.race-card[data-tier="god"] {
-    border-color: rgba(255, 215, 0, 0.5);
-    box-shadow: inset 0 0 20px rgba(255, 215, 0, 0.1);
+.race-desc {
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: #ddd;
+    text-shadow: 0 0 2px rgba(0,0,0,0.8);
+    /* 允许长文本滚动，防止溢出 */
+    max-height: 100%;
+    overflow-y: auto;
+    scrollbar-width: none; /* Firefox 隐藏滚动条 */
+}
+.race-desc::-webkit-scrollbar { display: none; } /* Chrome 隐藏滚动条 */
+
+/* === 各种族专属配色 (应用在 race-inner 上) === */
+
+/* Old Deus (神灵种) */
+.race-card[data-tier="god"] .race-inner {
+    border-color: rgba(255, 215, 0, 0.6);
+    box-shadow: inset 0 0 20px rgba(255, 215, 0, 0.15);
 }
 .race-card[data-tier="god"] .r-piece { 
     color: var(--gold); 
     text-shadow: 0 0 15px var(--gold);
     animation: pulseGold 2s infinite;
 }
-@keyframes pulseGold { 0%,100%{text-shadow:0 0 10px var(--gold);} 50%{text-shadow:0 0 25px var(--gold), 0 0 5px white;} }
 
-/* Phantasma/Elemental/Flügel (高位魔法种): 粉/紫/天蓝 */
-.race-card[data-tier="high"] {
+/* High Tier (幻想/精灵/天翼/龙) */
+.race-card[data-tier="high"] .race-inner {
     border-color: rgba(217, 5, 232, 0.5);
 }
 .race-card[data-tier="high"] .r-piece { 
-    color: #e08aff; 
-    text-shadow: 0 0 10px #bf00ff; 
+    color: #e08aff; text-shadow: 0 0 10px #bf00ff; 
 }
+/* 特殊种族微调 */
 .race-card[data-race="Flügel"] .r-piece { color: #ffb4ff; text-shadow: 0 0 15px #ff7bff; }
 .race-card[data-race="Dragonia"] .r-piece { color: #ff5c5c; text-shadow: 0 0 15px #ff0000; }
 
-/* Mid Tier (地精/森精/妖精): 绿色/自然色 */
-.race-card[data-tier="mid"] {
+/* Mid Tier (地精/森精/机凯) */
+.race-card[data-tier="mid"] .race-inner {
     border-color: rgba(5, 217, 232, 0.3);
 }
 .race-card[data-tier="mid"] .r-piece { color: #5cffe3; text-shadow: 0 0 8px #00cea8; }
-.race-card[data-race="Ex-Machina"] { border-color: #5cff5c; }
+
+.race-card[data-race="Ex-Machina"] .race-inner { border-color: #5cff5c; }
 .race-card[data-race="Ex-Machina"] .r-piece { 
     color: #5cff5c; 
     text-shadow: 0 0 10px #00ff00; 
-    /* 机械故障特效 */
     animation: glitchText 3s infinite;
 }
-@keyframes glitchText {
-    0%{transform:skew(0);} 95%{transform:skew(0);}
-    96%{transform:skew(-10deg);} 97%{transform:skew(10deg);} 100%{transform:skew(0);}
-}
 
-/* Low Tier (兽人/吸血/海栖): 红色/深红 */
-.race-card[data-tier="low"] {
-    border-color: rgba(255, 100, 100, 0.3);
+/* Low Tier (兽人/吸血/海栖) */
+.race-card[data-tier="low"] .race-inner {
+    border-color: rgba(255, 100, 100, 0.4);
 }
 .race-card[data-tier="low"] .r-piece { color: #ff7aa8; text-shadow: 0 0 8px #d6004d; }
 
-/* Imanity (人类种): 最弱也是最强 - 白色微光 + 霓虹边框 */
-.race-card[data-race="Imanity"] {
+/* Imanity (人类种) */
+.race-card[data-race="Imanity"] .race-inner {
     border: 1px solid #fff;
-    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.8));
-    box-shadow: 0 0 15px rgba(255,255,255,0.2);
+    background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.5));
+    box-shadow: 0 0 15px rgba(255,255,255,0.15);
 }
 .race-card[data-race="Imanity"] .r-piece {
     color: #fff;
-    text-shadow: 0 0 10px #fff, 0 0 20px var(--cyan), 0 0 30px var(--pink);
+    text-shadow: 0 0 10px #fff, 0 0 20px var(--cyan);
 }
-
+/* 背面特殊颜色 */
+.race-card[data-race="Imanity"] .race-back {
+    color: var(--cyan);
+}
 @media(max-width: 1024px){
     .codex-grid { grid-template-columns: 1fr; }
     .race-grid-container { grid-template-columns: repeat(4, 1fr); }
@@ -3048,37 +3083,43 @@ const visuals={
         requestAnimationFrame(draw);
     },
     initRaces(){
-        // tier 定义: god(金), high(紫/粉), mid(绿/青), low(红/橙)
+        // tier: god(金), high(紫), mid(绿/青), low(红), imanity(白)
         const races = [
-            { r: 1,  en: "Old Deus",      cn: "神灵种", piece: "♔", tier: "god" },
-            { r: 2,  en: "Phantasma",     cn: "幻想种", piece: "♕", tier: "high" },
-            { r: 3,  en: "Elemental",     cn: "精灵种", piece: "♗", tier: "high" },
-            { r: 4,  en: "Dragonia",      cn: "龙精种", piece: "♖", tier: "high" },
-            { r: 5,  en: "Gigant",        cn: "巨人种", piece: "♖", tier: "mid" },
-            { r: 6,  en: "Flügel",        cn: "天翼种", piece: "♕", tier: "high" }, // 特殊粉色
-            { r: 7,  en: "Elf",           cn: "森精种", piece: "♖", tier: "mid" },
-            { r: 8,  en: "Dwarf",         cn: "地精种", piece: "♗", tier: "mid" },
-            { r: 9,  en: "Fairy",         cn: "妖精种", piece: "P", tier: "mid" },
-            { r: 10, en: "Ex-Machina",    cn: "机凯种", piece: "♗", tier: "mid" }, // 特殊绿色
-            { r: 11, en: "Demonia",       cn: "妖魔种", piece: "P", tier: "low" },
-            { r: 12, en: "Dhampir",       cn: "吸血种", piece: "♘", tier: "low" },
-            { r: 13, en: "Lunamana",      cn: "月咏种", piece: "♖", tier: "low" },
-            { r: 14, en: "Warbeast",      cn: "兽人种", piece: "P", tier: "low" },
-            { r: 15, en: "Seiren",        cn: "海栖种", piece: "♘", tier: "low" },
-            { r: 16, en: "Imanity",       cn: "人类种", piece: "♔", tier: "imanity" } // 主角位
+            { r: 1,  en: "Old Deus",      cn: "神灵种", piece: "♔", tier: "god",  desc: "由星球的概念获得意志而诞生的神。拥有无限的寿命与全知全能的力量，是盟约之前的统治者。" },
+            { r: 2,  en: "Phantasma",     cn: "幻想种", piece: "♕", tier: "high", desc: "由“世界”本身的意志分化而成的生命体，没有实体，大多生存在异空间中。" },
+            { r: 3,  en: "Elemental",     cn: "精灵种", piece: "♗", tier: "high", desc: "构成世界魔法源流“精灵回廊”本身的种族，是一切魔法的根源。" },
+            { r: 4,  en: "Dragonia",      cn: "龙精种", piece: "♖", tier: "high", desc: "拥有最强物理力量的生物。以巨大的生命力支付代价，能行使足以弑神的破坏力。" },
+            { r: 5,  en: "Gigant",        cn: "巨人种", piece: "♖", tier: "mid",  desc: "拥有巨大的身躯和怪力，能轻易改变地形。虽然头脑简单，但战斗力极强。" },
+            { r: 6,  en: "Flügel",        cn: "天翼种", piece: "♕", tier: "high", desc: "战神阿尔特修创造的“弑神兵器”。拥有永恒的生命，以知识（书本）为食，也就是“天杀的”。" },
+            { r: 7,  en: "Elf",           cn: "森精种", piece: "♖", tier: "mid",  desc: "拥有仅次于神灵种的高超魔法适性。建立了名为“爱尔文·加尔得”的世界最大国家，有点看不起人。" },
+            { r: 8,  en: "Dwarf",         cn: "地精种", piece: "♗", tier: "mid",  desc: "拥有极高的工学和机械造诣，曾制造出能毁灭神灵种的决战兵器“髓爆”。与森精种是死对头。" },
+            { r: 9,  en: "Fairy",         cn: "妖精种", piece: "P", tier: "mid",  desc: "居住在精灵回廊中的微小生命，通常作为森精种魔法实验的协助者（或使魔）。" },
+            { r: 10, en: "Ex-Machina",    cn: "机凯种", piece: "♗", tier: "mid",  desc: "机械构成的群体生命。拥有无限进化的“演算”能力，能解析并复制一切攻击。曾是弑神的主力。" },
+            { r: 11, en: "Demonia",       cn: "妖魔种", piece: "P", tier: "low",  desc: "魔王为了战争而创造的种族。智力较低但好战，拥有多样的形态。" },
+            { r: 12, en: "Dhampir",       cn: "吸血种", piece: "♘", tier: "low",  desc: "以体液（灵魂）为食。擅长幻术与精神控制。若吸食血液能发挥真正力量，但会患上致死疾病。" },
+            { r: 13, en: "Lunamana",      cn: "月咏种", piece: "♖", tier: "low",  desc: "居住在红月之上的神秘种族。由于距离地面太远，关于她们的情报极少。" },
+            { r: 14, en: "Warbeast",      cn: "兽人种", piece: "P", tier: "low",  desc: "拥有超越物理极限的五感与身体能力。能通过“血坏”短暂突破界限。曾建立东部联合。" },
+            { r: 15, en: "Seiren",        cn: "海栖种", piece: "♘", tier: "low",  desc: "居住在深海的种族。全是女性，只有通过与其他种族交配才能繁衍，被称为“笨蛋”。" },
+            { r: 16, en: "Imanity",       cn: "人类种", piece: "♔", tier: "imanity", desc: "最弱的种族。没有魔法，没有感应力，甚至连身体能力也最弱。但正因一无所有，才拥有无限的“可能性”。" }
         ];
 
         const container = document.getElementById('race-list-container');
         if(!container) return;
 
         container.innerHTML = races.map(race => {
-            // 生成卡片
             return `
             <div class="race-card" data-tier="${race.tier}" data-race="${race.en}">
-                <div class="r-rank">#${race.r}</div>
-                <div class="r-piece">${race.piece}</div>
-                <div class="r-name-en">${race.en}</div>
-                <div class="r-name-cn">${race.cn}</div>
+                <div class="race-inner">
+                    <div class="race-front">
+                        <div class="r-rank">#${race.r}</div>
+                        <div class="r-piece">${race.piece}</div>
+                        <div class="r-name-en">${race.en}</div>
+                        <div class="r-name-cn">${race.cn}</div>
+                    </div>
+                    <div class="race-back">
+                        <div class="race-desc">${race.desc}</div>
+                    </div>
+                </div>
             </div>`;
         }).join('');
     },
