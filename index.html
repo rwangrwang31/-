@@ -825,18 +825,17 @@ input[type="color"] {
 
 .codex-grid {
     display: grid;
-    grid-template-columns: 1fr 1.4fr; /* 左侧盟约较窄，右侧棋盘较宽 */
+    grid-template-columns: 1fr 1.4fr;
     gap: 40px;
     align-items: stretch;
 }
 
-/* --- 通用容器样式：全息玻璃 --- */
+/* --- 通用容器 --- */
 .codex-card {
     background: rgba(10, 5, 15, 0.85);
     border-radius: 16px;
     position: relative;
     overflow: hidden;
-    /* 特图风格：粉紫边框发光 */
     border: 1px solid rgba(255, 42, 109, 0.3);
     box-shadow: 
         0 0 20px rgba(255, 42, 109, 0.1),
@@ -846,7 +845,7 @@ input[type="color"] {
     flex-direction: column;
 }
 
-/* 顶部光条扫描动画 */
+/* 顶部扫描线保持不变 */
 .codex-card::before {
     content: "";
     position: absolute;
@@ -865,13 +864,17 @@ input[type="color"] {
     justify-content: space-between;
     align-items: center;
 }
+
+/* 标题字体优化 */
 .codex-header h3 {
-    font-family: 'Orbitron';
+    font-family: 'Orbitron', sans-serif; /* 强制科幻字体 */
     color: #fff;
     font-size: 1.2rem;
-    letter-spacing: 2px;
-    text-shadow: 0 0 10px var(--pink); /* 粉色霓虹标题 */
+    font-weight: 700;
+    letter-spacing: 3px; /* 增加字间距，提升高级感 */
+    text-shadow: 0 0 10px var(--pink);
     margin: 0;
+    text-transform: uppercase;
 }
 
 .codex-body {
@@ -880,12 +883,12 @@ input[type="color"] {
     position: relative;
 }
 
-/* --- 左侧：十条盟约 (The Ten Pledges) --- */
+/* --- 左侧：十条盟约 (字体与排版优化) --- */
 .pledge-list {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
     position: relative;
     z-index: 2;
 }
@@ -893,46 +896,40 @@ input[type="color"] {
 .pledge-item {
     display: flex;
     gap: 14px;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: #e0e0e0;
-    padding: 10px 14px;
-    border-radius: 8px;
-    background: linear-gradient(90deg, rgba(255,255,255,0.03), transparent);
-    border-left: 3px solid rgba(255, 42, 109, 0.3);
+    padding: 12px 16px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.02), transparent);
+    border-left: 2px solid rgba(255, 42, 109, 0.3);
     transition: all 0.3s ease;
+    
+    /* 字体核心优化 */
+    font-family: 'Noto Sans SC', sans-serif; /* 确保使用思源黑体 */
+    font-weight: 300; /* 使用细体，更有未来感 */
+    font-size: 0.9rem;
+    line-height: 1.6;
+    letter-spacing: 1px; /* 增加字间距 */
+    color: rgba(255, 255, 255, 0.85);
 }
 
-/* 悬停时的“选中”特效 */
 .pledge-item:hover {
-    background: linear-gradient(90deg, rgba(255, 42, 109, 0.15), transparent);
+    background: linear-gradient(90deg, rgba(255, 42, 109, 0.1), transparent);
     border-left-color: var(--cyan);
-    transform: translateX(8px);
-    box-shadow: 0 0 15px rgba(5, 217, 232, 0.1);
+    transform: translateX(6px);
+    color: #fff;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
 }
 
+/* 序号字体 */
 .pledge-num {
-    font-family: 'Orbitron';
+    font-family: 'Orbitron', sans-serif;
     color: var(--cyan);
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: 1rem;
     text-shadow: 0 0 5px var(--cyan);
+    min-width: 25px; /* 对齐优化 */
 }
 
-/* 盟约背景的大 Logo */
-.codex-bg-logo {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 15rem;
-    opacity: 0.05;
-    color: var(--pink);
-    pointer-events: none;
-    z-index: 0;
-    filter: blur(2px);
-}
-
-/* --- 右侧：十六种族 (Chessboard Grid) --- */
+/* --- 右侧：种族卡片 (字体与排版优化) --- */
 .race-grid-container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -943,38 +940,34 @@ input[type="color"] {
     background-size: 40px 40px;
 }
 
-/* 翻转容器 (Scene) */
 .race-card {
     position: relative;
     aspect-ratio: 1 / 1.1;
-    perspective: 1000px; /* 3D透视 */
+    perspective: 1000px;
     cursor: pointer;
 }
 
-/* 内部翻转层 (Object) */
 .race-inner {
     width: 100%;
     height: 100%;
     position: relative;
     transform-style: preserve-3d;
-    transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
-    border-radius: 10px;
-    /* 边框和发光移到 inner 上，保证翻转时边框跟随 */
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); /* 更有弹性的翻转动画 */
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }
 
 .race-card:hover .race-inner {
     transform: rotateY(180deg);
-    box-shadow: 0 0 15px rgba(5, 217, 232, 0.2); /* 翻转后发光增强 */
+    box-shadow: 0 0 20px rgba(5, 217, 232, 0.3);
 }
 
-/* 正反面公共样式 */
 .race-front, .race-back {
     position: absolute;
     inset: 0;
-    backface-visibility: hidden; /* 背面不可见 */
-    border-radius: 10px;
+    backface-visibility: hidden;
+    border-radius: 8px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -982,63 +975,73 @@ input[type="color"] {
     justify-content: center;
 }
 
-/* --- 正面 (Front) --- */
+/* 正面字体优化 */
 .race-front {
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.75);
     z-index: 2;
 }
 
 .r-rank {
     position: absolute;
     top: 6px; left: 8px;
-    font-family: 'Orbitron';
-    font-size: 0.8rem;
-    opacity: 0.6;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 1px;
 }
 
 .r-piece {
-    font-size: 2.2rem;
-    margin-bottom: 6px;
+    font-size: 2.5rem;
+    margin-bottom: 8px;
     transition: transform 0.4s;
+    filter: drop-shadow(0 0 5px currentColor); /* 给棋子加辉光 */
 }
 .race-card:hover .r-piece {
-    transform: scale(1.1); /* 悬停时图标微缩放 */
+    transform: scale(1.15);
 }
 
 .r-name-en {
-    font-family: 'Orbitron';
-    font-size: 0.85rem;
-    font-weight: bold;
-    text-align: center;
-    line-height: 1.1;
-}
-.r-name-cn {
-    font-size: 0.7rem;
-    opacity: 0.7;
-    margin-top: 2px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #fff;
+    margin-bottom: 2px;
 }
 
-/* --- 背面 (Back) - 详细介绍 --- */
+.r-name-cn {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 500; /* 中等字重，比之前更清晰 */
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 2px; /* 宽字距，提升设计感 */
+}
+
+/* 背面 (详细介绍) 字体优化 */
 .race-back {
     transform: rotateY(180deg);
-    background: rgba(15, 10, 20, 0.95);
-    padding: 12px;
-    text-align: center;
-    box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+    background: rgba(18, 12, 24, 0.95); /* 深紫色底 */
+    padding: 14px;
+    text-align: justify; /* 文本两端对齐 */
+    border: 1px solid var(--cyan);
 }
 
 .race-desc {
-    font-size: 0.75rem;
-    line-height: 1.5;
-    color: #ddd;
-    text-shadow: 0 0 2px rgba(0,0,0,0.8);
-    /* 允许长文本滚动，防止溢出 */
-    max-height: 100%;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 0.75rem; /* 调小字体，适应卡片 */
+    font-weight: 300; /* 细体 */
+    line-height: 1.8; /* 增加行高，提升可读性 */
+    color: #e0e0e0;
+    letter-spacing: 0.5px;
+    
+    /* 滚动条隐藏但可滚动 */
+    width: 100%;
+    height: 100%;
     overflow-y: auto;
-    scrollbar-width: none; /* Firefox 隐藏滚动条 */
+    scrollbar-width: none;
 }
-.race-desc::-webkit-scrollbar { display: none; } /* Chrome 隐藏滚动条 */
-
+.race-desc::-webkit-scrollbar { display: none; }
 /* === 各种族专属配色 (应用在 race-inner 上) === */
 
 /* Old Deus (神灵种) */
