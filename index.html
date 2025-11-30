@@ -3431,6 +3431,17 @@ const chessGame = {
         this.isProcessing = false;
         document.getElementById('game-log').innerHTML = '';
         
+        // ⭐ 修复 AI 难度选择器的显示逻辑 ⭐
+        const diffSel = document.getElementById('pve-difficulty-selector'); // 注意这里 ID 是 pve-difficulty-selector
+        const diffInput = document.getElementById('game-difficulty');
+        
+        if (mode === 'pve') {
+            if(diffSel) diffSel.style.display = 'block'; // PVE 显示
+            if(diffInput) this.difficulty = diffInput.value || 'normal';
+        } else {
+            if(diffSel) diffSel.style.display = 'none';  // PVP 隐藏
+        }
+        
         // 重置结算层
         const overlay = document.getElementById('game-result-overlay');
         if(overlay) { overlay.style.opacity = 0; overlay.style.pointerEvents = 'none'; }
