@@ -3431,22 +3431,21 @@ const chessGame = {
         this.isProcessing = false;
         document.getElementById('game-log').innerHTML = '';
         
-        // ⭐ 修复 AI 难度选择器的显示逻辑 ⭐
-        const diffSel = document.getElementById('pve-difficulty-selector'); // 注意这里 ID 是 pve-difficulty-selector
+        // UI 显示处理 (保持原样)
+        const diffSel = document.getElementById('pve-difficulty-selector');
         const diffInput = document.getElementById('game-difficulty');
-        
         if (mode === 'pve') {
-            if(diffSel) diffSel.style.display = 'block'; // PVE 显示
+            if(diffSel) diffSel.style.display = 'block';
             if(diffInput) this.difficulty = diffInput.value || 'normal';
         } else {
-            if(diffSel) diffSel.style.display = 'none';  // PVP 隐藏
+            if(diffSel) diffSel.style.display = 'none';
         }
         
-        // 重置结算层
         const overlay = document.getElementById('game-result-overlay');
         if(overlay) { overlay.style.opacity = 0; overlay.style.pointerEvents = 'none'; }
 
         if (mode === 'pve') {
+            // PVE 逻辑保持不变
             this.myRole = 'blue';
             this.currentTurn = 'blue';
             if (this.pollInterval) clearInterval(this.pollInterval);
@@ -3454,7 +3453,7 @@ const chessGame = {
             this.log(`PVE Started.`, "system");
             this.updateUI();
         } else {
-            // PVP 联机
+            // === PVP 联机逻辑 (重点修改部分) ===
             if (!state.isLoggedIn) return alert("Login required.");
             const roomId = prompt("Enter Room ID (Create or Join):");
             if (!roomId) return;
@@ -3462,37 +3461,36 @@ const chessGame = {
             this.log(`Connecting to [${roomId}]...`, "system");
             const res = await apiRequest({ action: 'game_create', custom_id: roomId }); 
             
-            if (res.status === 'waiting') {
-                // === P1 (房主) ===
+            // 无论 Waiting 还是 Matched，后端现在都会返回 turn 和 state
+            // 我们直接同步，避免前端默认值造成的死锁
+            if (res.status === 'waiting' || res.status === 'matched' || res.status === 'reconnected') {
                 this.matchId = res.matchId;
-                this.myRole = 'blue';
+                this.myRole = res.role; // 'blue' or 'red'
                 
-                // 1. 生成棋盘
-                this.setupAllUnits();
+                // [修复] 立即同步回合，不再盲目等待轮询
+                // 如果后端返回了 turn 就用，没有则默认 blue
+                this.currentTurn = res.turn || 'blue'; 
                 
-                // 2. 随机先手 (50% 概率)
-                const startSide = Math.random() < 0.5 ? 'blue' : 'red';
-                this.currentTurn = startSide;
-                this.log(`Coin Toss: ${startSide.toUpperCase()} Start!`, "system");
+                // [修复] 如果后端有棋盘数据（比如重连或P2加入），立即加载
+                if (res.state && res.state.units && res.state.units.length > 0) {
+                    this.units = res.state.units;
+                    this.deadUnits = res.state.deadUnits || [];
+                    this.logs = res.state.logs || [];
+                } else if (this.myRole === 'blue' && res.status === 'waiting') {
+                    // 只有 P1 创建房间且棋盘为空时，才初始化棋子
+                    this.setupAllUnits();
+                    // 立即上传初始状态，防止 P2 进来看到空盘
+                    await this.networkSync();
+                }
 
-                // 3. 必须等待上传完成，防止P2进来读到空数据
-                await this.networkSync(); 
-                this.log(`Room Ready. Waiting for P2...`, "system");
-
-            } else if (res.status === 'matched') {
-                // === P2 (加入者) ===
-                this.matchId = res.matchId;
-                this.myRole = 'red';
-                this.log(`Joined Room! VS ${res.opponent}`, "system");
+                const vsMsg = res.opponent ? ` VS ${res.opponent}` : " Waiting for P2...";
+                this.log(`Room Ready.${vsMsg}`, "system");
+                this.log(`You are ${this.myRole.toUpperCase()}. Turn: ${this.currentTurn.toUpperCase()}`, "system");
                 
-                // 4. P2 绝不自己生成棋子，强制拉取 P1 的数据
-                await this.networkPoll(true); 
-            
-            } else if (res.status === 'reconnected') {
-                this.matchId = res.matchId;
-                this.myRole = res.role;
-                this.log(`Reconnected as ${res.role.toUpperCase()}`, "system");
-                await this.networkPoll(true);
+                this.updateUI(); // 立即刷新 UI，解锁操作
+            } else {
+                alert("Connection failed: " + (res.message || "Unknown error"));
+                return;
             }
             
             if (this.pollInterval) clearInterval(this.pollInterval);
